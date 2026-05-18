@@ -6,10 +6,10 @@ import { t } from "../i18n/utils/translate";
 import { useHeaderTheme } from "../composables/useHeaderTheme";
 import { lenis } from "../composables/useScroll";
 import { projectId } from "../composables/useRouteObserver";
-import { social } from "../content/social";
 import ButtonRound from "./ButtonRound.vue";
 import ArrowRight from "./icons/ArrowRight.vue";
 import SoundsToggle from "./SoundsToggle.vue";
+import ThemeToggle from "./ThemeToggle.vue";
 import { isFeatureEnabled } from "../utils/features";
 import { useRouter } from "../composables/useRouter";
 import { useFirstRoute } from "../composables/useFirstRoute";
@@ -48,6 +48,15 @@ const handleLogoClick = () => {
   lenis.value.scrollTo(0);
 };
 
+const handleGetInTouch = () => {
+  if (projectId.value !== null) {
+    router.push("/");
+    setTimeout(() => lenis.value?.scrollTo("#contact"), 600);
+    return;
+  }
+  lenis.value?.scrollTo("#contact");
+};
+
 const classNames = computed(() => {
   return {
     header: true,
@@ -75,8 +84,6 @@ const getInTouchClassNames = computed(() => {
         :aria-label="t('back-to-home')"
         :class="{ 'header-back': true, 'header-back-isProjectPage': projectId !== null }"
         data-cursor="circle-white"
-        data-sound="click"
-        data-hoversound="hover"
       >
         <ArrowRight class="header-back-icon" />
       </ButtonRound>
@@ -89,24 +96,21 @@ const getInTouchClassNames = computed(() => {
         'children-unclickable': true,
       }"
       @click="handleLogoClick"
-      data-sound="click"
-      data-hoversound="hover"
       data-cursor="circle-white"
     >
       <Logo class="header-logo-image" />
     </div>
     <div class="header-right">
       <Button
-        renderAs="a"
+        renderAs="button"
         variant="accent"
         :aria-label="t('get-in-touch')"
-        :href="social.find((item) => item.name === 'mail')?.url ?? ''"
-        external
         :class="getInTouchClassNames"
         data-cursor="circle-white"
-        data-hoversound="hover"
+        @click="handleGetInTouch"
         >{{ t("get-in-touch") }}</Button
       >
+      <ThemeToggle :isDarkTheme="isDarkTheme" />
       <SoundsToggle class="header-sounds-toggle" :isDarkTheme="isDarkTheme" v-if="isFeatureEnabled('sounds')" />
     </div>
   </header>

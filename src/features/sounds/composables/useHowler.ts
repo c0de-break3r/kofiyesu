@@ -5,15 +5,15 @@ import { Howler } from "howler";
 import { isFeatureEnabled } from "../../../utils/features";
 import { tick as contactTick } from "../core/contact";
 import { useAgent } from "../../../composables/useAgent";
-import { stopSnoreRepetition } from "../core/contact";
+import { stopSnoreRepetition, startContactAmbient } from "../core/contact";
 import { tick as roomTick } from "../core/room";
 import { sounds } from "../definitions/sounds";
 import { getSoundsHowl } from "../utils/sounds";
 
 import type { SoundKey } from "../types";
+import { howlerUnlocked, soundsEnabled } from "../soundState";
 
-export const howlerUnlocked = ref(false);
-export const soundsEnabled = ref(false);
+export { howlerUnlocked, soundsEnabled };
 
 Howler.volume(0);
 
@@ -36,6 +36,10 @@ export const useHowler = () => {
     } else {
       soundsEnabled.value = true;
       localStorage.setItem("portfolio-soundsEnabled", "true");
+    }
+
+    if (soundsEnabled.value) {
+      startContactAmbient();
     }
   };
 
@@ -71,6 +75,14 @@ export const useHowler = () => {
     if (!isFeatureEnabled("sounds") || isTouch.value) return;
     enabledVolume.value = newVal ? 1 : 0;
     localStorage.setItem("portfolio-soundsEnabled", newVal.toString());
+
+    if (!howlerUnlocked.value) return;
+
+    if (newVal) {
+      startContactAmbient();
+    } else {
+      stopSnoreRepetition();
+    }
   });
 
   const loadAllSounds = () => {

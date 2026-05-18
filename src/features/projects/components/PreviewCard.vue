@@ -7,8 +7,6 @@ import { onMounted, onUnmounted, ref } from "vue";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ButtonRound from "../../../components/ButtonRound.vue";
 import { t } from "../../../i18n/utils/translate";
-import { social } from "../../../content/social";
-import Plus from "../../../components/icons/Plus.vue";
 
 import type { ProjectPreview } from "../../../content/types";
 
@@ -75,24 +73,6 @@ onUnmounted(() => {
       <div class="preview-card-copys">
         <h3 class="preview-card-title">{{ props.preview.title }}</h3>
         <p class="preview-card-description">{{ props.preview.description }}</p>
-      </div>
-    </div>
-  </Link>
-
-  <Link
-    v-else
-    class="preview-card children-unclickable"
-    data-cursor="arrow-external"
-    data-hoversound="hover"
-    external
-    :href="social[0].url"
-  >
-    <div class="preview-card-top preview-card-top-empty">
-      <Plus class="preview-card-top-empty-icon" />
-    </div>
-    <div class="preview-card-content">
-      <div class="preview-card-copys">
-        <h3 class="preview-card-title">{{ t("start-a-new-project") }}</h3>
       </div>
     </div>
   </Link>

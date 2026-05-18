@@ -1,6 +1,8 @@
 import { sounds as items, pools } from "../definitions/sounds";
 import { sprites } from "../definitions/sprites";
 import { isFeatureEnabled } from "../../../utils/features";
+import { howlerUnlocked, soundsEnabled } from "../soundState";
+import { isTouch } from "../../../composables/useAgent";
 
 import type { SoundKey, PoolKey } from "../types";
 
@@ -21,6 +23,8 @@ const playPoolSound = (poolKey: PoolKey) => {
 
 export const playSound = (key: SoundKey | PoolKey) => {
   if (!isFeatureEnabled("sounds")) return;
+
+  if (isTouch.value || !howlerUnlocked.value || !soundsEnabled.value) return;
 
   if (key in pools) {
     playPoolSound(key as PoolKey);

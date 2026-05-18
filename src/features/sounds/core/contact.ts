@@ -21,8 +21,13 @@ const scheduleNextSnore = () => {
   });
 };
 
-scheduleNextSnore();
-playSound("snore");
+let ambientStarted = false;
+
+export const startContactAmbient = () => {
+  if (ambientStarted) return;
+  ambientStarted = true;
+  scheduleNextSnore();
+};
 
 export const tick = () => {
   const volume = projectVisible.value ? 0 : clamp(sceneWeights.contact * 0.5, 0, 1);
@@ -30,6 +35,7 @@ export const tick = () => {
 };
 
 export const stopSnoreRepetition = () => {
+  ambientStarted = false;
   if (snoreTimeout) {
     snoreTimeout.kill();
     snoreTimeout = null;

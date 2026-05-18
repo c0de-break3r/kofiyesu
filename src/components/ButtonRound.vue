@@ -2,9 +2,13 @@
 import { computed } from "vue";
 import ButtonWrapper from "./ButtonWrapper.vue";
 
-const props = defineProps<{
-  size?: "sm" | "md" | "lg";
-}>();
+import type { Props as ButtonWrapperProps } from "./ButtonWrapper.vue";
+
+const props = defineProps<
+  ButtonWrapperProps & {
+    size?: "sm" | "md" | "lg";
+  }
+>();
 
 const classes = computed(() => ["button-round", `button-round-size-${props.size ?? "md"}`, "children-unclickable"]);
 </script>

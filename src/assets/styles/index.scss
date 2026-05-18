@@ -14,6 +14,9 @@ html {
   font-family: "Urbanist";
   letter-spacing: 0.02em;
   overflow-y: scroll !important;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 
   --vh: 1vh;
   --dvh: 1vh;

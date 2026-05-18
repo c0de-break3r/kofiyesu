@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { transitions } from "../../../animations";
 import { t } from "../../../i18n/utils/translate";
 import Social from "../../../components/Social.vue";
+import ContactChat from "../../../components/ContactChat.vue";
+import { isFeatureEnabled } from "../../../utils/features";
 
 const contactElement = ref<HTMLElement | null>(null);
 
@@ -21,6 +23,7 @@ onUnmounted(() => {
   <div class="contact grid" ref="contactElement">
     <div class="contact-content">
       <h2 class="contact-title" v-html="t('lets-work-together')"></h2>
+      <ContactChat v-if="isFeatureEnabled('contactChat')" />
       <Social variant="background" />
     </div>
   </div>
@@ -58,7 +61,7 @@ onUnmounted(() => {
     }
 
     @include mixins.mq("lg") {
-      grid-column: 2 / 6;
+      grid-column: 2 / 8;
     }
   }
 

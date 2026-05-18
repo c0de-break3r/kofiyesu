@@ -10,7 +10,7 @@
   "location": "Ghana 🇬🇭",
   "get-in-touch": "Get in touch",
   "go-to": "Go to",
-  "job-title": "Software Engineer & Cybersecurity",
+  "job-title": "Software Engineer & Pentester",
   "lets-work-together": "Let's work<br/>together!",
   "legal": "Legal Notice",
   "live-view": "Live View",
@@ -25,5 +25,16 @@
   "source-code": "Source Code",
   "switch-to-project": "Switch to project {project}",
   "version": "Version",
-  "view-project": "View project"
+  "view-project": "View project",
+  "chat-title": "Chat with my assistant",
+  "chat-subtitle": "Describe your inquiry — I'll route you to the right contact channel",
+  "chat-placeholder": "e.g. I need help with a security audit…",
+  "chat-send": "Send message",
+  "chat-thinking": "Thinking…",
+  "chat-send-email": "Continue via email",
+  "chat-sign-in-required": "Sign in to chat with Kofi's assistant and send inquiries.",
+  "chat-sign-in": "Sign in to chat",
+  "chat-loading": "Loading…",
+  "chat-clerk-missing": "Add VITE_CLERK_PUBLISHABLE_KEY to enable sign-in and chat.",
+  "chat-escalated": "Passed to Kofi — he'll follow up from the admin queue."
 }

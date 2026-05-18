@@ -66,18 +66,22 @@ import AppearingText from "../../../components/AppearingText.vue";
       }
     }
 
-    &-copys {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-sm);
-
-      @include mixins.mq("md") {
-        gap: var(--space-md);
-      }
-    }
-
     &-button {
       width: fit-content;
+    }
+  }
+
+  &-copys {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-xl);
+    background: var(--color-hero-surface);
+    transition: background 0.3s ease;
+
+    @include mixins.mq("md") {
+      gap: var(--space-md);
     }
   }
 
@@ -85,6 +89,7 @@ import AppearingText from "../../../components/AppearingText.vue";
     font-weight: 900;
     letter-spacing: 0.02em;
     font-size: var(--font-size-title-lg);
+    color: var(--color-hero-title);
 
     @include mixins.landscape {
       font-size: var(--font-size-title-lg);
