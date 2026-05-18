@@ -36,7 +36,8 @@ export const signIn = async (email: string, password: string) => {
   authError.value = null;
   const supabase = getSupabase();
   if (!supabase) {
-    authError.value = "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.";
+    authError.value =
+      "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.";
     return { error: authError.value };
   }
 

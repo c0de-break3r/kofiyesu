@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useTheme } from "../composables/useTheme";
 
 interface Props {
@@ -12,20 +12,33 @@ const { theme, toggleTheme } = useTheme();
 
 const label = computed(() => (theme.value === "dark" ? "Switch to light mode" : "Switch to dark mode"));
 const isDark = computed(() => theme.value === "dark");
+const isPopping = ref(false);
+
+let popTimeout: ReturnType<typeof setTimeout> | undefined;
+
+const handleClick = () => {
+  isPopping.value = true;
+  if (popTimeout) clearTimeout(popTimeout);
+  popTimeout = setTimeout(() => {
+    isPopping.value = false;
+  }, 500);
+  toggleTheme();
+};
 </script>
 
 <template>
   <button
     type="button"
     class="theme-toggle"
-    :class="{ 'theme-toggle-active': isDark }"
+    :class="{ 'theme-toggle-active': isDark, 'theme-toggle-pop': isPopping }"
     :aria-label="label"
     :aria-pressed="isDark"
     data-cursor="circle-white"
     data-sound="click"
     data-hoversound="hover"
-    @click="toggleTheme"
+    @click="handleClick"
   >
+    <span class="theme-toggle-ripple" aria-hidden="true" />
     <span class="theme-toggle-track" aria-hidden="true">
       <span class="theme-toggle-glow" />
       <span class="theme-toggle-thumb">
@@ -60,6 +73,28 @@ const isDark = computed(() => theme.value === "dark");
   cursor: pointer;
   flex-shrink: 0;
 
+  &-ripple {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(232, 93, 4, 0.35);
+    opacity: 0;
+    transform: scale(0.6);
+    pointer-events: none;
+  }
+
+  &-pop &-ripple {
+    animation: theme-toggle-ripple 0.5s ease-out forwards;
+  }
+
+  &-pop &-track {
+    animation: theme-toggle-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  &-pop &-thumb {
+    animation: theme-toggle-thumb-spin 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+
   &-track {
     position: relative;
     display: flex;
@@ -76,8 +111,7 @@ const isDark = computed(() => theme.value === "dark");
     transition:
       background 0.35s ease,
       border-color 0.35s ease,
-      box-shadow 0.35s ease,
-      transform 0.2s ease;
+      box-shadow 0.35s ease;
     overflow: hidden;
   }
 
@@ -118,15 +152,10 @@ const isDark = computed(() => theme.value === "dark");
   &-icon {
     width: 20px;
     height: 20px;
-    transition: transform 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
   }
 
   &:hover &-track {
     transform: scale(1.06);
-  }
-
-  &:active &-track {
-    transform: scale(0.96);
   }
 
   &-active &-track {
@@ -149,8 +178,8 @@ const isDark = computed(() => theme.value === "dark");
     box-shadow: 0 4px 16px rgba(232, 93, 4, 0.45);
   }
 
-  &-active &-icon {
-    transform: rotate(-15deg);
+  &.theme-toggle-active.theme-toggle-pop &-thumb {
+    animation: theme-toggle-thumb-settle 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
   }
 }
 
@@ -162,6 +191,50 @@ const isDark = computed(() => theme.value === "dark");
 @keyframes theme-toggle-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes theme-toggle-ripple {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes theme-toggle-bounce {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.88);
+  }
+  65% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes theme-toggle-thumb-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(0.9);
+  }
+  100% {
+    transform: rotate(360deg) scale(1.05);
+  }
+}
+
+@keyframes theme-toggle-thumb-settle {
+  to {
+    transform: rotate(15deg) scale(1.05);
   }
 }
 </style>

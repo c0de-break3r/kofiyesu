@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useAuth } from "../../../composables/useAuth";
+import { useClerkAdmin } from "../../../composables/useClerkAdmin";
 import { useRouter } from "../../../composables/useRouter";
 import { getSupabase, isSupabaseConfigured } from "../../../lib/supabase";
 import Button from "../../../components/Button.vue";
 import { features } from "../../../utils/features";
 
-const { user, signOut } = useAuth();
+const { user, signOut } = useClerkAdmin();
 const router = useRouter();
 const inquiries = ref<
   {
@@ -49,7 +49,9 @@ onMounted(async () => {
     <header class="admin-dashboard-header">
       <div>
         <h1 class="admin-dashboard-title">Dashboard</h1>
-        <p class="admin-dashboard-subtitle">Signed in as {{ user?.email }}</p>
+        <p class="admin-dashboard-subtitle">
+          {{ user?.fullName ?? user?.primaryEmailAddress?.emailAddress }}
+        </p>
       </div>
       <Button renderAs="button" variant="border" @click="handleSignOut">Sign out</Button>
     </header>
@@ -67,7 +69,7 @@ onMounted(async () => {
     <section class="admin-dashboard-section">
       <h2>Contact inquiries</h2>
       <p v-if="!isSupabaseConfigured" class="admin-dashboard-note">
-        Create a <code>contact_inquiries</code> table in Supabase to log routed chat inquiries.
+        Configure Supabase to log and view chat inquiries.
       </p>
       <p v-else-if="loading" class="admin-dashboard-note">Loading…</p>
       <p v-else-if="inquiries.length === 0" class="admin-dashboard-note">No inquiries yet.</p>

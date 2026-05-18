@@ -69,6 +69,12 @@ onUnmounted(() => {
     font-weight: 900;
     letter-spacing: 0.02em;
     font-size: var(--font-size-title-md);
+    color: var(--color-text-400);
+    line-height: var(--line-height-title);
+
+    :deep(span) {
+      color: var(--color-accent-400, #e85d04);
+    }
 
     @include mixins.mq("sm") {
       font-size: var(--font-size-title-lg);

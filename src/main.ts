@@ -14,6 +14,10 @@ const app = createApp(App);
 if (isClerkConfigured) {
   const { clerkPlugin } = await import("@clerk/vue");
   app.use(clerkPlugin, { publishableKey: clerkPublishableKey! });
+} else {
+  console.warn(
+    "[Clerk] VITE_CLERK_PUBLISHABLE_KEY is missing — client sign-in, chat, and admin auth are disabled.",
+  );
 }
 
 app.mount("#app");

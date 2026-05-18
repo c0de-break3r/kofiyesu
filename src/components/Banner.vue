@@ -75,13 +75,13 @@ watchEffect((onInvalidate) => {
 
   &-background {
     position: absolute;
-    outline: var(--stroke-lg) solid var(--color-beige-400);
-    background-color: #263c70;
+    background-color: var(--color-banner-bg, #e85d04);
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     transform-origin: left center;
+    border-radius: var(--radius-sm);
   }
 
   &-size {
