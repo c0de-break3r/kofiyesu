@@ -9,7 +9,7 @@ export function useClerkAdmin() {
   const clerk = useClerk();
 
   const signOut = async () => {
-    await clerk.value?.signOut({ redirectUrl: "/admin/login" });
+    await clerk.value?.signOut({ redirectUrl: "/" });
   };
 
   const isAdmin = computed(() => isClerkAdminUser(userId.value));

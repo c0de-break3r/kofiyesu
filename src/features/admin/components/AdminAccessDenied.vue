@@ -8,7 +8,7 @@ const router = useRouter();
 
 const handleSignOut = async () => {
   await signOut();
-  router.replace("/admin/login");
+  router.replace("/");
 };
 </script>
 
