@@ -23,8 +23,10 @@ onUnmounted(() => {
   <div class="contact grid" ref="contactElement">
     <div class="contact-content">
       <h2 class="contact-title" v-html="t('lets-work-together')"></h2>
-      <ContactChatLauncher v-if="isFeatureEnabled('contactChat')" />
-      <Social variant="background" />
+      <div class="contact-actions">
+        <ContactChatLauncher v-if="isFeatureEnabled('contactChat')" />
+        <Social variant="background" />
+      </div>
     </div>
   </div>
 </template>
@@ -34,30 +36,29 @@ onUnmounted(() => {
   width: 100%;
   max-width: calc(var(--svw) * 100);
   overflow: hidden;
-  min-height: calc(var(--lvh) * 100);
+  min-height: auto;
   padding: var(--space-outer);
-  padding-top: var(--space-lg);
+  padding-top: var(--space-md);
 
   @include mixins.mq("md") {
-    padding-top: var(--space-xxl);
+    padding-top: var(--space-lg);
   }
 
   &-content {
     position: relative;
-    padding-top: var(--space-md);
+    padding-top: 0;
     grid-column: 1 / 13;
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-sm);
 
     @include mixins.mq("sm") {
       grid-column: 1 / 8;
     }
 
     @include mixins.mq("md") {
-      gap: var(--space-xl);
       grid-column: 1 / 6;
-      padding-top: var(--space-lg);
+      padding-top: 0;
     }
 
     @include mixins.mq("lg") {
@@ -83,6 +84,13 @@ onUnmounted(() => {
     @include mixins.mq("xl") {
       font-size: var(--font-size-title-xl);
     }
+  }
+
+  &-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: flex-start;
   }
 }
 </style>

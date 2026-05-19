@@ -10,16 +10,17 @@ import { sleepingSprite } from "./contact/sleeping-sprite";
 import { renderer } from "../core/renderer";
 
 const init = () => {
-  if (isFeatureEnabled("avatar")) {
-    avatarHologram.init();
-    avatar.init();
-  }
-  contact.init();
   darkPlane.init();
   gridFloor.init();
   lab.init();
   room.init();
-  sleepingSprite.init();
+
+  if (isFeatureEnabled("avatar")) {
+    avatarHologram.init();
+    avatar.init();
+    contact.init();
+    sleepingSprite.init();
+  }
 
   renderer.compile();
 };
@@ -28,13 +29,14 @@ const destroy = () => {
   if (isFeatureEnabled("avatar")) {
     avatarHologram.destroy();
     avatar.destroy();
+    contact.destroy();
+    sleepingSprite.destroy();
   }
-  contact.destroy();
+
   darkPlane.destroy();
   gridFloor.destroy();
   lab.destroy();
   room.destroy();
-  sleepingSprite.destroy();
 };
 
 export const objects = { init, destroy };

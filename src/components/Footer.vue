@@ -1,18 +1,10 @@
 <script setup lang="ts">
 import Social from "./Social.vue";
 import NotchSection from "./NotchSection.vue";
-import ButtonRound from "./ButtonRound.vue";
-import { lenis } from "../composables/useScroll";
-import ArrowRightLong from "./icons/ArrowRightLong.vue";
 
 interface Props {
   withSocial?: boolean;
 }
-
-const handleBackToTop = () => {
-  if (!lenis.value) return;
-  lenis.value.scrollTo(0);
-};
 
 const { withSocial = true } = defineProps<Props>();
 </script>
@@ -21,17 +13,6 @@ const { withSocial = true } = defineProps<Props>();
   <footer class="footer">
     <NotchSection class="footer-notch" />
     <div class="footer-content">
-      <div
-        class="footer-back-to-top"
-        tabindex="0"
-        @click="handleBackToTop"
-        @keydown.enter="handleBackToTop"
-        data-cursor="circle-white"
-      >
-        <ButtonRound renderAs="div" variant="border" class="children-unclickable">
-          <ArrowRightLong class="footer-back-to-top-icon" />
-        </ButtonRound>
-      </div>
       <div class="footer-top">
         <Social v-if="withSocial" />
       </div>
@@ -54,40 +35,22 @@ const { withSocial = true } = defineProps<Props>();
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-xl);
+    gap: var(--space-md);
     width: 100%;
     max-width: calc(var(--breakpoint-xxxl));
-    padding: calc(var(--space-outer) + var(--space-sm)) var(--space-outer);
-    padding-bottom: calc(var(--space-outer) + var(--space-sm) + 72px);
-    position: relative;
+    padding: var(--space-md) var(--space-outer);
+    padding-bottom: calc(var(--space-md) + 72px);
 
     @include mixins.mq("lg") {
-      padding-bottom: calc(var(--space-outer) + var(--space-sm));
-    }
-  }
-
-  &-back-to-top {
-    cursor: pointer;
-
-    @include mixins.mq("md") {
-      position: absolute;
-      top: calc(var(--space-outer) + var(--space-sm));
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    &-icon {
-      transform: rotate(-90deg);
+      padding-bottom: var(--space-md);
     }
   }
 
   &-top {
     display: flex;
-    flex-direction: column;
     width: 100%;
     justify-content: center;
     align-items: center;
-    gap: var(--space-xl);
   }
 
   &-credits {

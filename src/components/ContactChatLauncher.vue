@@ -42,14 +42,14 @@ const openChat = () => {
   &-inner {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
-    padding: var(--space-md);
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
 
     @include mixins.mq("md") {
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      padding: var(--space-lg);
+      padding: var(--space-md) var(--space-lg);
     }
   }
 

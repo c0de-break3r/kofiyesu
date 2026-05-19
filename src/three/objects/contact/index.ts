@@ -35,6 +35,7 @@ const initObjects = () => {
       if (import.meta.env.DEV) console.warn(`[Models] contact-model: missing object "${name}"`);
       return;
     }
+    if (name === "base") return;
     const mat = getContactMaterial();
     object.material = mat;
     group.add(object);

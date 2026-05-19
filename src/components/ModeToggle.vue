@@ -26,6 +26,7 @@ const selectTheme = (preference: ThemePreference) => {
         variant="border"
         size="md"
         class="mode-toggle-trigger"
+        :class="`mode-toggle-trigger--${resolvedTheme}`"
         :aria-label="t('toggle-theme')"
         data-cursor="circle-white"
       >
@@ -55,9 +56,16 @@ const selectTheme = (preference: ThemePreference) => {
 </template>
 
 <style scoped lang="scss">
-.mode-toggle-trigger {
-  --icon-color: var(--color-text-400);
-  color: var(--color-text-400);
+/* Light site theme (moon visible) → gray */
+.mode-toggle-trigger--light {
+  --icon-color: #94a3b8;
+  color: #94a3b8;
+}
+
+/* Dark site theme (sun visible) → light-mode accent orange, not dark-theme orange */
+.mode-toggle-trigger--dark {
+  --icon-color: #e85d04;
+  color: #e85d04;
 }
 
 .mode-toggle-icons {

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watchEffect } from "vue";
 import { lenis } from "../composables/useScroll";
-import ArrowRight from "./icons/ArrowRight.vue";
 import gsap from "gsap";
 import SwipeUp from "./icons/SwipeUp.vue";
 import { projectId } from "../composables/useRouteObserver";
@@ -37,11 +36,8 @@ watchEffect((onInvalidate) => {
   <Transition name="scroll-icon">
     <div v-if="!hasScrolled" class="scroll-icon">
       <SwipeUp v-if="isTouchDevice" class="scroll-icon-swipe-up" />
-      <div v-else class="scroll-icon-pointer">
-        <div class="scroll-icon-mouse">
-          <div class="scroll-icon-mouse-dot"></div>
-        </div>
-        <ArrowRight class="scroll-icon-arrow" />
+      <div v-else class="scroll-icon-mouse">
+        <div class="scroll-icon-mouse-dot"></div>
       </div>
     </div>
   </Transition>
@@ -80,7 +76,6 @@ watchEffect((onInvalidate) => {
     --stroke-width: var(--stroke-md);
     fill: var(--color-beige-400);
 
-    //animation up and down ease-in-out
     animation: swipeUp 1s infinite;
     animation-direction: alternate;
     animation-timing-function: var(--ease-power2-out);
@@ -93,22 +88,6 @@ watchEffect((onInvalidate) => {
         transform: translateY(-10px);
       }
     }
-  }
-
-  &-pointer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xxs);
-    transform: translateY(4px);
-  }
-
-  &-arrow {
-    transform: rotate(90deg);
-    width: var(--icon-size-sm);
-
-    --stroke-width: 3px;
   }
 
   &-mouse {
@@ -125,8 +104,6 @@ watchEffect((onInvalidate) => {
       height: 12px;
       background-color: var(--color-text-400);
       border-radius: 100px;
-
-      //animate up and down
       animation: scrollIconDot 1s infinite;
       animation-direction: alternate;
       animation-timing-function: var(--ease-power2-out);

@@ -1,5 +1,5 @@
 export const features = {
-  /** 3D character in hero / about / contact — set false to show room & lab only */
+  /** Portfolio uses room + lab only (no rigged character). Set true only with a valid avatar.glb. */
   avatar: false,
   sounds: true,
   introWave: false,

@@ -29,10 +29,7 @@ type Source = {
 const coreSources = [
   { name: "lab-model", type: "gltfModel", path: labModel },
   { name: "room-model", type: "gltfModel", path: roomModel },
-  { name: "contact-model", type: "gltfModel", path: contactModel },
 
-  { name: "contact-texture", type: "texture", path: contactTexture },
-  { name: "contact-shadow-texture", type: "texture", path: contactShadowTexture },
   { name: "desktops-texture", type: "texture", path: desktopsTexture },
   { name: "diffuse-map", type: "texture", path: diffuseMap },
   { name: "hologram-plane-texture", type: "texture", path: hologramPlaneTexture },
@@ -42,8 +39,11 @@ const coreSources = [
   { name: "room-shadow-texture", type: "texture", path: roomShadowTexture },
 ] as const satisfies readonly Source[];
 
-const avatarSources = [
+const avatarSceneSources = [
   { name: "avatar-model", type: "gltfModel", path: avatarModel },
+  { name: "contact-model", type: "gltfModel", path: contactModel },
+  { name: "contact-texture", type: "texture", path: contactTexture },
+  { name: "contact-shadow-texture", type: "texture", path: contactShadowTexture },
   { name: "face-texture", type: "texture", path: faceTexture },
   { name: "head-texture", type: "texture", path: headTexture },
   { name: "matcap-black", type: "texture", path: matcapBlack },
@@ -54,5 +54,5 @@ const avatarSources = [
 
 export const sources = [
   ...coreSources,
-  ...(isFeatureEnabled("avatar") ? avatarSources : []),
+  ...(isFeatureEnabled("avatar") ? avatarSceneSources : []),
 ] as const satisfies readonly Source[];
