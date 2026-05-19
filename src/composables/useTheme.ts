@@ -1,61 +1,88 @@
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
-export type ThemeMode = "light" | "dark";
+/** User preference stored in localStorage. */
+export type ThemePreference = "light" | "dark" | "system";
+
+/** Applied theme on `document.documentElement` (`data-theme`). */
+export type ResolvedTheme = "light" | "dark";
 
 const STORAGE_KEY = "kofiyesu-theme";
 
-const getSystemTheme = (): ThemeMode => {
+const getSystemTheme = (): ResolvedTheme => {
   if (typeof window === "undefined") return "light";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
-const getStoredTheme = (): ThemeMode | null => {
+const resolveTheme = (preference: ThemePreference): ResolvedTheme => {
+  if (preference === "system") return getSystemTheme();
+  return preference;
+};
+
+const getStoredPreference = (): ThemePreference | null => {
   if (typeof window === "undefined") return null;
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
+  if (stored === "light" || stored === "dark" || stored === "system") return stored;
   return null;
 };
 
-export const theme = ref<ThemeMode>(getStoredTheme() ?? getSystemTheme());
+export const themePreference = ref<ThemePreference>(getStoredPreference() ?? "system");
 
-const applyTheme = (mode: ThemeMode) => {
+/** Resolved light/dark used for styling (`data-theme`). */
+export const resolvedTheme = computed(() => resolveTheme(themePreference.value));
+
+/** @deprecated Use `themePreference` or `resolvedTheme` — kept for existing components. */
+export const theme = resolvedTheme;
+
+const applyResolvedTheme = (mode: ResolvedTheme) => {
   if (typeof document === "undefined") return;
-  document.documentElement.setAttribute("data-theme", mode);
+  const root = document.documentElement;
+  root.setAttribute("data-theme", mode);
+  root.classList.remove("light", "dark");
+  root.classList.add(mode);
+
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
     meta.setAttribute("content", mode === "dark" ? "#363a3f" : "#e85d04");
   }
 };
 
-export const initTheme = () => {
-  applyTheme(theme.value);
-
-  if (typeof window !== "undefined") {
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        theme.value = e.matches ? "dark" : "light";
-      }
-    });
+const onSystemThemeChange = () => {
+  if (themePreference.value === "system") {
+    applyResolvedTheme(getSystemTheme());
   }
 };
 
-watch(
-  theme,
-  (mode) => {
-    applyTheme(mode);
-    localStorage.setItem(STORAGE_KEY, mode);
-  },
-  { immediate: false },
-);
+let systemMediaQuery: MediaQueryList | null = null;
 
-export const toggleTheme = () => {
-  theme.value = theme.value === "light" ? "dark" : "light";
+export const initTheme = (defaultPreference: ThemePreference = "system") => {
+  themePreference.value = getStoredPreference() ?? defaultPreference;
+  applyResolvedTheme(resolveTheme(themePreference.value));
+
+  if (typeof window === "undefined") return;
+
+  systemMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  systemMediaQuery.addEventListener("change", onSystemThemeChange);
 };
 
-export const setTheme = (mode: ThemeMode) => {
-  theme.value = mode;
+watch(themePreference, (preference) => {
+  localStorage.setItem(STORAGE_KEY, preference);
+  applyResolvedTheme(resolveTheme(preference));
+});
+
+export const setTheme = (preference: ThemePreference) => {
+  themePreference.value = preference;
+};
+
+export const toggleTheme = () => {
+  setTheme(resolvedTheme.value === "light" ? "dark" : "light");
 };
 
 export function useTheme() {
-  return { theme, toggleTheme, setTheme };
+  return {
+    theme: resolvedTheme,
+    themePreference,
+    resolvedTheme,
+    setTheme,
+    toggleTheme,
+  };
 }

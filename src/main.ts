@@ -7,7 +7,7 @@ import { initTheme } from "./composables/useTheme";
 import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
 
 gsap.registerPlugin(ScrollTrigger);
-initTheme();
+initTheme("dark");
 
 const app = createApp(App);
 

@@ -6,7 +6,7 @@ import { isClerkConfigured } from "../../lib/clerk";
 import ButtonRound from "../../components/ButtonRound.vue";
 import ArrowRight from "../../components/icons/ArrowRight.vue";
 import ProfileNavButton from "../../components/ProfileNavButton.vue";
-import ThemeToggle from "../../components/ThemeToggle.vue";
+import ModeToggle from "../../components/ModeToggle.vue";
 import SoundsToggle from "../../components/SoundsToggle.vue";
 import { isFeatureEnabled } from "../../utils/features";
 import { useTheme } from "../../composables/useTheme";
@@ -16,7 +16,7 @@ const ContactChatPanel = isClerkConfigured
   : null;
 
 const router = useRouter();
-const { theme } = useTheme();
+const { resolvedTheme } = useTheme();
 
 const goHome = () => {
   router.push("/");
@@ -42,12 +42,11 @@ const goHome = () => {
       </div>
 
       <div class="chat-page-actions">
-        <ThemeToggle :isDarkTheme="theme === 'dark'" show-label />
+        <ModeToggle :isDarkTheme="resolvedTheme === 'dark'" />
         <SoundsToggle
           v-if="isFeatureEnabled('sounds')"
           class="chat-page-sounds"
-          :isDarkTheme="theme === 'dark'"
-          show-label
+          :isDarkTheme="resolvedTheme === 'dark'"
         />
         <ProfileNavButton variant="header" />
       </div>

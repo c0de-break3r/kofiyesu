@@ -8,7 +8,7 @@ import { projectId } from "../composables/useRouteObserver";
 import ButtonRound from "./ButtonRound.vue";
 import ArrowRight from "./icons/ArrowRight.vue";
 import SoundsToggle from "./SoundsToggle.vue";
-import ThemeToggle from "./ThemeToggle.vue";
+import ModeToggle from "./ModeToggle.vue";
 import { isFeatureEnabled } from "../utils/features";
 import { useRouter } from "../composables/useRouter";
 import { useFirstRoute } from "../composables/useFirstRoute";
@@ -88,7 +88,7 @@ const classNames = computed(() => {
     </div>
     <div class="header-right">
       <ProfileNavButton v-if="isClerkConfigured" variant="header" class="header-profile" />
-      <ThemeToggle :isDarkTheme="isDarkTheme" />
+      <ModeToggle :isDarkTheme="isDarkTheme" />
       <SoundsToggle class="header-sounds-toggle" :isDarkTheme="isDarkTheme" v-if="isFeatureEnabled('sounds')" />
     </div>
   </header>
