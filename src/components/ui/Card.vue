@@ -3,10 +3,12 @@ withDefaults(
   defineProps<{
     as?: "div" | "a";
     hover?: boolean;
+    borderless?: boolean;
   }>(),
   {
     as: "div",
     hover: false,
+    borderless: false,
   },
 );
 </script>
@@ -15,7 +17,7 @@ withDefaults(
   <component
     :is="as === 'a' ? 'a' : 'div'"
     class="ui-card"
-    :class="{ 'ui-card-hover': hover }"
+    :class="{ 'ui-card-hover': hover, 'ui-card-borderless': borderless }"
   >
     <slot />
   </component>
@@ -30,6 +32,12 @@ withDefaults(
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
     0 4px 16px rgba(0, 0, 0, 0.06);
+
+  &-borderless {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
 
   &-hover {
     transition:

@@ -19,6 +19,7 @@ import ProjectBackground from "./features/projects/components/ProjectBackground.
 import { useClickSound } from "./features/sounds/composables/useClickSounds";
 import { renderer } from "./three/core/renderer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useClerkAdminRedirect } from "./composables/useClerkAdminRedirect";
 //import { useHoverSound } from "./features/sounds/composables/useHoverSounds";
 
 const { isTransitioning } = useProjectTransition();
@@ -32,6 +33,7 @@ useMusic();
 useHowler();
 useScroll();
 useRouteObserver();
+useClerkAdminRedirect();
 useClickSound();
 //useHoverSound();
 const { isTouch } = useAgent();

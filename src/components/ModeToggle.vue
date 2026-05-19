@@ -39,12 +39,12 @@ const onToggle = () => {
     @click="onToggle"
   >
     <span class="mode-toggle-icons" aria-hidden="true">
-      <Sun
-        class="mode-toggle-icon mode-toggle-icon-sun"
-        :class="{ 'mode-toggle-icon-hidden': resolvedTheme === 'dark' }"
-      />
       <Moon
         class="mode-toggle-icon mode-toggle-icon-moon"
+        :class="{ 'mode-toggle-icon-hidden': resolvedTheme === 'dark' }"
+      />
+      <Sun
+        class="mode-toggle-icon mode-toggle-icon-sun"
         :class="{ 'mode-toggle-icon-hidden': resolvedTheme === 'light' }"
       />
     </span>
@@ -52,16 +52,16 @@ const onToggle = () => {
 </template>
 
 <style scoped lang="scss">
-/* Light site theme (moon visible) → accent orange */
+/* Light mode: moon visible (switch to dark) */
 .mode-toggle-trigger--light {
-  --icon-color: #e85d04;
-  color: #e85d04;
-}
-
-/* Dark site theme (sun visible) → gray */
-.mode-toggle-trigger--dark {
   --icon-color: #94a3b8;
   color: #94a3b8;
+}
+
+/* Dark mode: sun visible (switch to light) */
+.mode-toggle-trigger--dark {
+  --icon-color: #e85d04;
+  color: #e85d04;
 }
 
 .mode-toggle-icons {

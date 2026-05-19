@@ -1,4 +1,4 @@
--- Run in Supabase SQL editor for admin inquiry logging
+-- Single table for client chat logging + admin dashboard
 create table if not exists public.contact_inquiries (
   id uuid primary key default gen_random_uuid(),
   inquiry_type text not null,
@@ -24,8 +24,9 @@ create policy "Authenticated users can insert inquiries"
   to authenticated
   with check (true);
 
-create policy "Anon can insert inquiries"
-  on public.contact_inquiries
-  for insert
-  to anon
-  with check (true);
+create index if not exists contact_inquiries_created_at_idx
+  on public.contact_inquiries (created_at desc);
+
+create index if not exists contact_inquiries_needs_admin_idx
+  on public.contact_inquiries (needs_admin)
+  where needs_admin = true;

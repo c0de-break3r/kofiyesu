@@ -82,7 +82,6 @@ const goHome = () => {
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-outer);
     padding-top: calc(var(--space-sm) + env(safe-area-inset-top, 0px));
-    border-bottom: 1px solid var(--color-border-subtle);
     background: var(--color-surface-elevated);
   }
 
@@ -131,11 +130,16 @@ const goHome = () => {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 720px;
+    max-width: 840px;
     margin: 0 auto;
-    padding: var(--space-md) var(--space-outer);
-    padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+    padding: var(--space-sm) var(--space-outer) 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     overflow: hidden;
+
+    @include mixins.mq("lg") {
+      max-width: none;
+      padding-inline: var(--space-lg);
+    }
   }
 
   &-panel {

@@ -198,8 +198,11 @@ const formatContent = (content: string) =>
     .contact-chat-input-row {
       flex-shrink: 0;
       padding-top: var(--space-sm);
-      border-top: 1px solid var(--color-border-subtle);
-      background: var(--color-surface-elevated);
+      background: transparent;
+    }
+
+    .contact-chat-bubble-assistant {
+      border: none;
     }
   }
 }

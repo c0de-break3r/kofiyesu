@@ -13,6 +13,7 @@ interface ChatResponse {
   confidence: "high" | "medium" | "low";
   escalateToAdmin?: boolean;
   showEmailCta?: boolean;
+  source?: "gemini" | "openai" | "fallback";
 }
 
 const ESCALATION_PATTERN =
@@ -20,6 +21,8 @@ const ESCALATION_PATTERN =
 
 const EMAIL_INTENT_PATTERN =
   /hire|job|quote|proposal|collaborat|project|pentest|audit|security work|work together|get in touch|reach out|contact you/i;
+
+const DEFAULT_GEMINI_MODELS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash-8b"];
 
 const classifyWithKeywords = (text: string): InquiryType => {
   const lower = text.toLowerCase();
@@ -37,6 +40,7 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
       confidence: "high",
       escalateToAdmin: true,
       showEmailCta: true,
+      source: "fallback",
     };
   }
 
@@ -50,6 +54,7 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
       confidence: "medium",
       escalateToAdmin: false,
       showEmailCta: false,
+      source: "fallback",
     };
   }
 
@@ -66,6 +71,7 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
       confidence: "medium",
       escalateToAdmin: false,
       showEmailCta: EMAIL_INTENT_PATTERN.test(lower),
+      source: "fallback",
     };
   }
 
@@ -76,6 +82,7 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     confidence: "low",
     escalateToAdmin: false,
     showEmailCta: false,
+    source: "fallback",
   };
 };
 
@@ -116,13 +123,19 @@ const toGeminiContents = (messages: ChatMessage[]) => {
   }));
 };
 
-const callGemini = async (
+const geminiModels = (): string[] => {
+  const configured = process.env.GEMINI_MODEL?.trim();
+  if (configured) return [configured];
+  return DEFAULT_GEMINI_MODELS;
+};
+
+const callGeminiModel = async (
   apiKey: string,
+  model: string,
   messages: ChatMessage[],
   userName?: string,
   userEmail?: string,
 ): Promise<ChatResponse | null> => {
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
   const contents = toGeminiContents(messages ?? []);
   if (contents.length === 0) return null;
 
@@ -144,15 +157,41 @@ const callGemini = async (
     }),
   });
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error(`[chat] Gemini ${model} failed`, res.status, errText.slice(0, 400));
+    return null;
+  }
 
   const data = (await res.json()) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
   };
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) return null;
+  if (!text) {
+    console.error(`[chat] Gemini ${model} returned empty content`);
+    return null;
+  }
 
-  return parseAiJson(text);
+  const parsed = parseAiJson(text);
+  if (!parsed) {
+    console.error(`[chat] Gemini ${model} returned invalid JSON`, text.slice(0, 200));
+    return null;
+  }
+
+  return { ...parsed, source: "gemini" };
+};
+
+const callGemini = async (
+  apiKey: string,
+  messages: ChatMessage[],
+  userName?: string,
+  userEmail?: string,
+): Promise<ChatResponse | null> => {
+  for (const model of geminiModels()) {
+    const result = await callGeminiModel(apiKey, model, messages, userName, userEmail);
+    if (result) return result;
+  }
+  return null;
 };
 
 const callOpenAi = async (
@@ -180,11 +219,16 @@ const callOpenAi = async (
     }),
   });
 
-  if (!aiRes.ok) return null;
+  if (!aiRes.ok) {
+    const errText = await aiRes.text();
+    console.error("[chat] OpenAI failed", aiRes.status, errText.slice(0, 400));
+    return null;
+  }
 
   const data = await aiRes.json();
   const content = data.choices?.[0]?.message?.content ?? "";
-  return parseAiJson(content);
+  const parsed = parseAiJson(content);
+  return parsed ? { ...parsed, source: "openai" } : null;
 };
 
 const normalizeResponse = (parsed: ChatResponse, escalate: boolean): ChatResponse => {
@@ -196,6 +240,7 @@ const normalizeResponse = (parsed: ChatResponse, escalate: boolean): ChatRespons
     confidence: parsed.confidence ?? "high",
     escalateToAdmin: escalated,
     showEmailCta: escalated || parsed.showEmailCta === true,
+    source: parsed.source,
   };
 };
 
@@ -229,14 +274,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       parsed = await callGemini(geminiKey, messages ?? [], userName, userEmail);
     } else if (openAiKey) {
       parsed = await callOpenAi(openAiKey, messages ?? [], userName, userEmail);
+    } else {
+      console.warn("[chat] No GEMINI_API_KEY or OPENAI_API_KEY — using keyword fallback");
     }
 
     if (parsed) {
+      res.setHeader("X-Chat-Source", parsed.source ?? "ai");
       return res.status(200).json(normalizeResponse(parsed, escalate));
     }
-  } catch {
-    /* fall through */
+  } catch (err) {
+    console.error("[chat] AI handler error", err);
   }
 
+  res.setHeader("X-Chat-Source", "fallback");
   return res.status(200).json(buildLocalReply(lastUser.content, escalate, inquiryType));
 }

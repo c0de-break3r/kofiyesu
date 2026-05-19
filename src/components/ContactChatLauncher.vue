@@ -13,7 +13,7 @@ const openChat = () => {
 </script>
 
 <template>
-  <Card class="contact-chat-launcher" hover>
+  <Card class="contact-chat-launcher" borderless>
     <div class="contact-chat-launcher-inner">
       <div class="contact-chat-launcher-copy">
         <h3 class="contact-chat-launcher-title">{{ t("chat-title") }}</h3>

@@ -11,6 +11,8 @@ export interface RoutingResult {
   confidence: "high" | "medium" | "low";
   escalateToAdmin?: boolean;
   showEmailCta?: boolean;
+  /** Set by /api/chat when Gemini/OpenAI is used; "fallback" means keyword routing. */
+  source?: "gemini" | "openai" | "fallback";
 }
 
 const ESCALATION_PATTERN =
@@ -110,16 +112,29 @@ export const routeInquiryWithAi = async ({
       body: JSON.stringify({ messages, userEmail, userId, userName }),
     });
 
+    if (res.status === 404 && import.meta.env.DEV) {
+      console.warn(
+        "[chat] /api/chat not found — run `npm run dev:api` (or deploy with GEMINI_API_KEY on Vercel) for live AI replies.",
+      );
+    }
+
     if (!res.ok) {
       return routeInquiryLocally(lastUser.content);
     }
 
     const data = (await res.json()) as RoutingResult;
     if (data.inquiryType && data.reply) {
+      if (import.meta.env.DEV && data.source === "fallback") {
+        console.warn(
+          "[chat] Server used keyword fallback — add GEMINI_API_KEY to Vercel (or .env.local for dev:api).",
+        );
+      }
       return data;
     }
   } catch {
-    /* fallback below */
+    if (import.meta.env.DEV) {
+      console.warn("[chat] /api/chat request failed — using local keyword fallback.");
+    }
   }
 
   return routeInquiryLocally(lastUser.content);
