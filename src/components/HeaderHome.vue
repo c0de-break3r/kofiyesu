@@ -1,62 +1,114 @@
 <script setup lang="ts">
 import HeaderLink from "./HeaderLink.vue";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { t } from "../i18n/utils/translate";
 import { lenis } from "../composables/useScroll";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useHeaderTheme } from "../composables/useHeaderTheme";
-import { projectId } from "../composables/useRouteObserver";
+import { path, projectId } from "../composables/useRouteObserver";
+import { useRouter } from "../composables/useRouter";
 
-const handleLinkClick = (link: string) => {
-  if (!lenis.value) return;
-  lenis.value.scrollTo(link);
-};
+type NavSection = "home" | "about" | "projects" | "chat";
 
-type ActiveLink = "about" | "projects" | "contact";
-const activeLink = ref<ActiveLink | null>(null);
-const sections: ActiveLink[] = ["about", "projects", "contact"];
-const ariaLabels = {
-  about: t("about"),
-  projects: t("projects"),
-  contact: t("contact"),
-};
+const router = useRouter();
 
+const scrollSections: Exclude<NavSection, "chat">[] = ["home", "about", "projects"];
+
+const sections: NavSection[] = ["home", "about", "projects", "chat"];
+
+const activeLink = ref<NavSection | null>(null);
 const isMounted = ref(false);
 
-const barStyle = ref({ transform: "" });
-const ITEM_WIDTH = 128;
+const barStyle = ref({ transform: "", width: "" });
+const ITEM_WIDTH = 108;
 
 const { isDarkTheme, hasScrolledIntoView } = useHeaderTheme();
 
+const ariaLabels: Record<NavSection, string> = {
+  home: t("home"),
+  about: t("about"),
+  projects: t("projects"),
+  chat: t("chat"),
+};
+
+const isChatRoute = computed(() => path.value === "/chat" || path.value.startsWith("/chat/"));
+
 const updateBarPosition = () => {
-  const index = sections.indexOf(activeLink.value as ActiveLink);
-  const left = index * ITEM_WIDTH;
+  const index = sections.indexOf(activeLink.value as NavSection);
+  if (index < 0) {
+    barStyle.value = { transform: "", width: "" };
+    return;
+  }
   barStyle.value = {
-    transform: `translateX(${left}px)`,
+    transform: `translateX(${index * ITEM_WIDTH}px)`,
+    width: `${ITEM_WIDTH}px`,
   };
 };
 
+const handleNav = (section: NavSection) => {
+  if (section === "chat") {
+    router.push("/chat");
+    activeLink.value = "chat";
+    updateBarPosition();
+    return;
+  }
+
+  if (section === "home") {
+    lenis.value?.scrollTo(0);
+    return;
+  }
+
+  lenis.value?.scrollTo(`#${section}`);
+};
+
+watch(isChatRoute, (onChat) => {
+  if (onChat) {
+    activeLink.value = "chat";
+    updateBarPosition();
+  }
+});
+
+watch(path, () => {
+  if (!isChatRoute.value && activeLink.value === "chat") {
+    activeLink.value = null;
+    updateBarPosition();
+  }
+});
+
 onMounted(() => {
-  sections.forEach((section) => {
+  scrollSections.forEach((section) => {
+    const trigger = section === "home" ? "#hero" : `#${section}`;
     ScrollTrigger.create({
-      trigger: `#${section}`,
-      start: section === "about" ? "top 22.5%" : "top center",
+      trigger,
+      start: section === "home" ? "top 40%" : section === "about" ? "top 22.5%" : "top center",
       end: "bottom center",
       onEnter: () => {
-        activeLink.value = section;
-        updateBarPosition();
+        if (!isChatRoute.value) {
+          activeLink.value = section;
+          updateBarPosition();
+        }
       },
       onEnterBack: () => {
-        activeLink.value = section;
-        updateBarPosition();
+        if (!isChatRoute.value) {
+          activeLink.value = section;
+          updateBarPosition();
+        }
       },
-      onLeave: () => (activeLink.value = null),
-      onLeaveBack: () => (activeLink.value = null),
+      onLeave: () => {
+        if (!isChatRoute.value) activeLink.value = null;
+      },
+      onLeaveBack: () => {
+        if (!isChatRoute.value) activeLink.value = null;
+      },
     });
   });
 
-  ScrollTrigger.refresh();
+  if (isChatRoute.value) {
+    activeLink.value = "chat";
+    updateBarPosition();
+  }
 
+  ScrollTrigger.refresh();
   isMounted.value = true;
 });
 </script>
@@ -67,26 +119,33 @@ onMounted(() => {
       <div
         :class="[
           'header-home-bar',
-          { 'header-home-bar-active': activeLink !== null && hasScrolledIntoView, 'header-home-bar-dark': isDarkTheme },
+          {
+            'header-home-bar-active':
+              (activeLink !== null && hasScrolledIntoView) || activeLink === 'chat',
+            'header-home-bar-dark': isDarkTheme,
+          },
         ]"
         :style="barStyle"
-      ></div>
+      />
       <HeaderLink
         v-for="section in sections"
         :key="section"
-        :is-active="activeLink === section"
+        :is-active="activeLink === section && (hasScrolledIntoView || section === 'chat')"
         :class="[
           'header-home-link',
-          { 'header-home-link-active': activeLink === section && hasScrolledIntoView },
+          {
+            'header-home-link-active':
+              activeLink === section && (hasScrolledIntoView || section === 'chat'),
+          },
           'children-unclickable',
         ]"
-        @click="handleLinkClick('#' + section)"
         :is-dark-theme="isDarkTheme"
         :aria-label="ariaLabels[section]"
         data-sound="click"
         data-hoversound="hover"
+        @click="handleNav(section)"
       >
-        {{ t(section) }}
+        {{ ariaLabels[section] }}
       </HeaderLink>
     </div>
   </div>
@@ -142,13 +201,13 @@ onMounted(() => {
     top: 3px;
     left: 3px;
     height: calc(100% - 6px);
-    width: 128px;
     background: var(--color-orange-400);
     border-radius: 100px;
     transition:
       transform 0.3s var(--ease-smooth),
       opacity 0.1s ease-in-out,
-      background-color 0.1s ease-in-out;
+      background-color 0.1s ease-in-out,
+      width 0.3s var(--ease-smooth);
     z-index: 1;
     opacity: 0;
 
@@ -169,10 +228,14 @@ onMounted(() => {
     border: none;
     background: none;
     transition: color 0.1s ease-in-out;
-    font-size: var(--font-size-md);
-    width: 128px;
+    font-size: var(--font-size-sm);
+    width: 108px;
     white-space: nowrap;
-    text-transform: uppercase;
+    text-transform: capitalize;
+
+    @include mixins.mq("xl") {
+      font-size: var(--font-size-md);
+    }
 
     &-active {
       color: var(--color-white-400);

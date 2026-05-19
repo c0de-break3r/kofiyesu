@@ -1,38 +1,54 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { soundsEnabled, howlerUnlocked } from "../features/sounds/composables/useHowler";
-import ButtonRound from "./ButtonRound.vue";
+import Switch from "./ui/Switch.vue";
 import Volume from "./icons/Volume.vue";
+import { soundsEnabled, howlerUnlocked } from "../features/sounds/composables/useHowler";
 import { t } from "../i18n/utils/translate";
-const props = defineProps<{
+
+defineProps<{
   isDarkTheme: boolean;
 }>();
 
-const isActive = computed(() => soundsEnabled.value && howlerUnlocked.value);
-
-const toggleSounds = () => {
-  soundsEnabled.value = !soundsEnabled.value;
-};
+const isActive = computed({
+  get: () => soundsEnabled.value && howlerUnlocked.value,
+  set: (value: boolean) => {
+    soundsEnabled.value = value;
+  },
+});
 </script>
 
 <template>
-  <ButtonRound
-    variant="toggle"
-    :active="isActive"
-    :class="{ 'music-toggle': true, 'music-toggle-dark': props.isDarkTheme, 'children-unclickable': true }"
-    @click="toggleSounds"
-    :aria-label="isActive ? t('disable-sounds') : t('enable-sounds')"
-    data-cursor="circle-white"
-  >
-    <Volume :active="isActive" />
-  </ButtonRound>
+  <div class="sounds-toggle" :class="{ 'sounds-toggle-dark': isDarkTheme }" data-cursor="circle-white">
+    <Volume :active="isActive" class="sounds-toggle-icon" />
+    <Switch
+      :checked="isActive"
+      size="sm"
+      :aria-label="isActive ? t('disable-sounds') : t('enable-sounds')"
+      @update:checked="isActive = $event"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.music-toggle-dark :deep(.button-wrapper-toggle:not(.button-wrapper-toggle-active)) {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.7);
-  --icon-color: rgba(255, 255, 255, 0.7);
+.sounds-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-elevated);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  &-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    --icon-color: var(--color-text-300);
+  }
+
+  &-dark &-icon {
+    --icon-color: rgba(255, 255, 255, 0.75);
+  }
 }
 </style>

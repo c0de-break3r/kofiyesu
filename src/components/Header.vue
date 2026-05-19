@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Button from "./Button.vue";
 import Logo from "./Logo.vue";
 import { computed, ref } from "vue";
 import { t } from "../i18n/utils/translate";
@@ -50,15 +49,6 @@ const handleLogoClick = () => {
   lenis.value.scrollTo(0);
 };
 
-const handleGetInTouch = () => {
-  if (projectId.value !== null) {
-    router.push("/");
-    setTimeout(() => lenis.value?.scrollTo("#contact"), 600);
-    return;
-  }
-  lenis.value?.scrollTo("#contact");
-};
-
 const classNames = computed(() => {
   return {
     header: true,
@@ -68,12 +58,6 @@ const classNames = computed(() => {
   };
 });
 
-const getInTouchClassNames = computed(() => {
-  return {
-    "header-get-in-touch": true,
-    "header-get-in-touch-isProjectPage": projectId.value !== null,
-  };
-});
 </script>
 
 <template>
@@ -103,15 +87,6 @@ const getInTouchClassNames = computed(() => {
       <Logo class="header-logo-image" />
     </div>
     <div class="header-right">
-      <Button
-        renderAs="button"
-        variant="accent"
-        :aria-label="t('get-in-touch')"
-        :class="getInTouchClassNames"
-        data-cursor="circle-white"
-        @click="handleGetInTouch"
-        >{{ t("get-in-touch") }}</Button
-      >
       <ProfileNavButton v-if="isClerkConfigured" variant="header" class="header-profile" />
       <ThemeToggle :isDarkTheme="isDarkTheme" />
       <SoundsToggle class="header-sounds-toggle" :isDarkTheme="isDarkTheme" v-if="isFeatureEnabled('sounds')" />
@@ -166,14 +141,6 @@ const getInTouchClassNames = computed(() => {
     transform: translateY(-50%);
   }
 
-  &-get-in-touch {
-    width: fit-content;
-
-    &-isProjectPage {
-      opacity: 1 !important;
-    }
-  }
-
   &-right {
     position: absolute;
     right: var(--space-outer);
@@ -200,14 +167,6 @@ const getInTouchClassNames = computed(() => {
   &-dark {
     color: var(--color-white-400);
     --icon-color: var(--color-white-400);
-  }
-
-  &-get-in-touch {
-    display: none;
-
-    @include mixins.mq("md") {
-      display: flex;
-    }
   }
 
   &-logo {

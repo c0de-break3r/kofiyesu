@@ -1,37 +1,41 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { t } from "../i18n/utils/translate";
 import { lenis } from "../composables/useScroll";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { projectId } from "../composables/useRouteObserver";
+import { path, projectId } from "../composables/useRouteObserver";
+import { useRouter } from "../composables/useRouter";
 import ProfileNavButton from "./ProfileNavButton.vue";
-import SoundsToggle from "./SoundsToggle.vue";
-import { isFeatureEnabled } from "../utils/features";
-import { useTheme } from "../composables/useTheme";
-
-const { theme } = useTheme();
 import NavHome from "./icons/NavHome.vue";
 import NavAbout from "./icons/NavAbout.vue";
 import NavProjects from "./icons/NavProjects.vue";
-import NavContact from "./icons/NavContact.vue";
+import NavChat from "./icons/NavChat.vue";
 
-type NavSection = "hero" | "about" | "projects" | "contact";
+type NavSection = "hero" | "about" | "projects" | "chat";
 
+const router = useRouter();
 const activeSection = ref<NavSection | null>(null);
 
-const navItems: { id: NavSection; icon: typeof NavHome; labelKey: "about" | "projects" | "contact" }[] = [
+const scrollItems: { id: Exclude<NavSection, "chat">; icon: typeof NavHome; labelKey: "about" | "projects" }[] = [
   { id: "about", icon: NavAbout, labelKey: "about" },
   { id: "projects", icon: NavProjects, labelKey: "projects" },
-  { id: "contact", icon: NavContact, labelKey: "contact" },
 ];
 
+const isChatRoute = () => path.value === "/chat" || path.value.startsWith("/chat/");
+
 const scrollTo = (section: NavSection) => {
+  if (section === "chat") {
+    router.push("/chat");
+    activeSection.value = "chat";
+    return;
+  }
   if (!lenis.value) return;
+  activeSection.value = section;
   lenis.value.scrollTo(section === "hero" ? 0 : `#${section}`);
 };
 
 onMounted(() => {
-  const sections: NavSection[] = ["hero", "about", "projects", "contact"];
+  const sections: Exclude<NavSection, "chat">[] = ["hero", "about", "projects"];
 
   sections.forEach((section) => {
     const trigger = section === "hero" ? "#hero" : `#${section}`;
@@ -40,13 +44,23 @@ onMounted(() => {
       start: section === "hero" ? "top 40%" : section === "about" ? "top 30%" : "top center",
       end: "bottom center",
       onEnter: () => {
-        activeSection.value = section;
+        if (!isChatRoute()) activeSection.value = section;
       },
       onEnterBack: () => {
-        activeSection.value = section;
+        if (!isChatRoute()) activeSection.value = section;
       },
     });
   });
+
+  if (isChatRoute()) activeSection.value = "chat";
+});
+
+watch(path, () => {
+  if (isChatRoute()) {
+    activeSection.value = "chat";
+  } else if (activeSection.value === "chat") {
+    activeSection.value = null;
+  }
 });
 </script>
 
@@ -66,11 +80,11 @@ onMounted(() => {
         :aria-label="t('back-to-home')"
       >
         <NavHome class="mobile-nav-icon" />
-        <span class="mobile-nav-label">Home</span>
+        <span class="mobile-nav-label">{{ t("home") }}</span>
       </button>
 
       <button
-        v-for="item in navItems"
+        v-for="item in scrollItems"
         :key="item.id"
         type="button"
         class="mobile-nav-item"
@@ -82,13 +96,20 @@ onMounted(() => {
         <component :is="item.icon" class="mobile-nav-icon" />
         <span class="mobile-nav-label">{{ t(item.labelKey) }}</span>
       </button>
+
+      <button
+        type="button"
+        class="mobile-nav-item"
+        :class="{ 'mobile-nav-item-active': activeSection === 'chat' }"
+        @click="scrollTo('chat')"
+        data-sound="click"
+        :aria-label="t('chat')"
+      >
+        <NavChat class="mobile-nav-icon" />
+        <span class="mobile-nav-label">{{ t("chat") }}</span>
+      </button>
     </nav>
 
-    <SoundsToggle
-      v-if="isFeatureEnabled('sounds')"
-      class="mobile-nav-sounds"
-      :isDarkTheme="theme === 'dark'"
-    />
     <ProfileNavButton />
   </div>
 </template>
@@ -188,9 +209,5 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-}
-
-.mobile-nav-sounds {
-  flex-shrink: 0;
 }
 </style>
