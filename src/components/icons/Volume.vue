@@ -27,31 +27,75 @@ const props = defineProps<{
 <style scoped lang="scss">
 .volume-body {
   transition:
-    transform 0.2s ease-in-out,
+    transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
     fill 0.2s ease-in-out;
   transform: translateX(30px);
 
   &-active {
-    transform: translateX(0px);
+    transform: translateX(0);
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+      fill 0.2s ease-in-out;
   }
 }
 
 .volume-wave-1,
 .volume-wave-2 {
   transition:
-    transform 0.2s ease-in-out,
-    opacity 0.2s ease-in-out,
+    transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+    opacity 0.3s ease-in-out,
     fill 0.2s ease-in-out;
-  transform: translateX(-20px);
+  transform: translateX(-20px) scale(0.85);
   opacity: 0;
+  transform-origin: center left;
 
   * {
     transition: fill 0.2s ease-in-out;
   }
 
   &-active {
-    transform: translateX(0px);
+    transform: translateX(0) scale(1);
     opacity: 1;
+  }
+}
+
+.volume-wave-2-active {
+  transition-delay: 0.06s;
+}
+
+.volume-wave-1-active {
+  animation: volume-wave-pulse 1.15s ease-in-out infinite;
+}
+
+.volume-wave-2-active {
+  animation: volume-wave-pulse 1.15s ease-in-out infinite 0.18s;
+}
+
+.volume-body-active {
+  animation: volume-body-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes volume-wave-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  50% {
+    opacity: 0.65;
+    transform: translateX(2px) scale(0.96);
+  }
+}
+
+@keyframes volume-body-pulse {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+  }
+
+  50% {
+    transform: translateX(-1px) scale(1.03);
   }
 }
 </style>

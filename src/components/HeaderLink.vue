@@ -2,6 +2,8 @@
 const props = defineProps<{
   isActive?: boolean;
   isDarkTheme?: boolean;
+  /** Narrow pill nav item (HeaderHome) */
+  compact?: boolean;
 }>();
 </script>
 
@@ -9,7 +11,11 @@ const props = defineProps<{
   <button
     class="header-link"
     data-cursor="circle-white"
-    :class="{ 'header-link-active': props.isActive, 'header-link-dark': props.isDarkTheme }"
+    :class="{
+      'header-link-active': props.isActive,
+      'header-link-dark': props.isDarkTheme,
+      'header-link-compact': props.compact,
+    }"
   >
     <slot></slot>
   </button>
@@ -17,6 +23,7 @@ const props = defineProps<{
 
 <style scoped lang="scss">
 .header-link {
+  position: relative;
   letter-spacing: 0.02em;
   font-weight: 700;
   border: none;
@@ -29,6 +36,16 @@ const props = defineProps<{
   z-index: 2;
   border-radius: 100px;
   padding: var(--space-xxs) 0;
+
+  &-compact {
+    width: 108px;
+    font-size: var(--font-size-sm);
+    text-transform: capitalize;
+
+    @include mixins.mq("xl") {
+      font-size: var(--font-size-md);
+    }
+  }
 
   &::after {
     content: "";

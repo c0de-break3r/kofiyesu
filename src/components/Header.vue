@@ -54,6 +54,7 @@ const classNames = computed(() => {
     header: true,
     "header-dark": isDarkTheme.value,
     "header-scrolled": scrolledPastHeroVisible.value,
+    "header-hasHomeNav": projectId.value === null,
     [`project-${projectId.value}`]: projectId.value !== null,
   };
 });
@@ -167,6 +168,15 @@ const classNames = computed(() => {
   &-dark {
     color: var(--color-white-400);
     --icon-color: var(--color-white-400);
+  }
+
+  &-hasHomeNav {
+    @include mixins.mq("lg") {
+      .header-logo {
+        opacity: 0 !important;
+        pointer-events: none;
+      }
+    }
   }
 
   &-logo {

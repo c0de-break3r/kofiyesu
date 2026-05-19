@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import HeaderLink from "./HeaderLink.vue";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { t } from "../i18n/utils/translate";
 import { lenis } from "../composables/useScroll";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -19,10 +19,11 @@ const sections: NavSection[] = ["home", "about", "projects", "chat"];
 const activeLink = ref<NavSection | null>(null);
 const isMounted = ref(false);
 
-const barStyle = ref({ transform: "", width: "" });
-const ITEM_WIDTH = 108;
+const barStyle = ref({ transform: "translateX(0)", width: "0" });
+const linkEls = ref<Partial<Record<NavSection, HTMLElement>>>({});
+let scrollTriggers: ScrollTrigger[] = [];
 
-const { isDarkTheme, hasScrolledIntoView } = useHeaderTheme();
+const { isDarkTheme } = useHeaderTheme();
 
 const ariaLabels: Record<NavSection, string> = {
   home: t("home"),
@@ -33,17 +34,39 @@ const ariaLabels: Record<NavSection, string> = {
 
 const isChatRoute = computed(() => path.value === "/chat" || path.value.startsWith("/chat/"));
 
-const updateBarPosition = () => {
-  const index = sections.indexOf(activeLink.value as NavSection);
-  if (index < 0) {
-    barStyle.value = { transform: "", width: "" };
+const isLinkActive = (section: NavSection) => activeLink.value === section;
+
+const isBarVisible = () => activeLink.value !== null;
+
+const setLinkRef = (section: NavSection) => (el: unknown) => {
+  if (!el) {
+    delete linkEls.value[section];
     return;
   }
+  const node =
+    el && typeof el === "object" && "$el" in el
+      ? (el as { $el: HTMLElement }).$el
+      : (el as HTMLElement);
+  linkEls.value[section] = node;
+};
+
+const updateBarPosition = () => {
+  const section = activeLink.value;
+  if (!section) {
+    barStyle.value = { transform: "translateX(0)", width: "0" };
+    return;
+  }
+
+  const el = linkEls.value[section];
+  if (!el) return;
+
   barStyle.value = {
-    transform: `translateX(${index * ITEM_WIDTH}px)`,
-    width: `${ITEM_WIDTH}px`,
+    transform: `translateX(${el.offsetLeft}px)`,
+    width: `${el.offsetWidth}px`,
   };
 };
+
+const onResize = () => updateBarPosition();
 
 const handleNav = (section: NavSection) => {
   if (section === "chat") {
@@ -52,6 +75,9 @@ const handleNav = (section: NavSection) => {
     updateBarPosition();
     return;
   }
+
+  activeLink.value = section;
+  updateBarPosition();
 
   if (section === "home") {
     lenis.value?.scrollTo(0);
@@ -70,15 +96,21 @@ watch(isChatRoute, (onChat) => {
 
 watch(path, () => {
   if (!isChatRoute.value && activeLink.value === "chat") {
-    activeLink.value = null;
-    updateBarPosition();
+    const scrollTop = lenis.value?.scroll ?? window.scrollY ?? 0;
+    activeLink.value = scrollTop < 80 ? "home" : null;
+    nextTick(updateBarPosition);
+    ScrollTrigger.refresh();
   }
 });
 
+watch(activeLink, () => nextTick(updateBarPosition));
+
 onMounted(() => {
+  scrollTriggers = [];
   scrollSections.forEach((section) => {
     const trigger = section === "home" ? "#hero" : `#${section}`;
-    ScrollTrigger.create({
+    scrollTriggers.push(
+      ScrollTrigger.create({
       trigger,
       start: section === "home" ? "top 40%" : section === "about" ? "top 22.5%" : "top center",
       end: "bottom center",
@@ -94,22 +126,26 @@ onMounted(() => {
           updateBarPosition();
         }
       },
-      onLeave: () => {
-        if (!isChatRoute.value) activeLink.value = null;
-      },
-      onLeaveBack: () => {
-        if (!isChatRoute.value) activeLink.value = null;
-      },
-    });
+      }),
+    );
   });
 
   if (isChatRoute.value) {
     activeLink.value = "chat";
-    updateBarPosition();
+  } else if ((lenis.value?.scroll ?? window.scrollY ?? 0) < 80) {
+    activeLink.value = "home";
   }
 
+  window.addEventListener("resize", onResize);
   ScrollTrigger.refresh();
+  nextTick(updateBarPosition);
   isMounted.value = true;
+});
+
+onUnmounted(() => {
+  scrollTriggers.forEach((st) => st.kill());
+  scrollTriggers = [];
+  window.removeEventListener("resize", onResize);
 });
 </script>
 
@@ -120,8 +156,7 @@ onMounted(() => {
         :class="[
           'header-home-bar',
           {
-            'header-home-bar-active':
-              (activeLink !== null && hasScrolledIntoView) || activeLink === 'chat',
+            'header-home-bar-active': isBarVisible(),
             'header-home-bar-dark': isDarkTheme,
           },
         ]"
@@ -130,13 +165,12 @@ onMounted(() => {
       <HeaderLink
         v-for="section in sections"
         :key="section"
-        :is-active="activeLink === section && (hasScrolledIntoView || section === 'chat')"
+        :ref="setLinkRef(section)"
+        compact
+        :is-active="isLinkActive(section)"
         :class="[
           'header-home-link',
-          {
-            'header-home-link-active':
-              activeLink === section && (hasScrolledIntoView || section === 'chat'),
-          },
+          { 'header-home-link-active': isLinkActive(section) },
           'children-unclickable',
         ]"
         :is-dark-theme="isDarkTheme"
@@ -182,6 +216,7 @@ onMounted(() => {
   &-links {
     position: relative;
     display: flex;
+    pointer-events: auto;
     padding: 3px;
     background-color: var(--color-beige-500);
     border-radius: 100px;
@@ -221,21 +256,7 @@ onMounted(() => {
   }
 
   &-link {
-    position: relative;
     z-index: 2;
-    letter-spacing: 0.02em;
-    font-weight: 700;
-    border: none;
-    background: none;
-    transition: color 0.1s ease-in-out;
-    font-size: var(--font-size-sm);
-    width: 108px;
-    white-space: nowrap;
-    text-transform: capitalize;
-
-    @include mixins.mq("xl") {
-      font-size: var(--font-size-md);
-    }
 
     &-active {
       color: var(--color-white-400);

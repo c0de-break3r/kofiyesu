@@ -20,39 +20,62 @@ export const getMeshNames = (gltf: GLTF): string[] => {
   return names;
 };
 
-export const validateAvatarModel = (gltf: GLTF): boolean => {
-  const requiredMeshes = ["face", "head", "black", "gray", "skin", "white"];
-  const requiredAnimations = [
-    "idle",
-    "t-idle",
-    "left-desktop",
-    "sleeping",
-    "wake-up",
-    "contact-idle",
-    "wave",
-  ];
+const REQUIRED_AVATAR_MESHES = ["face", "head", "black", "gray", "skin", "white"] as const;
+const REQUIRED_AVATAR_ANIMATIONS = [
+  "idle",
+  "t-idle",
+  "left-desktop",
+  "sleeping",
+  "wake-up",
+  "contact-idle",
+  "wave",
+] as const;
 
+const hasSkinnedMesh = (gltf: GLTF) =>
+  gltf.scene.children.some(
+    (child) => "isSkinnedMesh" in child && (child as { isSkinnedMesh?: boolean }).isSkinnedMesh,
+  ) ||
+  (() => {
+    let found = false;
+    gltf.scene.traverse((child) => {
+      if ("isSkinnedMesh" in child && (child as { isSkinnedMesh?: boolean }).isSkinnedMesh) {
+        found = true;
+      }
+    });
+    return found;
+  })();
+
+/** Rigged portfolio avatar (meshes + clips) vs static replacement mesh. */
+export const isRiggedAvatarModel = (gltf: GLTF): boolean => {
   const meshNames = getMeshNames(gltf);
   const animationNames = getAnimationNames(gltf);
-  const hasSkin = gltf.scene.children.some(
-    (child) => "isSkinnedMesh" in child && (child as { isSkinnedMesh?: boolean }).isSkinnedMesh,
-  );
 
+  if (!hasSkinnedMesh(gltf)) return false;
+
+  return (
+    REQUIRED_AVATAR_MESHES.every((name) => meshNames.includes(name)) &&
+    REQUIRED_AVATAR_ANIMATIONS.every((name) => animationNames.includes(name))
+  );
+};
+
+export const validateAvatarModel = (gltf: GLTF): boolean => {
+  const meshNames = getMeshNames(gltf);
+  const animationNames = getAnimationNames(gltf);
   let valid = true;
 
-  if (!hasSkin) {
+  if (!hasSkinnedMesh(gltf)) {
     logModelIssue("avatar-model", "missing skinned mesh — use the rigged avatar.glb from the repo");
     valid = false;
   }
 
-  for (const name of requiredMeshes) {
+  for (const name of REQUIRED_AVATAR_MESHES) {
     if (!meshNames.includes(name)) {
       logModelIssue("avatar-model", `missing mesh "${name}"`);
       valid = false;
     }
   }
 
-  for (const name of requiredAnimations) {
+  for (const name of REQUIRED_AVATAR_ANIMATIONS) {
     if (!animationNames.includes(name)) {
       logModelIssue("avatar-model", `missing animation "${name}"`);
       valid = false;

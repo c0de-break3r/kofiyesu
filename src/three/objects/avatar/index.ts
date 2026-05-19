@@ -12,10 +12,14 @@ import headVertexShader from "../../shaders/avatar-head/vertex.glsl";
 import headFragmentShader from "../../shaders/avatar-head/fragment.glsl";
 import gsap from "gsap";
 import { aboutProgress } from "../../../animations/transitions/about";
-import { logModelIssue, validateAvatarModel } from "../../utils/gltfValidation";
+import { isRiggedAvatarModel, logModelIssue } from "../../utils/gltfValidation";
 //import { avatarHologram } from "./hologram";
 
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { Material, Bone, Texture } from "three";
+
+/** Scale static Tripo-style exports to roughly match the rigged character in-scene. */
+const STATIC_AVATAR_SCALE = 3.5;
 
 let mesh: Mesh | null = null;
 let rightHandBone: Bone | null = null;
@@ -92,24 +96,50 @@ const assignMatcap = (child: Mesh): boolean => {
   return false;
 };
 
-const setupMesh = () => {
-  if (mesh) return;
-  const resource = resources.items["avatar-model"];
-  if (!resource?.scene?.children?.[0]) {
+const applyMatcapToMesh = (child: Mesh, tex: Texture) => {
+  child.material = new ShaderMaterial({
+    vertexShader: matcapVertexShader,
+    fragmentShader: matcapFragmentShader,
+    transparent: true,
+    uniforms: {
+      uMatcap: { value: tex },
+      ...uniforms,
+    },
+  });
+  child.frustumCulled = false;
+  child.renderOrder = 24;
+};
+
+const setupStaticMesh = (resource: GLTF) => {
+  mesh = cloneSkeleton(resource.scene) as Mesh;
+  mesh.frustumCulled = false;
+  mesh.scale.setScalar(STATIC_AVATAR_SCALE);
+
+  const skinTex = resources.items["matcap-skin"];
+  skinTex.colorSpace = LinearSRGBColorSpace;
+  skinTex.generateMipmaps = false;
+
+  mesh.traverse((child) => {
+    if (child instanceof Mesh) applyMatcapToMesh(child, skinTex);
+  });
+
+  mesh.rotation.z = 0;
+  transform.add(mesh);
+  scene.instance.add(transform);
+
+  logModelIssue(
+    "avatar-model",
+    "static mesh loaded — idle/wave/face animations disabled; export a rigged GLB with named meshes to restore them",
+  );
+};
+
+const setupRiggedMesh = (resource: GLTF) => {
+  if (!resource.scene.children[0]) {
     logModelIssue("avatar-model", "empty scene — could not load character");
     return;
   }
 
-  if (!validateAvatarModel(resource)) {
-    logModelIssue(
-      "avatar-model",
-      "invalid rig; restore src/assets/models/avatar.glb from git (commit before static mesh swap)",
-    );
-    return;
-  }
-
   mesh = cloneSkeleton(resource.scene.children[0]) as Mesh;
-
   mesh.frustumCulled = false;
 
   mesh.traverse((child) => {
@@ -130,17 +160,27 @@ const setupMesh = () => {
   });
 
   const brain = mesh.getObjectByName("brain") as Mesh;
-  if (brain) {
-    mesh.remove(brain);
-  }
+  if (brain) mesh.remove(brain);
 
   mesh.rotation.z = 0;
-
   transform.add(mesh);
-
   rightHandBone = mesh.getObjectByName("bone-right-hand") as Bone;
-
   scene.instance.add(transform);
+};
+
+const setupMesh = () => {
+  if (mesh) return;
+  const resource = resources.items["avatar-model"];
+  if (!resource?.scene) {
+    logModelIssue("avatar-model", "empty scene — could not load character");
+    return;
+  }
+
+  if (isRiggedAvatarModel(resource)) {
+    setupRiggedMesh(resource);
+  } else {
+    setupStaticMesh(resource);
+  }
 };
 
 const tick = () => {
