@@ -34,7 +34,11 @@ const init = () => {
     electric: resource.scene.children.find((child: Object3D) => child.name === "electric"),
   };
 
-  Object.values(objects).forEach((object) => {
+  Object.entries(objects).forEach(([name, object]) => {
+    if (!object) {
+      if (import.meta.env.DEV) console.warn(`[Models] lab-model: missing object "${name}"`);
+      return;
+    }
     if (object.name === "shine") object.renderOrder = 30;
     if (object.name === "electric") object.renderOrder = 25;
     if (object.name === "base") object.renderOrder = 20;

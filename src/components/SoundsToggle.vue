@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, useId } from "vue";
 import Switch from "./ui/Switch.vue";
-import Volume from "./icons/Volume.vue";
+import ToggleLabel from "./ui/ToggleLabel.vue";
 import { soundsEnabled, howlerUnlocked } from "../features/sounds/composables/useHowler";
 import { t } from "../i18n/utils/translate";
 
-defineProps<{
-  isDarkTheme: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    isDarkTheme?: boolean;
+    showLabel?: boolean;
+  }>(),
+  { showLabel: false },
+);
+
+const inputId = useId();
 
 const isActive = computed({
   get: () => soundsEnabled.value && howlerUnlocked.value,
@@ -15,40 +21,26 @@ const isActive = computed({
     soundsEnabled.value = value;
   },
 });
+
+const label = computed(() => (isActive.value ? t("disable-sounds") : t("enable-sounds")));
 </script>
 
 <template>
-  <div class="sounds-toggle" :class="{ 'sounds-toggle-dark': isDarkTheme }" data-cursor="circle-white">
-    <Volume :active="isActive" class="sounds-toggle-icon" />
+  <div class="sounds-toggle" data-cursor="circle-white">
     <Switch
+      :id="inputId"
       :checked="isActive"
-      size="sm"
-      :aria-label="isActive ? t('disable-sounds') : t('enable-sounds')"
+      :aria-label="label"
       @update:checked="isActive = $event"
     />
+    <ToggleLabel v-if="props.showLabel" :for-id="inputId">{{ t("sounds") }}</ToggleLabel>
   </div>
 </template>
 
 <style scoped lang="scss">
 .sounds-toggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-elevated);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  &-icon {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-    --icon-color: var(--color-text-300);
-  }
-
-  &-dark &-icon {
-    --icon-color: rgba(255, 255, 255, 0.75);
-  }
+  gap: 0.625rem;
 }
 </style>

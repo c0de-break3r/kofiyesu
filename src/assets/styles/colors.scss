@@ -46,6 +46,11 @@
   --color-hero-title: #1a1d21;
   --color-hero-surface: transparent;
   --color-banner-bg: #e85d04;
+
+  /* shadcn-style switch */
+  --switch-background: #e2e8f0;
+  --switch-primary: var(--color-accent-400);
+  --switch-thumb: #ffffff;
 }
 
 /* Dark theme */
@@ -95,4 +100,8 @@
   --color-hero-title: #1a1d21;
   --color-hero-surface: rgba(244, 247, 250, 0.94);
   --color-banner-bg: #e85d04;
+
+  --switch-background: #3f4449;
+  --switch-primary: var(--color-accent-400);
+  --switch-thumb: #f8fafc;
 }

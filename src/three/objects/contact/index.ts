@@ -30,10 +30,13 @@ const initObjects = () => {
     base: resource.scene.children.find((child: Object3D) => child.name === "base"),
   };
 
-  Object.values(objects).forEach((object) => {
+  Object.entries(objects).forEach(([name, object]) => {
+    if (!object) {
+      if (import.meta.env.DEV) console.warn(`[Models] contact-model: missing object "${name}"`);
+      return;
+    }
     const mat = getContactMaterial();
     object.material = mat;
-
     group.add(object);
   });
 

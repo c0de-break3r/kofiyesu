@@ -12,6 +12,7 @@ import headVertexShader from "../../shaders/avatar-head/vertex.glsl";
 import headFragmentShader from "../../shaders/avatar-head/fragment.glsl";
 import gsap from "gsap";
 import { aboutProgress } from "../../../animations/transitions/about";
+import { logModelIssue, validateAvatarModel } from "../../utils/gltfValidation";
 //import { avatarHologram } from "./hologram";
 
 import type { Material, Bone, Texture } from "three";
@@ -94,6 +95,19 @@ const assignMatcap = (child: Mesh): boolean => {
 const setupMesh = () => {
   if (mesh) return;
   const resource = resources.items["avatar-model"];
+  if (!resource?.scene?.children?.[0]) {
+    logModelIssue("avatar-model", "empty scene — could not load character");
+    return;
+  }
+
+  if (!validateAvatarModel(resource)) {
+    logModelIssue(
+      "avatar-model",
+      "invalid rig; restore src/assets/models/avatar.glb from git (commit before static mesh swap)",
+    );
+    return;
+  }
+
   mesh = cloneSkeleton(resource.scene.children[0]) as Mesh;
 
   mesh.frustumCulled = false;

@@ -42,11 +42,12 @@ const goHome = () => {
       </div>
 
       <div class="chat-page-actions">
-        <ThemeToggle :isDarkTheme="theme === 'dark'" />
+        <ThemeToggle :isDarkTheme="theme === 'dark'" show-label />
         <SoundsToggle
           v-if="isFeatureEnabled('sounds')"
           class="chat-page-sounds"
           :isDarkTheme="theme === 'dark'"
+          show-label
         />
         <ProfileNavButton variant="header" />
       </div>

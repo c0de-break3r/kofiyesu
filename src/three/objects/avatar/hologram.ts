@@ -8,6 +8,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { sceneWeights } from "../../../animations/scenes";
 import { avatar } from ".";
 import { aboutProgress } from "../../../animations/transitions/about";
+import { logModelIssue } from "../../utils/gltfValidation";
 
 import type { Material, BufferGeometry, Object3D, Skeleton } from "three";
 
@@ -32,13 +33,19 @@ const init = () => {
 const setupSkeleton = () => {
   if (skeleton) return;
   const resource = resources.items["avatar-model"];
+  if (!resource?.scene?.children?.[0]) return;
+
   const cloned = cloneSkeleton(resource.scene.children[0]);
-  const black: SkinnedMesh = cloned.getObjectByName("black") as SkinnedMesh;
+  const black = cloned.getObjectByName("black") as SkinnedMesh | null;
+  if (!black?.skeleton) {
+    logModelIssue("avatar-model", "hologram skipped — mesh \"black\" not found");
+    return;
+  }
   skeleton = black.skeleton;
 };
 
 const setupGeometry = () => {
-  if (geometry) return;
+  if (geometry || !skeleton) return;
   const resource = resources.items["avatar-model"];
   const geometries: BufferGeometry[] = [];
 
@@ -49,8 +56,12 @@ const setupGeometry = () => {
     }
   });
 
-  //geometry = mergeGeometries(geometries).toNonIndexed();
-  geometry = mergeGeometries(geometries);
+  if (!geometries.length) return;
+
+  const merged = mergeGeometries(geometries);
+  if (!merged) return;
+
+  geometry = merged;
   geometry.toNonIndexed();
 
   const vectors = [new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1)];
@@ -66,7 +77,7 @@ const setupGeometry = () => {
 };
 
 const setupMesh = () => {
-  if (mesh) return;
+  if (mesh || !geometry || !skeleton) return;
   material = getHologramMaterial();
   mesh = new SkinnedMesh(geometry!, material!);
   mesh.bind(skeleton!, new Matrix4());

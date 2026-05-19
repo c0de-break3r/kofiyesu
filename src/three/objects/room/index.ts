@@ -48,24 +48,30 @@ const initObjects = () => {
   if (objects) return;
   const resource = resources.items["room-model"];
 
-  const penguin = resource.scene.children.find((child: Object3D) => child.name === "penguin");
+  const penguin = resource.scene.children.find((child: Object3D) => child.name === "penguin") as
+    | Object3D
+    | undefined;
+
   objects = {
-    blackboard: resource.scene.children.find((child: Object3D) => child.name === "blackboard"),
-    carpet: resource.scene.children.find((child: Object3D) => child.name === "carpet"),
-    chair: resource.scene.children.find((child: Object3D) => child.name === "chair"),
-    frame: resource.scene.children.find((child: Object3D) => child.name === "frame"),
-    mouse: resource.scene.children.find((child: Object3D) => child.name === "mouse"),
-    music: resource.scene.children.find((child: Object3D) => child.name === "music"),
-    plant: resource.scene.children.find((child: Object3D) => child.name === "plant"),
-    room: resource.scene.children.find((child: Object3D) => child.name === "room"),
-    shelf: resource.scene.children.find((child: Object3D) => child.name === "shelf"),
-    penguin,
-    "penguin-wing-left": penguin.children.find((child: Object3D) => child.name === "penguin-wing-left"),
-    "penguin-wing-right": penguin.children.find((child: Object3D) => child.name === "penguin-wing-right"),
+    blackboard: resource.scene.children.find((child: Object3D) => child.name === "blackboard") as Mesh,
+    carpet: resource.scene.children.find((child: Object3D) => child.name === "carpet") as Mesh,
+    chair: resource.scene.children.find((child: Object3D) => child.name === "chair") as Mesh,
+    frame: resource.scene.children.find((child: Object3D) => child.name === "frame") as Mesh,
+    mouse: resource.scene.children.find((child: Object3D) => child.name === "mouse") as Mesh,
+    music: resource.scene.children.find((child: Object3D) => child.name === "music") as Mesh,
+    plant: resource.scene.children.find((child: Object3D) => child.name === "plant") as Mesh,
+    room: resource.scene.children.find((child: Object3D) => child.name === "room") as Mesh,
+    shelf: resource.scene.children.find((child: Object3D) => child.name === "shelf") as Mesh,
+    penguin: penguin as Mesh,
+    "penguin-wing-left": penguin?.children.find((child: Object3D) => child.name === "penguin-wing-left") as Mesh,
+    "penguin-wing-right": penguin?.children.find((child: Object3D) => child.name === "penguin-wing-right") as Mesh,
   };
 
-  Object.values(objects).forEach((object) => {
-    if (!object) return;
+  Object.entries(objects).forEach(([name, object]) => {
+    if (!object) {
+      if (import.meta.env.DEV) console.warn(`[Models] room-model: missing object "${name}"`);
+      return;
+    }
     const mat = getRoomMaterial();
     object.material = mat;
     group.add(object);

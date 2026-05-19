@@ -41,9 +41,16 @@ class Resources extends EventEmitter<{
 
     for (const source of sources) {
       if (source.type === "gltfModel") {
-        this.loaders.gltfLoader.load(source.path, (file) => {
-          this.sourceLoaded(source, file);
-        });
+        this.loaders.gltfLoader.load(
+          source.path,
+          (file) => {
+            this.sourceLoaded(source, file);
+          },
+          undefined,
+          (error) => {
+            console.error(`[Resources] Failed to load ${source.name}:`, error);
+          },
+        );
       } else if (source.type === "texture") {
         this.loaders.textureLoader.load(source.path, (file: Texture) => {
           file.colorSpace = SRGBColorSpace;

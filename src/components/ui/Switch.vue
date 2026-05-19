@@ -3,9 +3,10 @@ const props = withDefaults(
   defineProps<{
     checked: boolean;
     ariaLabel?: string;
-    size?: "default" | "sm";
+    disabled?: boolean;
+    id?: string;
   }>(),
-  { size: "default" },
+  { disabled: false },
 );
 
 const emit = defineEmits<{
@@ -13,19 +14,21 @@ const emit = defineEmits<{
 }>();
 
 const toggle = () => {
+  if (props.disabled) return;
   emit("update:checked", !props.checked);
 };
 </script>
 
 <template>
   <button
+    :id="id"
     type="button"
     role="switch"
     class="ui-switch"
-    :class="`ui-switch-${size}`"
     :data-state="checked ? 'checked' : 'unchecked'"
     :aria-checked="checked"
     :aria-label="ariaLabel"
+    :disabled="disabled"
     data-sound="click"
     @click="toggle"
   >
@@ -34,73 +37,53 @@ const toggle = () => {
 </template>
 
 <style scoped lang="scss">
+/* shadcn/ui Switch */
 .ui-switch {
   position: relative;
+  display: inline-flex;
   flex-shrink: 0;
-  border: 1px solid var(--color-border-subtle);
+  align-items: center;
+  width: 2.75rem;
+  height: 1.5rem;
   border-radius: 9999px;
-  background: var(--color-grayscale-400);
-  cursor: pointer;
+  border: 2px solid transparent;
   padding: 0;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  cursor: pointer;
+  background-color: var(--switch-background);
+  transition: background-color 0.2s ease;
 
   &:focus-visible {
-    outline: 2px solid var(--color-accent-400);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--color-background-400),
+      0 0 0 4px var(--color-accent-400);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 
   &[data-state="checked"] {
-    background: var(--color-accent-400);
-    border-color: var(--color-accent-400);
-  }
-
-  &-default {
-    width: 44px;
-    height: 24px;
-
-    .ui-switch-thumb {
-      width: 20px;
-      height: 20px;
-    }
-
-    &[data-state="checked"] .ui-switch-thumb {
-      transform: translateX(20px);
-    }
-  }
-
-  &-sm {
-    width: 36px;
-    height: 20px;
-
-    .ui-switch-thumb {
-      width: 16px;
-      height: 16px;
-    }
-
-    &[data-state="checked"] .ui-switch-thumb {
-      transform: translateX(16px);
-    }
-  }
-
-  &-thumb {
-    position: absolute;
-    top: 1px;
-    left: 1px;
-    border-radius: 50%;
-    background: var(--color-surface-elevated);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.12),
-      0 1px 3px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
+    background-color: var(--switch-primary);
   }
 }
 
-[data-theme="dark"] .ui-switch:not([data-state="checked"]) {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.14);
+.ui-switch-thumb {
+  pointer-events: none;
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background-color: var(--switch-thumb);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(0);
+}
+
+.ui-switch[data-state="checked"] .ui-switch-thumb {
+  transform: translateX(1.25rem);
 }
 </style>
