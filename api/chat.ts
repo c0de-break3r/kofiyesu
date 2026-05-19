@@ -12,10 +12,14 @@ interface ChatResponse {
   reply: string;
   confidence: "high" | "medium" | "low";
   escalateToAdmin?: boolean;
+  showEmailCta?: boolean;
 }
 
 const ESCALATION_PATTERN =
-  /speak to (a )?human|talk to kofi|contact kofi|real person|urgent|escalat|admin|pass (this )?on|human support/i;
+  /speak to (a )?human|talk to kofi|contact kofi|real person|urgent|escalat|admin|pass (this )?on|human support|email (me|kofi)|send (an )?email/i;
+
+const EMAIL_INTENT_PATTERN =
+  /hire|job|quote|proposal|collaborat|project|pentest|audit|security work|work together|get in touch|reach out|contact you/i;
 
 const classifyWithKeywords = (text: string): InquiryType => {
   const lower = text.toLowerCase();
@@ -25,31 +29,70 @@ const classifyWithKeywords = (text: string): InquiryType => {
   return "general";
 };
 
-const buildLocalReply = (type: InquiryType, escalate: boolean): string => {
+const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryType): ChatResponse => {
   if (escalate) {
-    return `I've flagged this for **Kofi** and added it to the admin queue. He'll review your message and follow up personally.`;
+    return {
+      inquiryType,
+      reply: `I've passed this to **Kofi** in the admin queue — he'll follow up with you personally.`,
+      confidence: "high",
+      escalateToAdmin: true,
+      showEmailCta: true,
+    };
   }
-  const labels: Record<InquiryType, string> = {
-    collaboration: "project collaboration",
-    security: "security and pentesting",
-    job: "job opportunity",
-    general: "general message",
+
+  const lower = text.toLowerCase();
+
+  if (/skill|stack|tech|python|backend|security|cyber|tool|automation|what do you|who (is|are) kofi|about kofi/.test(lower)) {
+    return {
+      inquiryType,
+      reply:
+        "Kofi is a **Software Engineer & Cybersecurity Practitioner** from Ghana. He builds backend APIs, automation scripts, and offensive-security tooling (recon, pentesting workflows). Ask me anything specific — projects, stack, or how he works.",
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: false,
+    };
+  }
+
+  if (EMAIL_INTENT_PATTERN.test(lower)) {
+    const labels: Record<InquiryType, string> = {
+      collaboration: "a collaboration",
+      security: "security / pentesting work",
+      job: "a role or hire",
+      general: "getting in touch",
+    };
+    return {
+      inquiryType,
+      reply: `Happy to help with ${labels[inquiryType]}. Tell me a bit more about what you need — timeline, scope, or goals — and I can point you to the right next step.`,
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: EMAIL_INTENT_PATTERN.test(lower),
+    };
+  }
+
+  return {
+    inquiryType,
+    reply:
+      "I'm here to answer questions about Kofi's work, skills, and experience. What would you like to know?",
+    confidence: "low",
+    escalateToAdmin: false,
+    showEmailCta: false,
   };
-  return `Thanks! This looks like a **${labels[type]}** inquiry. Tap below to email Kofi with your message pre-filled.`;
 };
 
 const buildSystemPrompt = (userName?: string, userEmail?: string) =>
-  `You are the AI assistant for Obed Prince Kofi Yesu's portfolio. Kofi is a Software Engineer & Cybersecurity Practitioner from Ghana who builds backend systems, automation, and pentesting tools.
+  `You are the AI assistant on Obed Prince Kofi Yesu's portfolio site. Kofi is a Software Engineer & Cybersecurity Practitioner from Ghana (backend systems, Python/Bash automation, pentesting & recon tools).
 
-Your jobs:
-1. Answer brief questions about Kofi's skills (backend, security, Python, automation, mobile/web).
-2. Classify contact intent: collaboration | security | job | general.
-3. If the user asks to speak to Kofi, a human, admin, or says urgent — set escalateToAdmin true.
+Rules:
+1. **Answer the visitor's question directly** in 2–4 sentences. Be helpful and conversational.
+2. **Never** say "general inquiry", "this looks like a … inquiry", or "tap below to email" unless the user explicitly wants to contact Kofi or speak to a human.
+3. Classify intent internally only (collaboration | security | job | general) — do not announce the category in the reply.
+4. Set escalateToAdmin true only if they ask for Kofi, a human, admin, or say it's urgent.
+5. Set showEmailCta true only if they clearly want to hire, collaborate, get a quote, or explicitly ask to email — not for casual questions.
 
-User: ${userName ?? "Guest"} (${userEmail ?? "not provided"})
+Visitor: ${userName ?? "Guest"} (${userEmail ?? "not provided"})
 
-Respond with JSON only:
-{"inquiryType":"collaboration|security|job|general","reply":"2-3 friendly sentences. Use **bold** sparingly.","escalateToAdmin":false,"confidence":"high"}`;
+JSON only:
+{"inquiryType":"collaboration|security|job|general","reply":"your answer","escalateToAdmin":false,"showEmailCta":false,"confidence":"high"}`;
 
 const parseAiJson = (content: string): ChatResponse | null => {
   try {
@@ -94,8 +137,8 @@ const callGemini = async (
       },
       contents,
       generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 280,
+        temperature: 0.55,
+        maxOutputTokens: 400,
         responseMimeType: "application/json",
       },
     }),
@@ -132,8 +175,8 @@ const callOpenAi = async (
         { role: "system", content: buildSystemPrompt(userName, userEmail) },
         { role: "user", content: conversation },
       ],
-      temperature: 0.4,
-      max_tokens: 280,
+      temperature: 0.55,
+      max_tokens: 400,
     }),
   });
 
@@ -142,6 +185,18 @@ const callOpenAi = async (
   const data = await aiRes.json();
   const content = data.choices?.[0]?.message?.content ?? "";
   return parseAiJson(content);
+};
+
+const normalizeResponse = (parsed: ChatResponse, escalate: boolean): ChatResponse => {
+  const escalated = parsed.escalateToAdmin ?? escalate;
+
+  return {
+    inquiryType: parsed.inquiryType,
+    reply: parsed.reply,
+    confidence: parsed.confidence ?? "high",
+    escalateToAdmin: escalated,
+    showEmailCta: escalated || parsed.showEmailCta === true,
+  };
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -162,6 +217,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const escalate = ESCALATION_PATTERN.test(lastUser.content);
+  const inquiryType = classifyWithKeywords(lastUser.content);
 
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   const openAiKey = process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY;
@@ -176,22 +232,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (parsed) {
-      return res.status(200).json({
-        inquiryType: parsed.inquiryType,
-        reply: parsed.reply,
-        confidence: parsed.confidence ?? "high",
-        escalateToAdmin: parsed.escalateToAdmin ?? escalate,
-      });
+      return res.status(200).json(normalizeResponse(parsed, escalate));
     }
   } catch {
     /* fall through */
   }
 
-  const inquiryType = classifyWithKeywords(lastUser.content);
-  return res.status(200).json({
-    inquiryType,
-    reply: buildLocalReply(inquiryType, escalate),
-    confidence: "medium",
-    escalateToAdmin: escalate,
-  });
+  return res.status(200).json(buildLocalReply(lastUser.content, escalate, inquiryType));
 }

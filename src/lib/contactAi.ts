@@ -10,6 +10,7 @@ export interface RoutingResult {
   reply: string;
   confidence: "high" | "medium" | "low";
   escalateToAdmin?: boolean;
+  showEmailCta?: boolean;
 }
 
 const ESCALATION_PATTERN =
@@ -34,25 +35,54 @@ const classifyLocally = (text: string): InquiryType => {
   return best;
 };
 
-const buildReply = (type: InquiryType, escalate: boolean): string => {
+const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): RoutingResult => {
   if (escalate) {
-    return `I've flagged this for **Kofi** and added it to the admin queue. He'll review your message and follow up personally.\n\nYou can also continue via email using the button below.`;
+    return {
+      inquiryType: type,
+      reply: `I've passed this to **Kofi** in the admin queue — he'll follow up with you personally.`,
+      confidence: "high",
+      escalateToAdmin: true,
+      showEmailCta: true,
+    };
   }
 
-  const route = getInquiryRoute(type);
-  return `Thanks for reaching out! This sounds like a **${route.label.toLowerCase()}** inquiry.\n\n${route.description}\n\nTap below to email me directly — your message will be pre-filled.`;
+  const lower = userMessage.toLowerCase();
+
+  if (/skill|stack|tech|python|backend|security|cyber|tool|automation|what do you|who (is|are) kofi|about/.test(lower)) {
+    return {
+      inquiryType: type,
+      reply:
+        "Kofi is a **Software Engineer & Cybersecurity Practitioner** from Ghana — backend APIs, automation, and offensive-security tooling. What would you like to know more about?",
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: false,
+    };
+  }
+
+  if (/hire|job|quote|collaborat|project|pentest|audit|work together|get in touch/.test(lower)) {
+    const route = getInquiryRoute(type);
+    return {
+      inquiryType: type,
+      reply: `${route.description} Share a few details (scope, timeline, goals) and we can take it from there.`,
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: true,
+    };
+  }
+
+  return {
+    inquiryType: type,
+    reply: "Ask me anything about Kofi's skills, projects, or experience — I'm happy to help.",
+    confidence: "low",
+    escalateToAdmin: false,
+    showEmailCta: false,
+  };
 };
 
 export const routeInquiryLocally = (userMessage: string): RoutingResult => {
   const escalate = shouldEscalate(userMessage);
   const inquiryType = classifyLocally(userMessage);
-
-  return {
-    inquiryType,
-    reply: buildReply(inquiryType, escalate),
-    confidence: inquiryType === "general" ? "low" : "high",
-    escalateToAdmin: escalate,
-  };
+  return buildReply(inquiryType, escalate, userMessage);
 };
 
 export interface RouteInquiryOptions {
@@ -97,5 +127,5 @@ export const routeInquiryWithAi = async ({
 
 export const getWelcomeMessage = (name?: string | null): string => {
   const greeting = name ? `Hi ${name.split(" ")[0]}!` : "Hi!";
-  return `${greeting} I'm Kofi's assistant. Ask about collaboration, security work, jobs — or say "speak to Kofi" to escalate to him directly.`;
+  return `${greeting} I'm Kofi's assistant. Ask me about his work, skills, projects, or security engineering — I'll answer your questions here.`;
 };

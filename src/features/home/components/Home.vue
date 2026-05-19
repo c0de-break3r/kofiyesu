@@ -17,8 +17,6 @@ import gsap from "gsap";
 import { useAgent } from "../../../composables/useAgent";
 import { projectId, projectVisible } from "../../../composables/useRouteObserver";
 import { isTransitioning } from "../../../composables/useProjectTransition";
-import { renderer } from "../../../three/core/renderer";
-
 const introRef = ref<HTMLElement | null>(null);
 const stickyObserver = ref<IntersectionObserver | null>(null);
 const scrolledPastIntro = ref(false);
@@ -123,13 +121,6 @@ watchEffect((onInvalidate) => {
   });
 });
 
-watch(
-  projectVisible,
-  (newVal) => {
-    renderer.setIsActive(!newVal);
-  },
-  { immediate: true },
-);
 </script>
 
 <template>

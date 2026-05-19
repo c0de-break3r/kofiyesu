@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, computed, watch } from "vue";
+import { ref, nextTick, computed, watch, withDefaults } from "vue";
 import { useAuth, useUser, SignInButton } from "@clerk/vue";
 import { t } from "../i18n/utils/translate";
 import Button from "./Button.vue";
@@ -11,6 +11,14 @@ import {
 } from "../lib/contactAi";
 import { buildMailtoUrl, getInquiryRoute } from "../content/contact";
 import { getSupabase } from "../lib/supabase";
+
+const props = withDefaults(
+  defineProps<{
+    /** Full-viewport fixed layout on /chat */
+    fixed?: boolean;
+  }>(),
+  { fixed: false },
+);
 
 const { isSignedIn, isLoaded } = useAuth();
 const { user } = useUser();
@@ -86,7 +94,7 @@ const handleSend = async () => {
 };
 
 const mailtoUrl = computed(() => {
-  if (!routing.value) return null;
+  if (!routing.value?.showEmailCta && !routing.value?.escalateToAdmin) return null;
   const route = getInquiryRoute(routing.value.inquiryType);
   const userMsgs = messages.value.filter((m) => m.role === "user").map((m) => m.content);
   return buildMailtoUrl(route, userMsgs.join("\n\n"));
@@ -104,7 +112,7 @@ const formatContent = (content: string) =>
 </script>
 
 <template>
-  <div class="contact-chat-panel">
+  <div class="contact-chat-panel" :class="{ 'contact-chat-panel-fixed': props.fixed }">
     <div v-if="!isLoaded" class="contact-chat-gate">
       <p>{{ t("chat-loading") }}</p>
     </div>
@@ -168,6 +176,32 @@ const formatContent = (content: string) =>
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  min-height: 0;
+
+  &-fixed {
+    height: 100%;
+    gap: 0;
+
+    .contact-chat-messages {
+      flex: 1;
+      min-height: 0;
+      max-height: none;
+      overflow-y: auto;
+      padding: var(--space-sm) 0;
+    }
+
+    .contact-chat-escalation,
+    .contact-chat-action {
+      flex-shrink: 0;
+    }
+
+    .contact-chat-input-row {
+      flex-shrink: 0;
+      padding-top: var(--space-sm);
+      border-top: 1px solid var(--color-border-subtle);
+      background: var(--color-surface-elevated);
+    }
+  }
 }
 
 .contact-chat-gate {

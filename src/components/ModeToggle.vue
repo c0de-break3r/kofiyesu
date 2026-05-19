@@ -1,71 +1,67 @@
 <script setup lang="ts">
 import ButtonRound from "./ButtonRound.vue";
-import DropdownMenu from "./ui/DropdownMenu.vue";
-import DropdownMenuItem from "./ui/DropdownMenuItem.vue";
 import Sun from "./icons/Sun.vue";
 import Moon from "./icons/Moon.vue";
-import { useTheme, type ThemePreference } from "../composables/useTheme";
+import { useTheme } from "../composables/useTheme";
 import { t } from "../i18n/utils/translate";
+import { ref } from "vue";
 
 defineProps<{
   isDarkTheme?: boolean;
 }>();
 
-const { themePreference, resolvedTheme, setTheme } = useTheme();
+const { resolvedTheme, toggleTheme } = useTheme();
+const isAnimating = ref(false);
+let animTimer: ReturnType<typeof setTimeout> | undefined;
 
-const selectTheme = (preference: ThemePreference) => {
-  setTheme(preference);
+const onToggle = () => {
+  toggleTheme();
+  isAnimating.value = true;
+  clearTimeout(animTimer);
+  animTimer = setTimeout(() => {
+    isAnimating.value = false;
+  }, 520);
 };
 </script>
 
 <template>
-  <DropdownMenu align="end">
-    <template #trigger>
-      <ButtonRound
-        renderAs="button"
-        variant="border"
-        size="md"
-        class="mode-toggle-trigger"
-        :class="`mode-toggle-trigger--${resolvedTheme}`"
-        :aria-label="t('toggle-theme')"
-        data-cursor="circle-white"
-      >
-        <span class="mode-toggle-icons" aria-hidden="true">
-          <Sun
-            class="mode-toggle-icon mode-toggle-icon-sun"
-            :class="{ 'mode-toggle-icon-hidden': resolvedTheme === 'dark' }"
-          />
-          <Moon
-            class="mode-toggle-icon mode-toggle-icon-moon"
-            :class="{ 'mode-toggle-icon-hidden': resolvedTheme === 'light' }"
-          />
-        </span>
-      </ButtonRound>
-    </template>
-
-    <DropdownMenuItem :active="themePreference === 'light'" @click="selectTheme('light')">
-      {{ t("theme-light") }}
-    </DropdownMenuItem>
-    <DropdownMenuItem :active="themePreference === 'dark'" @click="selectTheme('dark')">
-      {{ t("theme-dark") }}
-    </DropdownMenuItem>
-    <DropdownMenuItem :active="themePreference === 'system'" @click="selectTheme('system')">
-      {{ t("theme-system") }}
-    </DropdownMenuItem>
-  </DropdownMenu>
+  <ButtonRound
+    renderAs="button"
+    variant="border"
+    size="md"
+    class="mode-toggle-trigger"
+    :class="[
+      `mode-toggle-trigger--${resolvedTheme}`,
+      { 'mode-toggle-trigger--animating': isAnimating },
+    ]"
+    :aria-label="t('toggle-theme')"
+    data-cursor="circle-white"
+    @click="onToggle"
+  >
+    <span class="mode-toggle-icons" aria-hidden="true">
+      <Sun
+        class="mode-toggle-icon mode-toggle-icon-sun"
+        :class="{ 'mode-toggle-icon-hidden': resolvedTheme === 'dark' }"
+      />
+      <Moon
+        class="mode-toggle-icon mode-toggle-icon-moon"
+        :class="{ 'mode-toggle-icon-hidden': resolvedTheme === 'light' }"
+      />
+    </span>
+  </ButtonRound>
 </template>
 
 <style scoped lang="scss">
-/* Light site theme (moon visible) → gray */
+/* Light site theme (moon visible) → accent orange */
 .mode-toggle-trigger--light {
-  --icon-color: #94a3b8;
-  color: #94a3b8;
-}
-
-/* Dark site theme (sun visible) → light-mode accent orange, not dark-theme orange */
-.mode-toggle-trigger--dark {
   --icon-color: #e85d04;
   color: #e85d04;
+}
+
+/* Dark site theme (sun visible) → gray */
+.mode-toggle-trigger--dark {
+  --icon-color: #94a3b8;
+  color: #94a3b8;
 }
 
 .mode-toggle-icons {
@@ -73,6 +69,29 @@ const selectTheme = (preference: ThemePreference) => {
   display: flex;
   width: 1.2rem;
   height: 1.2rem;
+  transform-origin: center center;
+}
+
+.mode-toggle-trigger--animating .mode-toggle-icons {
+  animation: mode-toggle-spin-tilt 0.52s cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+@keyframes mode-toggle-spin-tilt {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  35% {
+    transform: rotate(120deg) scale(1.12) skewX(-8deg);
+  }
+
+  70% {
+    transform: rotate(260deg) scale(1.08) skewX(6deg);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 .mode-toggle-icon {
@@ -81,18 +100,8 @@ const selectTheme = (preference: ThemePreference) => {
   width: 100%;
   height: 100%;
   transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-
-  &-sun {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
-
-  &-moon {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
+    transform 0.28s cubic-bezier(0.34, 1.2, 0.64, 1),
+    opacity 0.22s ease;
 
   &-hidden {
     opacity: 0;

@@ -57,22 +57,25 @@ const goHome = () => {
         <p>{{ t("chat-clerk-missing") }}</p>
         <button type="button" class="chat-page-home-link" @click="goHome">{{ t("back-to-home") }}</button>
       </div>
-      <ContactChatPanel v-else class="chat-page-panel" />
+      <ContactChatPanel v-else fixed class="chat-page-panel" />
     </main>
   </div>
 </template>
 
 <style scoped lang="scss">
 .chat-page {
-  min-height: 100vh;
-  min-height: 100dvh;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
   display: flex;
   flex-direction: column;
   background: var(--color-background-400);
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
+  overflow: hidden;
 
   &-header {
+    flex-shrink: 0;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
@@ -81,9 +84,6 @@ const goHome = () => {
     padding-top: calc(var(--space-sm) + env(safe-area-inset-top, 0px));
     border-bottom: 1px solid var(--color-border-subtle);
     background: var(--color-surface-elevated);
-    position: sticky;
-    top: 0;
-    z-index: 10;
   }
 
   &-back-icon {
@@ -127,30 +127,22 @@ const goHome = () => {
 
   &-main {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    max-width: 720px;
     width: 100%;
+    max-width: 720px;
     margin: 0 auto;
     padding: var(--space-md) var(--space-outer);
     padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
   }
 
   &-panel {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    min-height: 0;
-
-    :deep(.contact-chat-messages) {
-      max-height: none;
-      flex: 1;
-      min-height: 240px;
-
-      @include mixins.mq("md") {
-        min-height: 360px;
-      }
-    }
   }
 
   &-gate {

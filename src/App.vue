@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import Header from "./components/Header.vue";
 import MobileNav from "./components/MobileNav.vue";
 import { useTranslations } from "./i18n/composables/useTranslations";
@@ -8,16 +8,17 @@ import Cursor from "./components/Cursor.vue";
 import { useAgent } from "./composables/useAgent";
 import { useMusic } from "./features/sounds/composables/useMusic";
 import { useHowler } from "./features/sounds/composables/useHowler";
-import { useRouteObserver, path } from "./composables/useRouteObserver";
+import { useRouteObserver, path, projectVisible } from "./composables/useRouteObserver";
 import Home from "./features/home/components/Home.vue";
 import Project from "./features/projects/components/Project.vue";
 import AdminApp from "./features/admin/components/AdminApp.vue";
 import ChatPage from "./features/chat/ChatPage.vue";
 import { useProjectTransition } from "./composables/useProjectTransition";
 import { useScroll } from "./composables/useScroll";
-import { projectVisible } from "./composables/useRouteObserver";
 import ProjectBackground from "./features/projects/components/ProjectBackground.vue";
 import { useClickSound } from "./features/sounds/composables/useClickSounds";
+import { renderer } from "./three/core/renderer";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 //import { useHoverSound } from "./features/sounds/composables/useHoverSounds";
 
 const { isTransitioning } = useProjectTransition();
@@ -34,41 +35,68 @@ useRouteObserver();
 useClickSound();
 //useHoverSound();
 const { isTouch } = useAgent();
+
+watch(
+  [isChatRoute, projectVisible],
+  ([onChat, onProject]) => {
+    renderer.setIsActive(!onChat && !onProject);
+    if (!onChat && !onProject) {
+      requestAnimationFrame(() => ScrollTrigger.refresh());
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <AdminApp v-if="isAdminRoute" />
 
-  <ChatPage v-else-if="isChatRoute" />
-
   <template v-else>
-  <Header />
+    <div class="app-shell" :class="{ 'app-shell-chat-open': isChatRoute }">
+      <Header v-show="!isChatRoute" />
 
-  <!-- main page -->
-  <div :class="{ 'home-wrapper-projectIsReady': projectVisible }">
-    <Home />
-  </div>
+      <div v-show="!isChatRoute" :class="{ 'home-wrapper-projectIsReady': projectVisible }">
+        <Home />
+      </div>
 
-  <!-- overlay page -->
-  <ProjectBackground />
-  <div
-    class="project-wrapper"
-    :class="{
-      'project-wrapper-visible': projectVisible,
-      'project-wrapper-transitioning': isTransitioning,
-    }"
-  >
-    <div class="project-content">
-      <Project />
-    </div>
-  </div>
+      <ProjectBackground />
+      <div
+        class="project-wrapper"
+        :class="{
+          'project-wrapper-visible': projectVisible,
+          'project-wrapper-transitioning': isTransitioning,
+        }"
+      >
+        <div class="project-content">
+          <Project />
+        </div>
+      </motion.div>
 
-  <MobileNav />
-  <Cursor v-if="!isTouch" />
+      <MobileNav v-show="!isChatRoute" />
+      <Cursor v-if="!isTouch && !isChatRoute" />
+    </motion.div>
+
+    <ChatPage v-if="isChatRoute" class="app-chat-layer" />
   </template>
 </template>
 
 <style lang="scss">
+.app-shell {
+  &-chat-open {
+    visibility: hidden;
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+}
+
+.app-chat-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+}
+
 .home-wrapper-projectIsReady {
   visibility: hidden;
   position: fixed;
@@ -76,12 +104,12 @@ const { isTouch } = useAgent();
 }
 
 .project-wrapper {
-  position: fixed; /* <-- key */
+  position: fixed;
   inset: 0;
-  overflow: hidden; /* new page must NOT scroll during transition */
+  overflow: hidden;
   z-index: var(--z-index-layout-project);
   visibility: hidden;
-  pointer-events: none; /* avoid interaction before fully opened */
+  pointer-events: none;
 
   &-visible {
     visibility: visible;
@@ -93,6 +121,6 @@ const { isTouch } = useAgent();
 .project-content {
   width: 100%;
   height: 100%;
-  overflow: hidden; /* ensure no scroll container */
+  overflow: hidden;
 }
 </style>
