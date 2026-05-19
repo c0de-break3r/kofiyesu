@@ -70,11 +70,11 @@ watch(
         <div class="project-content">
           <Project />
         </div>
-      </motion.div>
+      </div>
 
       <MobileNav v-show="!isChatRoute" />
       <Cursor v-if="!isTouch && !isChatRoute" />
-    </motion.div>
+    </div>
 
     <ChatPage v-if="isChatRoute" class="app-chat-layer" />
   </template>
