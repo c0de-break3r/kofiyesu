@@ -1,6 +1,7 @@
-import { Mesh, PlaneGeometry, MeshBasicMaterial, LinearSRGBColorSpace } from "three";
+import { Color, Mesh, PlaneGeometry, MeshBasicMaterial, LinearSRGBColorSpace } from "three";
 import gsap from "gsap";
-import { uniforms as hologramUniforms } from "../avatar/hologram-material";
+import { aboutProgress } from "../../../animations/transitions/about";
+import { sceneColors } from "../../config/sceneColors";
 import { resources } from "../../../utils/resources";
 
 let plane: Mesh | null = null;
@@ -27,6 +28,7 @@ const init = () => {
   // Create a basic material (could be customized later)
   const material = new MeshBasicMaterial({
     map: texture,
+    color: new Color(sceneColors.hologramPlaneTint),
     transparent: true,
     opacity: 1,
   });
@@ -40,7 +42,7 @@ const init = () => {
 const tick = () => {
   if (!plane) return;
 
-  const progress = hologramUniforms.uProgress.value;
+  const progress = aboutProgress.value;
   const yPosition = START_Y + progress * (END_Y - START_Y);
   plane.position.y = yPosition + 0.01;
 

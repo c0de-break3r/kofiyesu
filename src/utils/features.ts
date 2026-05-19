@@ -1,6 +1,8 @@
 export const features = {
+  /** 3D character in hero / about / contact — set false to show room & lab only */
+  avatar: false,
   sounds: true,
-  introWave: true,
+  introWave: false,
   startProject: false,
   contactChat: true,
 } as const;

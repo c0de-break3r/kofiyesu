@@ -1,6 +1,7 @@
 import gsap from "gsap";
 import { sceneWeightsInOut } from "../scenes";
 import { animations as avatarAnimations } from "../../three/objects/avatar/animations";
+import { isFeatureEnabled } from "../../utils/features";
 import { createMatchMedia } from "../utils/matchMedia";
 
 let inTl: gsap.core.Timeline | null = null;
@@ -38,15 +39,17 @@ const setup = (contact: HTMLElement) => {
       });
     },
   }); */
-  wakeUpMm = createMatchMedia((_context, { isMobile }) => {
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: contact,
-        start: isMobile ? "top 10%" : "top 15%",
-      },
+  if (isFeatureEnabled("avatar")) {
+    wakeUpMm = createMatchMedia((_context, { isMobile }) => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: contact,
+          start: isMobile ? "top 10%" : "top 15%",
+        },
+      });
+      tl.call(avatarAnimations.wakeUp, [0.25]);
     });
-    tl.call(avatarAnimations.wakeUp, [0.25]);
-  });
+  }
 };
 
 const destroy = () => {

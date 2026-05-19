@@ -6,6 +6,7 @@ import fragmentShader from "../../shaders/desktops/fragment.glsl";
 import vertexShader from "../../shaders/desktops/vertex.glsl";
 import gsap from "gsap";
 import { sceneWeights } from "../../../animations/scenes";
+import { isFeatureEnabled } from "../../../utils/features";
 import { animations as avatarAnimations } from "../avatar/animations";
 import { leftDesktop as avatarLeftDesktop } from "../avatar/left-desktop";
 import { playSound } from "../../../features/sounds/utils/sounds";
@@ -80,11 +81,11 @@ const startScrollInterval = () => {
 
     if (sceneWeights.hero < 0.95) return;
 
-    const idleAction = avatarAnimations.actions.get("desktop-idle");
-    if (!idleAction || idleAction.weight < 0.95) return;
-
-    const isAtLeftDesktop = avatarLeftDesktop.getIsActive();
-    if (isAtLeftDesktop) return;
+    if (isFeatureEnabled("avatar")) {
+      const idleAction = avatarAnimations.actions.get("desktop-idle");
+      if (!idleAction || idleAction.weight < 0.95) return;
+      if (avatarLeftDesktop.getIsActive()) return;
+    }
 
     scroll();
 
@@ -92,7 +93,10 @@ const startScrollInterval = () => {
     if (Math.random() <= 0.33) {
       gsap.delayedCall(0.6, () => {
         if (sceneWeights.hero < 0.2) return;
-        if (!idleAction || idleAction.weight < 0.95) return;
+        if (isFeatureEnabled("avatar")) {
+          const idleAction = avatarAnimations.actions.get("desktop-idle");
+          if (!idleAction || idleAction.weight < 0.95) return;
+        }
         scroll();
       });
     }

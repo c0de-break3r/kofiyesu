@@ -1,3 +1,4 @@
+import { isFeatureEnabled } from "../../utils/features";
 import { avatar } from "./avatar";
 import { avatarHologram } from "./avatar/hologram";
 import { contact } from "./contact";
@@ -9,8 +10,10 @@ import { sleepingSprite } from "./contact/sleeping-sprite";
 import { renderer } from "../core/renderer";
 
 const init = () => {
-  avatarHologram.init();
-  avatar.init();
+  if (isFeatureEnabled("avatar")) {
+    avatarHologram.init();
+    avatar.init();
+  }
   contact.init();
   darkPlane.init();
   gridFloor.init();
@@ -22,8 +25,10 @@ const init = () => {
 };
 
 const destroy = () => {
-  avatarHologram.destroy();
-  avatar.destroy();
+  if (isFeatureEnabled("avatar")) {
+    avatarHologram.destroy();
+    avatar.destroy();
+  }
   contact.destroy();
   darkPlane.destroy();
   gridFloor.destroy();

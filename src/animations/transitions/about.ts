@@ -1,4 +1,5 @@
 import { avatar } from "../../three/objects/avatar";
+import { isFeatureEnabled } from "../../utils/features";
 import { sceneWeightsInOut } from "../scenes";
 import { createMatchMedia } from "../utils/matchMedia";
 import { room } from "../../three/objects/room";
@@ -83,7 +84,9 @@ const setupInAnimation = (about: HTMLElement) => {
     tl.fromTo(room.chairScrollRotation, { x: 0, y: 0, z: 0 }, { y: -1.1, duration: 0.6, ease: "power4.out" }, 0);
     tl.fromTo(room.chairScrollRotation, { x: 0, y: 0, z: 0 }, { x: -0.9, z: -1.3, duration: 0.6 }, 0);
 
-    tl.fromTo(avatar.tIdleIntensity, { value: 0 }, { value: 1, duration: 0.75, ease: "power1.out" }, 0);
+    if (isFeatureEnabled("avatar")) {
+      tl.fromTo(avatar.tIdleIntensity, { value: 0 }, { value: 1, duration: 0.75, ease: "power1.out" }, 0);
+    }
 
     tl.fromTo(sceneWeightsInOut.about, { in: 0 }, { in: 1, ease: "none", duration: 1 }, 0);
     tl.fromTo(sceneWeightsInOut["about-1"], { in: 0 }, { in: 1, ease: "none", duration: 1 }, 0);
@@ -102,20 +105,20 @@ const setupInAnimation = (about: HTMLElement) => {
       );
     }
 
-    const { waypointsPosition, waypointsRotation } = avatar;
-
     if (isLandscape) {
       //lab
       tl.fromTo(lab.group.position, { x: 0, y: 0, z: 6 }, { x: 0, y: 0, z: 6, duration: 1, ease: "power.1out" }, 0);
 
-      tl.fromTo(waypointsPosition, { x: 2, y: 0, z: 0 }, { x: 0, y: 0, z: 6, duration: 1, ease: "power1.out" }, 0);
-      tl.fromTo(
-        waypointsRotation,
-        { x: 0, y: -2.3 + Math.PI / 2, z: 0 },
-        //{ x: 0, y: -Math.PI, z: 0, duration: 1, ease: "power1.out" },
-        { x: 0, y: -Math.PI, z: 0, duration: 1, ease: "power1.out" },
-        0,
-      );
+      if (isFeatureEnabled("avatar")) {
+        const { waypointsPosition, waypointsRotation } = avatar;
+        tl.fromTo(waypointsPosition, { x: 2, y: 0, z: 0 }, { x: 0, y: 0, z: 6, duration: 1, ease: "power1.out" }, 0);
+        tl.fromTo(
+          waypointsRotation,
+          { x: 0, y: -2.3 + Math.PI / 2, z: 0 },
+          { x: 0, y: -Math.PI, z: 0, duration: 1, ease: "power1.out" },
+          0,
+        );
+      }
 
       tl.to(
         "#hero-content-inner",
@@ -126,13 +129,16 @@ const setupInAnimation = (about: HTMLElement) => {
       //lab
       tl.fromTo(lab.group.position, { x: 0, y: 0, z: 6 }, { x: 0, y: 0, z: 6, duration: 1, ease: "none" }, 0);
 
-      tl.fromTo(waypointsPosition, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 6, duration: 1, ease: "power1.out" }, 0);
-      tl.fromTo(
-        waypointsRotation,
-        { x: 0, y: -2.1 + Math.PI / 2, z: 0 },
-        { x: 0, y: -Math.PI, z: 0, duration: 1, ease: "power1.out" },
-        0,
-      );
+      if (isFeatureEnabled("avatar")) {
+        const { waypointsPosition, waypointsRotation } = avatar;
+        tl.fromTo(waypointsPosition, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 6, duration: 1, ease: "power1.out" }, 0);
+        tl.fromTo(
+          waypointsRotation,
+          { x: 0, y: -2.1 + Math.PI / 2, z: 0 },
+          { x: 0, y: -Math.PI, z: 0, duration: 1, ease: "power1.out" },
+          0,
+        );
+      }
     }
   });
 };
@@ -170,8 +176,9 @@ const setupScenesAnimation = (about: HTMLElement) => {
     const multiplier = 0.95;
     const duration = (1 - delay * 2) * multiplier;
 
-    const { waypointsRotation } = avatar;
-    tl.to(waypointsRotation, { x: 0, y: -Math.PI, z: 0, duration: duration, ease: "power1.inOut" }, delay);
+    if (isFeatureEnabled("avatar")) {
+      tl.to(avatar.waypointsRotation, { x: 0, y: -Math.PI, z: 0, duration: duration, ease: "power1.inOut" }, delay);
+    }
 
     tl.to(sceneWeightsInOut["about-2"], { in: 1, duration: duration, ease: "power1.inOut" }, delay);
     tl.to(sceneWeightsInOut["about-1"], { out: 1, duration: duration, ease: "power1.inOut" }, delay);
