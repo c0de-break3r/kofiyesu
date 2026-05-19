@@ -5,6 +5,11 @@ import { lenis } from "../composables/useScroll";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { projectId } from "../composables/useRouteObserver";
 import ProfileNavButton from "./ProfileNavButton.vue";
+import SoundsToggle from "./SoundsToggle.vue";
+import { isFeatureEnabled } from "../utils/features";
+import { useTheme } from "../composables/useTheme";
+
+const { theme } = useTheme();
 import NavHome from "./icons/NavHome.vue";
 import NavAbout from "./icons/NavAbout.vue";
 import NavProjects from "./icons/NavProjects.vue";
@@ -79,6 +84,11 @@ onMounted(() => {
       </button>
     </nav>
 
+    <SoundsToggle
+      v-if="isFeatureEnabled('sounds')"
+      class="mobile-nav-sounds"
+      :isDarkTheme="theme === 'dark'"
+    />
     <ProfileNavButton />
   </div>
 </template>
@@ -178,5 +188,9 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+
+.mobile-nav-sounds {
+  flex-shrink: 0;
 }
 </style>

@@ -12,6 +12,7 @@ import { useRouteObserver, path } from "./composables/useRouteObserver";
 import Home from "./features/home/components/Home.vue";
 import Project from "./features/projects/components/Project.vue";
 import AdminApp from "./features/admin/components/AdminApp.vue";
+import ChatPage from "./features/chat/ChatPage.vue";
 import { useProjectTransition } from "./composables/useProjectTransition";
 import { useScroll } from "./composables/useScroll";
 import { projectVisible } from "./composables/useRouteObserver";
@@ -22,6 +23,7 @@ import { useClickSound } from "./features/sounds/composables/useClickSounds";
 const { isTransitioning } = useProjectTransition();
 
 const isAdminRoute = computed(() => path.value.startsWith("/admin"));
+const isChatRoute = computed(() => path.value === "/chat" || path.value.startsWith("/chat/"));
 
 useTranslations();
 usePreloader();
@@ -36,6 +38,8 @@ const { isTouch } = useAgent();
 
 <template>
   <AdminApp v-if="isAdminRoute" />
+
+  <ChatPage v-else-if="isChatRoute" />
 
   <template v-else>
   <Header />

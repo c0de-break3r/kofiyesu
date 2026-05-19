@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, watchEffect } from "vue";
 import gsap from "gsap";
 import Notch from "../../../components/Notch.vue";
+import Card from "../../../components/ui/Card.vue";
 
 const wrapperRef = ref<HTMLDivElement | null>(null);
 const mediaRef = ref<HTMLVideoElement | HTMLImageElement | null>(null);
@@ -53,7 +54,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div :class="wrapperClasses" ref="wrapperRef">
+  <Card :class="wrapperClasses" ref="wrapperRef">
     <div class="project-media-content" ref="mediaContentRef">
       <img
         v-if="props.type === 'image'"
@@ -83,7 +84,7 @@ onMounted(async () => {
       <Notch class="project-media-caption-notch project-media-caption-notch-top" />
       <p class="project-media-caption-copy">{{ props.caption }}</p>
     </div>
-  </div>
+  </Card>
 </template>
 
 <style scoped lang="scss">
@@ -168,10 +169,14 @@ onMounted(async () => {
 
   &-content {
     overflow: hidden;
-    border-radius: var(--radius-lg);
+    border-radius: calc(var(--radius-xl) - 2px);
     background-color: var(--color-background-300);
     width: 100%;
     height: 100%;
   }
+}
+
+:deep(.ui-card.project-media) {
+  padding: 4px;
 }
 </style>

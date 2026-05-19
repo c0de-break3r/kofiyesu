@@ -91,12 +91,16 @@ const { withSocial = true } = defineProps<Props>();
   }
 
   &-credits {
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     width: 100%;
     font-size: var(--font-size-sm);
     color: var(--color-text-300);
+
+    @include mixins.mq("lg") {
+      display: flex;
+    }
   }
 
   &-notch {

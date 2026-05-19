@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { onMounted, onUnmounted, ref } from "vue";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ButtonRound from "../../../components/ButtonRound.vue";
+import Card from "../../../components/ui/Card.vue";
 import { t } from "../../../i18n/utils/translate";
 
 import type { ProjectPreview } from "../../../content/types";
@@ -45,7 +46,7 @@ onUnmounted(() => {
 
 <template>
   <Link
-    class="preview-card children-unclickable"
+    class="preview-card-link children-unclickable"
     :to="`/project/${props.preview.slug}`"
     :aria-label="t('switch-to-project', { project: props.preview.title })"
     data-cursor="arrow"
@@ -53,6 +54,7 @@ onUnmounted(() => {
     data-hoversound="hover"
     v-if="props.preview"
   >
+    <Card class="preview-card" hover>
     <div class="preview-card-top" ref="wrapperRef">
       <div class="preview-card-image-wrapper">
         <div class="preview-card-image-container">
@@ -75,38 +77,26 @@ onUnmounted(() => {
         <p class="preview-card-description">{{ props.preview.description }}</p>
       </div>
     </div>
+    </Card>
   </Link>
 </template>
 
 <style scoped lang="scss">
+.preview-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .preview-card {
   --hover: 0;
   position: relative;
-  border-radius: var(--radius-xl);
   z-index: var(--z-index-layout);
-
-  &::after {
-    content: "";
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    width: calc(100% + 16px);
-    height: calc(100% + 16px);
-    background-color: var(--color-grayscale-400);
-    border-radius: var(--radius-xl);
-    z-index: -1;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.1s ease-in-out;
-  }
+  overflow: hidden;
 
   @include mixins.hover {
     &:hover {
       --hover: 1;
-
-      &::after {
-        opacity: 1;
-      }
     }
   }
 
@@ -114,7 +104,7 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    padding-top: var(--space-xs);
+    padding: var(--space-sm) var(--space-md) var(--space-md);
   }
 
   &-overlay {

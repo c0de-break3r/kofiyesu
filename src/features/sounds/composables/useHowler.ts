@@ -4,7 +4,6 @@ import { lerp } from "../../../utils/math";
 import { Howler } from "howler";
 import { isFeatureEnabled } from "../../../utils/features";
 import { tick as contactTick } from "../core/contact";
-import { useAgent } from "../../../composables/useAgent";
 import { stopSnoreRepetition, startContactAmbient } from "../core/contact";
 import { tick as roomTick } from "../core/room";
 import { sounds } from "../definitions/sounds";
@@ -18,17 +17,10 @@ export { howlerUnlocked, soundsEnabled };
 Howler.volume(0);
 
 export const useHowler = () => {
-  const { isTouch } = useAgent();
   const enabledVolume = ref<number>(0);
 
   const handleUnlocked = () => {
     howlerUnlocked.value = true;
-
-    // Disable sounds completely on touch devices
-    if (isTouch.value) {
-      soundsEnabled.value = false;
-      return;
-    }
 
     const storeItem = localStorage.getItem("portfolio-soundsEnabled");
     if (storeItem) {
@@ -47,8 +39,7 @@ export const useHowler = () => {
     if (!howlerUnlocked.value) {
       if (Howler.ctx.state !== "running") return;
       handleUnlocked();
-    } else if (!isTouch.value) {
-      // Only process sounds on non-touch devices
+    } else {
       contactTick();
       roomTick();
 
@@ -66,13 +57,13 @@ export const useHowler = () => {
   };
 
   const handleKeyPress = (event: KeyboardEvent) => {
-    if (event.code === "KeyM" && !isTouch.value) {
+    if (event.code === "KeyM") {
       soundsEnabled.value = !soundsEnabled.value;
     }
   };
 
   watch(soundsEnabled, (newVal) => {
-    if (!isFeatureEnabled("sounds") || isTouch.value) return;
+    if (!isFeatureEnabled("sounds")) return;
     enabledVolume.value = newVal ? 1 : 0;
     localStorage.setItem("portfolio-soundsEnabled", newVal.toString());
 
@@ -106,9 +97,7 @@ export const useHowler = () => {
     window.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("keydown", handleKeyPress);
 
-    if (!isTouch.value) {
-      loadAllSounds();
-    }
+    loadAllSounds();
   });
 
   onUnmounted(() => {

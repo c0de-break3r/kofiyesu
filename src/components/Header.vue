@@ -13,6 +13,8 @@ import ThemeToggle from "./ThemeToggle.vue";
 import { isFeatureEnabled } from "../utils/features";
 import { useRouter } from "../composables/useRouter";
 import { useFirstRoute } from "../composables/useFirstRoute";
+import ProfileNavButton from "./ProfileNavButton.vue";
+import { isClerkConfigured } from "../lib/clerk";
 
 const router = useRouter();
 const { isFirstRoute } = useFirstRoute();
@@ -110,6 +112,7 @@ const getInTouchClassNames = computed(() => {
         @click="handleGetInTouch"
         >{{ t("get-in-touch") }}</Button
       >
+      <ProfileNavButton v-if="isClerkConfigured" variant="header" class="header-profile" />
       <ThemeToggle :isDarkTheme="isDarkTheme" />
       <SoundsToggle class="header-sounds-toggle" :isDarkTheme="isDarkTheme" v-if="isFeatureEnabled('sounds')" />
     </div>
@@ -180,6 +183,14 @@ const getInTouchClassNames = computed(() => {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+  }
+
+  &-profile {
+    display: none;
+
+    @include mixins.mq("lg") {
+      display: flex;
+    }
   }
 
   &-music-toggle {
