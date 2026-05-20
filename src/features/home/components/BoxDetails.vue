@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { t } from "../../../i18n/utils/translate";
+import { useSiteContent } from "../../../composables/useSiteContent";
+
+const { aboutText } = useSiteContent();
+const displayName = aboutText("display_name", "Obed Prince Kofi Yesu");
+const locationCopy = aboutText("location", t("location"));
 import { ref, watchEffect, onBeforeUnmount } from "vue";
 import gsap from "gsap";
 import AppearingText from "../../../components/AppearingText.vue";
@@ -104,7 +109,7 @@ const handleTimelineCreated = (timeline: gsap.core.Timeline, delay: number) => {
       <div class="box-details-content">
         <div class="box-details-title">
           <AppearingText
-            text="Obed Prince Kofi Yesu"
+            :text="displayName"
             :steps="1"
             :duration="0.35"
             @timeline:created="(tl: gsap.core.Timeline) => handleTimelineCreated(tl, 0)"
@@ -114,9 +119,9 @@ const handleTimelineCreated = (timeline: gsap.core.Timeline, delay: number) => {
           <div class="box-details-item">
             <PinIcon class="box-details-icon" />
             <AppearingText
-              v-if="t('location')"
+              v-if="locationCopy"
               class="box-details-content-copy"
-              :text="t('location')"
+              :text="locationCopy"
               :steps="3"
               :duration="0.35"
               @timeline:created="(tl: gsap.core.Timeline) => handleTimelineCreated(tl, 0.1)"

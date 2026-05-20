@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import projectPreviews from "../../../content/projects/previews";
+import { ref, watch } from "vue";
 import PreviewCard from "../../projects/components/PreviewCard.vue";
 import NotchSection from "../../../components/NotchSection.vue";
 import Banner from "../../../components/Banner.vue";
 import { t } from "../../../i18n/utils/translate";
 import type { ProjectPreview } from "../../../content/types";
+import { useSiteContent } from "../../../composables/useSiteContent";
+
+const { previews, loaded } = useSiteContent();
 
 const loadedPreviews = ref<ProjectPreview[] | null>(null);
 
@@ -13,12 +15,13 @@ const emit = defineEmits<{
   (e: "loaded", previews: ProjectPreview[]): void;
 }>();
 
-const loadPreviews = () => {
-  loadedPreviews.value = [...projectPreviews];
-  emit("loaded", projectPreviews);
+const syncPreviews = () => {
+  const list = [...previews.value];
+  loadedPreviews.value = list;
+  emit("loaded", list);
 };
 
-onMounted(loadPreviews);
+watch([previews, loaded], syncPreviews, { immediate: true });
 </script>
 
 <template>
@@ -33,7 +36,7 @@ onMounted(loadPreviews);
     </div>
     <div class="grid">
       <div class="projects-cards">
-        <PreviewCard v-for="preview in loadedPreviews" :key="preview.title" :preview="preview" />
+        <PreviewCard v-for="preview in loadedPreviews" :key="preview.slug" :preview="preview" />
       </div>
     </div>
   </div>

@@ -82,9 +82,17 @@ onMounted(() => {
   stickyObserver.value = new IntersectionObserver(handleIntersection);
   stickyObserver.value.observe(introRef.value as HTMLElement);
 
-  if (threeCanvasRef.value && !threeInitialized.value) {
-    three.init(threeCanvasRef.value);
-    threeInitialized.value = true;
+  const initThree = () => {
+    if (threeCanvasRef.value && !threeInitialized.value) {
+      three.init(threeCanvasRef.value);
+      threeInitialized.value = true;
+    }
+  };
+
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(initThree, { timeout: 2000 });
+  } else {
+    window.setTimeout(initThree, 100);
   }
 
   gsap.ticker.add(updateCursor);
@@ -106,20 +114,16 @@ const handleProjectsLoaded = () => {
   projectsLoaded.value = true;
 };
 
-watchEffect((onInvalidate) => {
-  if (
-    projectsLoaded &&
-    threeInitialized &&
-    //(projectId.value === null || isTransitioning.value) &&
-    !preloaderVisible.value
-  ) {
-    animations.init();
-  }
-
-  onInvalidate(() => {
-    animations.destroy();
-  });
-});
+watch(
+  [projectsLoaded, threeInitialized, preloaderVisible],
+  ([projects, three, preloader]) => {
+    if (projects && three && !preloader) {
+      animations.init();
+    } else {
+      animations.destroy();
+    }
+  },
+);
 
 </script>
 

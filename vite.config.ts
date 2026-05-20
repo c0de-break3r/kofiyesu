@@ -38,6 +38,11 @@ export default defineConfig({
         assetFileNames: "assets/[hash].[ext]",
         entryFileNames: "chunks/[name]-[hash].js",
         chunkFileNames: "chunks/[hash].js",
+        manualChunks(id) {
+          if (id.includes("node_modules/three")) return "three";
+          if (id.includes("node_modules/@clerk")) return "clerk";
+          if (id.includes("node_modules/gsap")) return "gsap";
+        },
       },
     },
   },

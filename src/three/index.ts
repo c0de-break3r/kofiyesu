@@ -11,7 +11,7 @@ let canvas: HTMLCanvasElement | null = null;
 const init = (_canvas: HTMLCanvasElement) => {
   canvas = _canvas;
 
-  resources.once("ready", () => {
+  const onResourcesReady = () => {
     threeSizes.init(_canvas);
     camera.init();
     renderTarget.init();
@@ -19,7 +19,13 @@ const init = (_canvas: HTMLCanvasElement) => {
 
     objects.init();
     raycast.init();
-  });
+  };
+
+  if (resources.isReady) {
+    onResourcesReady();
+  } else {
+    resources.once("ready", onResourcesReady);
+  }
 };
 
 const destroy = () => {

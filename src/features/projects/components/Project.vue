@@ -2,22 +2,33 @@
 import { projectId, projectVisible, recentProjectId } from "../../../composables/useRouteObserver";
 import { isTransitioning } from "../../../composables/useProjectTransition";
 import { ref, watch } from "vue";
-import { projectModules } from "../../../content/projects";
 import ProjectContent from "./ProjectContent.vue";
 import Footer from "../../../components/Footer.vue";
 import { lenis } from "../../../composables/useScroll";
+import { useSiteContent } from "../../../composables/useSiteContent";
+import type { ProjectContent as ProjectContentType } from "../../../content/types";
+
+const { getProjectContent } = useSiteContent();
 
 const loading = ref(true);
-const content = ref(null);
+const content = ref<ProjectContentType | null>(null);
 const error = ref<Error | null>(null);
 
 const fetchProject = async (project: string | undefined) => {
+  if (!project) return;
+
+  loading.value = true;
+  error.value = null;
+
   try {
-    const module = await projectModules[project as string].default;
-    content.value = module;
-    loading.value = false;
+    const data = await getProjectContent(project);
+    if (!data) {
+      throw new Error(`Project not found: ${project}`);
+    }
+    content.value = data;
   } catch (err) {
-    error.value = new Error(`Failed to fetch project ${project}`);
+    error.value = err instanceof Error ? err : new Error(`Failed to load ${project}`);
+    content.value = null;
   } finally {
     loading.value = false;
   }

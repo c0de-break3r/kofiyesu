@@ -12,6 +12,7 @@
     "typecheck": "vue-tsc -b"
   },
   "dependencies": {
+    "@clerk/backend": "^3.4.11",
     "@clerk/vue": "^2.2.6",
     "@supabase/supabase-js": "^2.106.0",
     "gsap": "^3.13.0",

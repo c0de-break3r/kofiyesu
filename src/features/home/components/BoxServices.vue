@@ -2,6 +2,9 @@
 import { ref, watchEffect, onBeforeUnmount } from "vue";
 import gsap from "gsap";
 import { t } from "../../../i18n/utils/translate";
+import { useSiteContent } from "../../../composables/useSiteContent";
+
+const { services } = useSiteContent();
 import AppearingText from "../../../components/AppearingText.vue";
 import { BREAKPOINTS } from "../../../utils/sizes";
 import { Vector3 } from "three";
@@ -17,13 +20,6 @@ let matchMedia: gsap.MatchMedia | null = null;
 const emit = defineEmits<{
   "timeline:created": [timeline: gsap.core.Timeline];
 }>();
-
-const SERVICES = [
-  { name: "Backend Development" },
-  { name: "Offensive Security & Pentesting" },
-  { name: "Automation & Tooling" },
-  { name: "Mobile & Web Software" },
-] as const satisfies { name: string }[];
 
 watchEffect((onInvalidate) => {
   const wrapperEl = wrapperRef.value;
@@ -121,7 +117,7 @@ const handleTimelineCreated = (timeline: gsap.core.Timeline, delay: number) => {
           />
         </div>
         <div class="box-services-list">
-          <div class="box-services-list-item" v-for="(service, index) in SERVICES" :key="service.name">
+          <div class="box-services-list-item" v-for="(service, index) in services" :key="service.name">
             <p class="box-services-list-item-name">
               <AppearingText
                 :text="service.name"

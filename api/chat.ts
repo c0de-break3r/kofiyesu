@@ -22,7 +22,7 @@ const ESCALATION_PATTERN =
 const EMAIL_INTENT_PATTERN =
   /hire|job|quote|proposal|collaborat|project|pentest|audit|security work|work together|get in touch|reach out|contact you/i;
 
-const DEFAULT_GEMINI_MODELS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash-8b"];
+const DEFAULT_GEMINI_MODELS = ["gemini-3-flash-preview"];
 
 const classifyWithKeywords = (text: string): InquiryType => {
   const lower = text.toLowerCase();

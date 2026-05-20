@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import { t } from "../i18n/utils/translate";
 import { useHeaderTheme } from "../composables/useHeaderTheme";
 import { lenis } from "../composables/useScroll";
-import { projectId } from "../composables/useRouteObserver";
+import { path, projectId } from "../composables/useRouteObserver";
 import ButtonRound from "./ButtonRound.vue";
 import ArrowRight from "./icons/ArrowRight.vue";
 import SoundsToggle from "./SoundsToggle.vue";
@@ -13,6 +13,7 @@ import { isFeatureEnabled } from "../utils/features";
 import { useRouter } from "../composables/useRouter";
 import { useFirstRoute } from "../composables/useFirstRoute";
 import ProfileNavButton from "./ProfileNavButton.vue";
+import AdminPanelToggle from "./AdminPanelToggle.vue";
 import { isClerkConfigured } from "../lib/clerk";
 
 const router = useRouter();
@@ -34,9 +35,17 @@ const { isDarkTheme } = useHeaderTheme({
   },
 });
 
+const isChatRoute = computed(
+  () => path.value === "/chat" || path.value.startsWith("/chat/"),
+);
+
+const showBackButton = computed(() => projectId.value !== null || isChatRoute.value);
+
 const handleBackClick = () => {
-  // If it's the first route the user visited, navigate to home
-  // Otherwise, go back in browser history
+  if (isChatRoute.value) {
+    router.push("/");
+    return;
+  }
   if (isFirstRoute.value) {
     router.push("/");
   } else {
@@ -65,11 +74,11 @@ const classNames = computed(() => {
   <header :class="classNames">
     <div class="header-left">
       <ButtonRound
-        v-if="projectId !== null"
+        v-if="showBackButton"
         variant="accent"
         @click="handleBackClick"
         :aria-label="t('back-to-home')"
-        :class="{ 'header-back': true, 'header-back-isProjectPage': projectId !== null }"
+        :class="{ 'header-back': true, 'header-back-isProjectPage': showBackButton }"
         data-cursor="circle-white"
       >
         <ArrowRight class="header-back-icon" />
@@ -88,6 +97,7 @@ const classNames = computed(() => {
       <Logo class="header-logo-image" />
     </div>
     <div class="header-right">
+      <AdminPanelToggle :isDarkTheme="isDarkTheme" />
       <ProfileNavButton v-if="isClerkConfigured" variant="header" class="header-profile" />
       <ModeToggle :isDarkTheme="isDarkTheme" />
       <SoundsToggle class="header-sounds-toggle" :isDarkTheme="isDarkTheme" v-if="isFeatureEnabled('sounds')" />

@@ -1,4 +1,4 @@
-/** Comma-separated Clerk user IDs allowed to access /admin (set in Vercel as VITE_CLERK_ADMIN_USER_IDS). */
+/** Comma-separated Clerk user IDs allowed to open the inline site admin panel (VITE_CLERK_ADMIN_USER_IDS). */
 const rawAdminIds = import.meta.env.VITE_CLERK_ADMIN_USER_IDS as string | undefined;
 
 export const clerkAdminUserIds = (rawAdminIds ?? "")

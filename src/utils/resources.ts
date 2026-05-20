@@ -49,14 +49,33 @@ class Resources extends EventEmitter<{
           undefined,
           (error) => {
             console.error(`[Resources] Failed to load ${source.name}:`, error);
+            this.sourceFailed(source);
           },
         );
       } else if (source.type === "texture") {
-        this.loaders.textureLoader.load(source.path, (file: Texture) => {
-          file.colorSpace = SRGBColorSpace;
-          this.sourceLoaded(source, file);
-        });
+        this.loaders.textureLoader.load(
+          source.path,
+          (file: Texture) => {
+            file.colorSpace = SRGBColorSpace;
+            this.sourceLoaded(source, file);
+          },
+          undefined,
+          (error) => {
+            console.error(`[Resources] Failed to load ${source.name}:`, error);
+            this.sourceFailed(source);
+          },
+        );
       }
+    }
+  }
+
+  sourceFailed(source: { name: string; type: string; path: string }) {
+    this.items[source.name] = null;
+    this.loaded++;
+    this.emit("progress", this.loaded / this.toLoad);
+    if (this.loaded === this.toLoad) {
+      this.isReady = true;
+      this.emit("ready");
     }
   }
 
@@ -81,4 +100,14 @@ class Resources extends EventEmitter<{
 }
 
 export const resources = new Resources();
-resources.startLoading();
+
+/** Defer heavy GLTF/texture loads until after first paint to avoid "page unresponsive". */
+export const scheduleResourceLoading = () => {
+  const start = () => resources.startLoading();
+
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(start, { timeout: 1500 });
+  } else {
+    window.setTimeout(start, 50);
+  }
+};

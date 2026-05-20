@@ -6,6 +6,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { path, projectId } from "../composables/useRouteObserver";
 import { useRouter } from "../composables/useRouter";
 import ProfileNavButton from "./ProfileNavButton.vue";
+import AdminPanelToggle from "./AdminPanelToggle.vue";
+import { useHeaderTheme } from "../composables/useHeaderTheme";
 import NavHome from "./icons/NavHome.vue";
 import NavAbout from "./icons/NavAbout.vue";
 import NavProjects from "./icons/NavProjects.vue";
@@ -14,6 +16,7 @@ import NavChat from "./icons/NavChat.vue";
 type NavSection = "hero" | "about" | "projects" | "chat";
 
 const router = useRouter();
+const { isDarkTheme } = useHeaderTheme();
 const activeSection = ref<NavSection | null>(null);
 
 const scrollItems: { id: Exclude<NavSection, "chat">; icon: typeof NavHome; labelKey: "about" | "projects" }[] = [
@@ -110,6 +113,7 @@ watch(path, () => {
       </button>
     </nav>
 
+    <AdminPanelToggle :isDarkTheme="isDarkTheme" />
     <ProfileNavButton />
   </div>
 </template>

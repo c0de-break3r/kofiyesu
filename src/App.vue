@@ -11,20 +11,20 @@ import { useHowler } from "./features/sounds/composables/useHowler";
 import { useRouteObserver, path, projectVisible } from "./composables/useRouteObserver";
 import Home from "./features/home/components/Home.vue";
 import Project from "./features/projects/components/Project.vue";
-import AdminApp from "./features/admin/components/AdminApp.vue";
 import ChatPage from "./features/chat/ChatPage.vue";
+import AdminPanel from "./features/admin/components/AdminPanel.vue";
+import { loadSiteContent } from "./composables/useSiteContent";
 import { useProjectTransition } from "./composables/useProjectTransition";
 import { useScroll } from "./composables/useScroll";
 import ProjectBackground from "./features/projects/components/ProjectBackground.vue";
 import { useClickSound } from "./features/sounds/composables/useClickSounds";
 import { renderer } from "./three/core/renderer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useClerkAdminRedirect } from "./composables/useClerkAdminRedirect";
+import { useLegacyAdminRoute } from "./composables/useLegacyAdminRoute";
 //import { useHoverSound } from "./features/sounds/composables/useHoverSounds";
 
 const { isTransitioning } = useProjectTransition();
 
-const isAdminRoute = computed(() => path.value.startsWith("/admin"));
 const isChatRoute = computed(() => path.value === "/chat" || path.value.startsWith("/chat/"));
 
 useTranslations();
@@ -33,8 +33,9 @@ useMusic();
 useHowler();
 useScroll();
 useRouteObserver();
-useClerkAdminRedirect();
+useLegacyAdminRoute();
 useClickSound();
+loadSiteContent();
 //useHoverSound();
 const { isTouch } = useAgent();
 
@@ -51,52 +52,42 @@ watch(
 </script>
 
 <template>
-  <AdminApp v-if="isAdminRoute" />
+  <Header />
 
-  <template v-else>
-    <div class="app-shell" :class="{ 'app-shell-chat-open': isChatRoute }">
-      <Header v-show="!isChatRoute" />
-
-      <div v-show="!isChatRoute" :class="{ 'home-wrapper-projectIsReady': projectVisible }">
-        <Home />
-      </div>
-
-      <ProjectBackground />
-      <div
-        class="project-wrapper"
-        :class="{
-          'project-wrapper-visible': projectVisible,
-          'project-wrapper-transitioning': isTransitioning,
-        }"
-      >
-        <div class="project-content">
-          <Project />
-        </div>
-      </div>
-
-      <MobileNav v-show="!isChatRoute" />
-      <Cursor v-if="!isTouch && !isChatRoute" />
+  <div v-show="!isChatRoute" class="app-shell">
+    <div :class="{ 'home-wrapper-projectIsReady': projectVisible }">
+      <Home />
     </div>
 
-    <ChatPage v-if="isChatRoute" class="app-chat-layer" />
-  </template>
+    <ProjectBackground />
+    <div
+      class="project-wrapper"
+      :class="{
+        'project-wrapper-visible': projectVisible,
+        'project-wrapper-transitioning': isTransitioning,
+      }"
+    >
+      <div class="project-content">
+        <Project />
+      </div>
+    </div>
+
+    <Cursor v-if="!isTouch" />
+  </div>
+
+  <ChatPage v-if="isChatRoute" class="app-chat-layer" />
+  <MobileNav v-show="!projectVisible" />
+  <AdminPanel />
 </template>
 
 <style lang="scss">
-.app-shell {
-  &-chat-open {
-    visibility: hidden;
-    pointer-events: none;
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-  }
-}
-
 .app-chat-layer {
   position: fixed;
-  inset: 0;
-  z-index: 200;
+  top: var(--height-header);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
 }
 
 .home-wrapper-projectIsReady {
@@ -123,6 +114,10 @@ watch(
 .project-content {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+}
+
+html.admin-panel-open {
   overflow: hidden;
 }
 </style>
