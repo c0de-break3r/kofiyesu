@@ -17,6 +17,7 @@
     height: 120px;
     border-radius: 50%;
     object-fit: cover;
+    object-position: center 20%;
     transition:
       transform 0.2s var(--ease-power2-in),
       opacity 0.2s var(--ease-power2-in);

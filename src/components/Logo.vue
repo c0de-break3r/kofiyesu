@@ -11,9 +11,11 @@
 
 <style scoped lang="scss">
 .logo-img {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 20%;
   display: block;
 }
 </style>

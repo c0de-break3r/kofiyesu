@@ -18,5 +18,4 @@ export const getSupabase = (): SupabaseClient | null => {
   return client;
 };
 
-/** Singleton client — matches Supabase Vue quickstart (`utils/supabase.ts`). */
 export const supabase = getSupabase();

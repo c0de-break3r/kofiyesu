@@ -21,7 +21,6 @@ import { useClickSound } from "./features/sounds/composables/useClickSounds";
 import { renderer } from "./three/core/renderer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useLegacyAdminRoute } from "./composables/useLegacyAdminRoute";
-//import { useHoverSound } from "./features/sounds/composables/useHoverSounds";
 
 const { isTransitioning } = useProjectTransition();
 
@@ -36,7 +35,6 @@ useRouteObserver();
 useLegacyAdminRoute();
 useClickSound();
 loadSiteContent();
-//useHoverSound();
 const { isTouch } = useAgent();
 
 watch(
