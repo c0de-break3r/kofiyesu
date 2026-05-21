@@ -3,6 +3,7 @@ import { defineAsyncComponent } from "vue";
 import { t } from "../../i18n/utils/translate";
 import { useRouter } from "../../composables/useRouter";
 import { isClerkConfigured } from "../../lib/clerk";
+import { clerkReady } from "../../lib/clerkReady";
 
 const ContactChatPanel = isClerkConfigured
   ? defineAsyncComponent(() => import("../../components/ContactChatPanel.vue"))
@@ -27,7 +28,8 @@ const goHome = () => {
         <p>{{ t("chat-clerk-missing") }}</p>
         <button type="button" class="chat-page-home-link" @click="goHome">{{ t("back-to-home") }}</button>
       </div>
-      <ContactChatPanel v-else fixed class="chat-page-panel" />
+      <ContactChatPanel v-else-if="clerkReady" fixed class="chat-page-panel" />
+      <p v-else class="chat-page-gate">{{ t("chat-loading") }}</p>
     </main>
   </div>
 </template>

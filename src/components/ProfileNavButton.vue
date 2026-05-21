@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { isClerkConfigured } from "../lib/clerk";
+import { clerkReady } from "../lib/clerkReady";
 import ClerkProfileNav from "./ClerkProfileNav.vue";
 import User from "./icons/User.vue";
 
@@ -12,7 +13,7 @@ withDefaults(
 </script>
 
 <template>
-  <ClerkProfileNav v-if="isClerkConfigured" :variant="variant" />
+  <ClerkProfileNav v-if="isClerkConfigured && clerkReady" :variant="variant" />
   <a
     v-else
     href="#contact"

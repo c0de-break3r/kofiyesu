@@ -12,9 +12,8 @@ import { useRouteObserver, path, projectVisible } from "./composables/useRouteOb
 import Home from "./features/home/components/Home.vue";
 import Project from "./features/projects/components/Project.vue";
 import ChatPage from "./features/chat/ChatPage.vue";
-import { defineAsyncComponent } from "vue";
-
-const AdminPanel = defineAsyncComponent(() => import("./features/admin/components/AdminPanel.vue"));
+import AdminPanel from "./features/admin/components/AdminPanel.vue";
+import { clerkReady } from "./lib/clerkReady";
 import { loadSiteContent } from "./composables/useSiteContent";
 import { useProjectTransition } from "./composables/useProjectTransition";
 import { useScroll } from "./composables/useScroll";
@@ -80,7 +79,7 @@ watch(
 
   <ChatPage v-if="isChatRoute" class="app-chat-layer" />
   <MobileNav v-show="!projectVisible" />
-  <AdminPanel />
+  <AdminPanel v-if="clerkReady" />
 </template>
 
 <style lang="scss">

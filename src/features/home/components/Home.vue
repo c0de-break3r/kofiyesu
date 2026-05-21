@@ -11,6 +11,7 @@ import HeaderHome from "../../../components/HeaderHome.vue";
 import { preloaderVisible } from "../../../composables/usePreloader";
 import ScrollIcon from "../../../components/ScrollIcon.vue";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useAgent } from "../../../composables/useAgent";
 import { projectId, projectVisible } from "../../../composables/useRouteObserver";
 import { isTransitioning } from "../../../composables/useProjectTransition";
@@ -117,15 +118,16 @@ const handleProjectsLoaded = () => {
 
 const syncAnimations = () => {
   void import("../../../animations").then(({ animations }) => {
-    if (projectsLoaded.value && threeInitialized.value && !preloaderVisible.value) {
+    if (threeInitialized.value && !preloaderVisible.value) {
       animations.init();
+      requestAnimationFrame(() => ScrollTrigger.refresh());
     } else {
       animations.destroy();
     }
   });
 };
 
-watch([projectsLoaded, threeInitialized, preloaderVisible], syncAnimations, { immediate: true });
+watch([threeInitialized, preloaderVisible], syncAnimations, { immediate: true });
 
 watch(preloaderVisible, (visible) => {
   if (!visible) syncAnimations();
@@ -247,10 +249,16 @@ watch(preloaderVisible, (visible) => {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 2;
   width: 100%;
   max-height: calc(var(--lvh) * 100);
   min-height: calc(var(--lvh) * 100);
   overflow: hidden;
+  pointer-events: none;
+
+  :deep(*) {
+    pointer-events: auto;
+  }
 }
 
 .intro-about-hidden {
