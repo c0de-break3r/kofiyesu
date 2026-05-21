@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Banner from "../../../components/Banner.vue";
-import { preloaderVisible } from "../../../composables/usePreloader";
 import { t } from "../../../i18n/utils/translate";
 import { useSiteContent } from "../../../composables/useSiteContent";
 
@@ -14,7 +13,7 @@ const jobTitle = aboutText("job_title", t("job-title"));
       <div class="hero-content-inner" id="hero-content-inner">
         <div class="hero-content-copys">
           <h1 class="hero-title">Obed Prince<br />Kofi Yesu</h1>
-          <Banner class="hero-banner" :copy="jobTitle" v-if="!preloaderVisible" animated />
+          <Banner class="hero-banner" :copy="jobTitle" animated />
         </div>
       </div>
     </div>

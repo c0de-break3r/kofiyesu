@@ -115,19 +115,21 @@ const handleProjectsLoaded = () => {
   projectsLoaded.value = true;
 };
 
-watch(
-  [projectsLoaded, threeInitialized, preloaderVisible],
-  ([projects, three, preloader]) => {
-    void import("../../../animations").then(({ animations }) => {
-      if (projects && three && !preloader) {
-        animations.init();
-      } else {
-        animations.destroy();
-      }
-    });
-  },
-  { immediate: true },
-);
+const syncAnimations = () => {
+  void import("../../../animations").then(({ animations }) => {
+    if (projectsLoaded.value && threeInitialized.value && !preloaderVisible.value) {
+      animations.init();
+    } else {
+      animations.destroy();
+    }
+  });
+};
+
+watch([projectsLoaded, threeInitialized, preloaderVisible], syncAnimations, { immediate: true });
+
+watch(preloaderVisible, (visible) => {
+  if (!visible) syncAnimations();
+});
 
 </script>
 

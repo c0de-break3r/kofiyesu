@@ -40,10 +40,11 @@
 
     <meta name="theme-color" content="#e85d04" />
     <script>
-      // Fallback if the JS bundle is slow or stuck — never leave the page unresponsive.
+      // Fallback if the JS bundle is slow — sync DOM + Vue preloader state.
       setTimeout(function () {
         document.body.classList.remove("is-loading");
         document.querySelector(".preloader")?.classList.add("preloader-hidden");
+        window.dispatchEvent(new Event("preloader:force-dismiss"));
       }, 5000);
     </script>
   </head>

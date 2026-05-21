@@ -4,7 +4,7 @@ import gsap from "gsap";
 
 export const preloaderVisible = ref(true);
 
-const dismissPreloader = () => {
+export const dismissPreloader = () => {
   document.body.classList.remove("is-loading");
   const preloader = document.querySelector(".preloader");
   preloader?.classList.add("preloader-hidden");
@@ -24,10 +24,20 @@ const tryDismiss = (() => {
   };
 })();
 
+/** Called from index.html fallback before Vue is ready. */
+export const forceDismissPreloader = () => {
+  tryDismiss();
+  dismissPreloader();
+};
+
 const syncResourcesProgress = () => {
   if (resources.isReady || resources.toLoad === 0) return 1;
   return resources.loaded / Math.max(resources.toLoad, 1);
 };
+
+if (typeof window !== "undefined") {
+  window.addEventListener("preloader:force-dismiss", forceDismissPreloader);
+}
 
 export const usePreloader = () => {
   const progress = ref(0);
@@ -45,6 +55,10 @@ export const usePreloader = () => {
   onMounted(() => {
     scheduleResourceLoading();
     resourcesProgress.value = syncResourcesProgress();
+
+    if (resources.isReady) {
+      resourcesProgress.value = 1;
+    }
 
     window.setTimeout(tryDismiss, 4_000);
     window.addEventListener("pointerdown", tryDismiss, { once: true, passive: true });
