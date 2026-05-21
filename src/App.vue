@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, onMounted, watch } from "vue";
 import Header from "./components/Header.vue";
 import MobileNav from "./components/MobileNav.vue";
 import { useTranslations } from "./i18n/composables/useTranslations";
@@ -12,13 +12,14 @@ import { useRouteObserver, path, projectVisible } from "./composables/useRouteOb
 import Home from "./features/home/components/Home.vue";
 import Project from "./features/projects/components/Project.vue";
 import ChatPage from "./features/chat/ChatPage.vue";
-import AdminPanel from "./features/admin/components/AdminPanel.vue";
+import { defineAsyncComponent } from "vue";
+
+const AdminPanel = defineAsyncComponent(() => import("./features/admin/components/AdminPanel.vue"));
 import { loadSiteContent } from "./composables/useSiteContent";
 import { useProjectTransition } from "./composables/useProjectTransition";
 import { useScroll } from "./composables/useScroll";
 import ProjectBackground from "./features/projects/components/ProjectBackground.vue";
 import { useClickSound } from "./features/sounds/composables/useClickSounds";
-import { renderer } from "./three/core/renderer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useLegacyAdminRoute } from "./composables/useLegacyAdminRoute";
 
@@ -34,12 +35,16 @@ useScroll();
 useRouteObserver();
 useLegacyAdminRoute();
 useClickSound();
-loadSiteContent();
 const { isTouch } = useAgent();
+
+onMounted(() => {
+  void loadSiteContent();
+});
 
 watch(
   [isChatRoute, projectVisible],
-  ([onChat, onProject]) => {
+  async ([onChat, onProject]) => {
+    const { renderer } = await import("./three/core/renderer");
     renderer.setIsActive(!onChat && !onProject);
     if (!onChat && !onProject) {
       requestAnimationFrame(() => ScrollTrigger.refresh());

@@ -11,40 +11,43 @@ const dismissPreloader = () => {
   preloaderVisible.value = false;
 };
 
-export const usePreloader = () => {
-  const progress = ref(0);
-  const resourcesProgress = ref(0);
+const tryDismiss = (() => {
   let dismissed = false;
-
-  const tryDismiss = () => {
+  return () => {
     if (dismissed) return;
     dismissed = true;
-    gsap.delayedCall(0.15, dismissPreloader);
+    try {
+      gsap.delayedCall(0.15, dismissPreloader);
+    } catch {
+      dismissPreloader();
+    }
   };
+})();
 
-  resourcesProgress.value = resources.isReady ? 1 : resources.loaded / Math.max(resources.toLoad, 1);
+const syncResourcesProgress = () => {
+  if (resources.isReady || resources.toLoad === 0) return 1;
+  return resources.loaded / Math.max(resources.toLoad, 1);
+};
+
+export const usePreloader = () => {
+  const progress = ref(0);
+  const resourcesProgress = ref(syncResourcesProgress());
 
   if (!resources.isReady) {
     resources.on("progress", (newProgress) => {
       resourcesProgress.value = newProgress;
     });
-    resources.on("ready", () => {
+    resources.once("ready", () => {
       resourcesProgress.value = 1;
     });
   }
 
   onMounted(() => {
     scheduleResourceLoading();
+    resourcesProgress.value = syncResourcesProgress();
 
-    if (resources.isReady) {
-      resourcesProgress.value = 1;
-    }
-
-    // Never block the UI for more than a few seconds (slow networks, blocked assets).
     window.setTimeout(tryDismiss, 4_000);
-
-    const onInteract = () => tryDismiss();
-    window.addEventListener("pointerdown", onInteract, { once: true, passive: true });
+    window.addEventListener("pointerdown", tryDismiss, { once: true, passive: true });
   });
 
   watch(
@@ -56,9 +59,7 @@ export const usePreloader = () => {
   );
 
   watch(progress, (newProgress) => {
-    if (newProgress >= 1) {
-      tryDismiss();
-    }
+    if (newProgress >= 1) tryDismiss();
 
     const rect = document.querySelector(".preloader-rect") as HTMLElement | null;
     if (rect) rect.style.transform = `scaleY(${newProgress})`;

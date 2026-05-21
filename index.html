@@ -39,6 +39,13 @@
     <link rel="shortcut icon" href="/meta/logo-avatar.png" />
 
     <meta name="theme-color" content="#e85d04" />
+    <script>
+      // Fallback if the JS bundle is slow or stuck — never leave the page unresponsive.
+      setTimeout(function () {
+        document.body.classList.remove("is-loading");
+        document.querySelector(".preloader")?.classList.add("preloader-hidden");
+      }, 5000);
+    </script>
   </head>
   <body class="is-loading">
     <div id="app"></div>

@@ -7,12 +7,9 @@ import Projects from "./Projects.vue";
 import Contact from "./Contact.vue";
 import Footer from "../../../components/Footer.vue";
 import { ref, onMounted, onUnmounted, watchEffect, computed, watch } from "vue";
-import { three } from "../../../three";
-import { animations } from "../../../animations";
 import HeaderHome from "../../../components/HeaderHome.vue";
 import { preloaderVisible } from "../../../composables/usePreloader";
 import ScrollIcon from "../../../components/ScrollIcon.vue";
-import { raycast } from "../../../three/utils/raycast";
 import gsap from "gsap";
 import { useAgent } from "../../../composables/useAgent";
 import { projectId, projectVisible } from "../../../composables/useRouteObserver";
@@ -69,13 +66,15 @@ watchEffect((onInvalidate) => {
 
 const updateCursor = () => {
   if (isTouch.value) return;
-  const hoveringBox = raycast.getHoveringBox();
-  const shouldBePointer = !!hoveringBox;
+  void import("../../../three/utils/raycast").then(({ raycast }) => {
+    const hoveringBox = raycast.getHoveringBox();
+    const shouldBePointer = !!hoveringBox;
 
-  if (shouldBePointer !== isHoveringObject3D.value) {
-    isHoveringObject3D.value = shouldBePointer;
-    document.documentElement.style.cursor = shouldBePointer ? "pointer" : "";
-  }
+    if (shouldBePointer !== isHoveringObject3D.value) {
+      isHoveringObject3D.value = shouldBePointer;
+      document.documentElement.style.cursor = shouldBePointer ? "pointer" : "";
+    }
+  });
 };
 
 onMounted(() => {
@@ -83,10 +82,12 @@ onMounted(() => {
   stickyObserver.value.observe(introRef.value as HTMLElement);
 
   const initThree = () => {
-    if (threeCanvasRef.value && !threeInitialized.value) {
+    if (!threeCanvasRef.value || threeInitialized.value) return;
+    void import("../../../three").then(({ three }) => {
+      if (!threeCanvasRef.value || threeInitialized.value) return;
       three.init(threeCanvasRef.value);
       threeInitialized.value = true;
-    }
+    });
   };
 
   if (typeof requestIdleCallback === "function") {
@@ -102,12 +103,12 @@ onUnmounted(() => {
   stickyObserver.value?.disconnect();
   stickyObserver.value = null;
 
-  three.destroy();
+  void import("../../../three").then(({ three }) => three.destroy());
+  void import("../../../animations").then(({ animations }) => animations.destroy());
 
   document.documentElement.style.cursor = "";
 
   gsap.ticker.remove(updateCursor);
-  animations.destroy();
 });
 
 const handleProjectsLoaded = () => {
@@ -117,12 +118,15 @@ const handleProjectsLoaded = () => {
 watch(
   [projectsLoaded, threeInitialized, preloaderVisible],
   ([projects, three, preloader]) => {
-    if (projects && three && !preloader) {
-      animations.init();
-    } else {
-      animations.destroy();
-    }
+    void import("../../../animations").then(({ animations }) => {
+      if (projects && three && !preloader) {
+        animations.init();
+      } else {
+        animations.destroy();
+      }
+    });
   },
+  { immediate: true },
 );
 
 </script>

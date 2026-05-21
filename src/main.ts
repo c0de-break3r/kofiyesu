@@ -9,23 +9,21 @@ import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
 gsap.registerPlugin(ScrollTrigger);
 initTheme("dark");
 
-const bootstrap = async () => {
-  const app = createApp(App);
+const app = createApp(App);
 
-  if (isClerkConfigured) {
-    try {
-      const { clerkPlugin } = await import("@clerk/vue");
+// Mount first so the preloader can dismiss; load Clerk in the background (awaiting blocks first paint).
+if (isClerkConfigured) {
+  void import("@clerk/vue")
+    .then(({ clerkPlugin }) => {
       app.use(clerkPlugin, { publishableKey: clerkPublishableKey! });
-    } catch (err) {
+    })
+    .catch((err) => {
       console.error("[Clerk] Failed to load auth — continuing without sign-in.", err);
-    }
-  } else {
-    console.warn(
-      "[Clerk] VITE_CLERK_PUBLISHABLE_KEY is missing — client sign-in, chat, and admin auth are disabled.",
-    );
-  }
+    });
+} else {
+  console.warn(
+    "[Clerk] VITE_CLERK_PUBLISHABLE_KEY is missing — client sign-in, chat, and admin auth are disabled.",
+  );
+}
 
-  app.mount("#app");
-};
-
-void bootstrap();
+app.mount("#app");
