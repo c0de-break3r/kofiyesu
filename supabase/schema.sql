@@ -61,6 +61,7 @@ create table if not exists public.site_about (
   updated_at timestamptz not null default now()
 );
 
+-- Default row; full copy applied in migration 20260522120000_seed_site_content.sql
 insert into public.site_about (id)
 values ('default')
 on conflict (id) do nothing;

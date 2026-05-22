@@ -1,4 +1,4 @@
-export const projectIds = ["kheliancart"];
+export const projectIds = ["kheliancart", "security-recon-toolkit", "api-pentest-workflows"];
 
 function simplifyModules(glob: Record<string, any>) {
   const result: Record<string, any> = {};
