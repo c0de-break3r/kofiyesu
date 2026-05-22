@@ -11,6 +11,7 @@ import { getSoundsHowl } from "../utils/sounds";
 
 import type { SoundKey } from "../types";
 import { howlerUnlocked, soundsEnabled } from "../soundState";
+import { attachAudioUnlockOnGesture } from "../unlockAudio";
 
 export { howlerUnlocked, soundsEnabled };
 
@@ -91,13 +92,19 @@ export const useHowler = () => {
 
     if (howlerUnlocked.value) {
       soundsEnabled.value = localStorage.getItem("portfolio-soundsEnabled") === "true";
+      loadAllSounds();
+    } else {
+      attachAudioUnlockOnGesture(() => {
+        if (Howler.ctx?.state === "running") {
+          handleUnlocked();
+          loadAllSounds();
+        }
+      });
     }
 
     gsap.ticker.add(tick);
     window.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("keydown", handleKeyPress);
-
-    loadAllSounds();
   });
 
   onUnmounted(() => {

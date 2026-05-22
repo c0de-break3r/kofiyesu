@@ -20,7 +20,7 @@ import { useScroll } from "./composables/useScroll";
 import ProjectBackground from "./features/projects/components/ProjectBackground.vue";
 import { useClickSound } from "./features/sounds/composables/useClickSounds";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useLegacyAdminRoute } from "./composables/useLegacyAdminRoute";
+import LegacyAdminRouteSync from "./components/LegacyAdminRouteSync.vue";
 
 const { isTransitioning } = useProjectTransition();
 
@@ -32,7 +32,6 @@ useMusic();
 useHowler();
 useScroll();
 useRouteObserver();
-useLegacyAdminRoute();
 useClickSound();
 const { isTouch } = useAgent();
 
@@ -79,6 +78,7 @@ watch(
 
   <ChatPage v-if="isChatRoute" class="app-chat-layer" />
   <MobileNav v-show="!projectVisible" />
+  <LegacyAdminRouteSync v-if="clerkReady" />
   <AdminPanel v-if="clerkReady" />
 </template>
 
