@@ -1,3 +1,4 @@
+import { animations } from "../animations";
 import { camera } from "./core/camera";
 import { renderer } from "./core/renderer";
 import { objects } from "./objects";
@@ -19,6 +20,7 @@ const init = (_canvas: HTMLCanvasElement) => {
 
     objects.init();
     raycast.init();
+    animations.init();
   };
 
   if (resources.isReady) {
@@ -29,6 +31,7 @@ const init = (_canvas: HTMLCanvasElement) => {
 };
 
 const destroy = () => {
+  animations.destroy();
   threeSizes.destroy();
   renderTarget.destroy();
   renderer.destroy();

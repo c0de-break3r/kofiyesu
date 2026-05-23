@@ -5,7 +5,7 @@ export function About() {
   const { aboutText, services } = useSiteContent();
 
   return (
-    <section id="about" className="relative w-full px-6 py-24 md:py-32">
+    <section id="about-content" className="relative w-full px-6 py-24 md:py-32">
       <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-2 md:gap-16">
         <div>
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-[0.15em] text-[var(--color-accent)]">

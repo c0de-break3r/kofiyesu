@@ -16,7 +16,10 @@ export function Hero() {
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--bg)]/20 via-transparent to-[var(--bg)]/90"
         aria-hidden
       />
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 py-24 text-center md:items-start md:py-28 md:text-left">
+      <div
+        id="hero-content-inner"
+        className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 py-24 text-center md:items-start md:py-28 md:text-left"
+      >
         <div className="flex flex-col gap-4">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-accent)]">
             Portfolio · {new Date().getFullYear()}

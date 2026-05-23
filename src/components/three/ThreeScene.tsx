@@ -1,16 +1,15 @@
 import { useEffect, useRef } from "react";
 
 interface ThreeSceneProps {
-  visible?: boolean;
   className?: string;
 }
 
-export function ThreeScene({ visible = true, className = "" }: ThreeSceneProps) {
+export function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (!visible || !canvasRef.current || initialized.current) return;
+    if (!canvasRef.current || initialized.current) return;
 
     const init = () => {
       if (!canvasRef.current || initialized.current) return;
@@ -26,12 +25,7 @@ export function ThreeScene({ visible = true, className = "" }: ThreeSceneProps) 
     } else {
       window.setTimeout(init, 100);
     }
-  }, [visible]);
-
-  useEffect(() => {
-    if (visible) return;
-    void import("@/three/core/renderer").then(({ renderer }) => renderer.setIsActive(false));
-  }, [visible]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -43,7 +37,7 @@ export function ThreeScene({ visible = true, className = "" }: ThreeSceneProps) 
   return (
     <canvas
       ref={canvasRef}
-      className={`pointer-events-none absolute inset-0 h-full w-full transition-opacity duration-500 ${visible ? "opacity-100" : "opacity-0"} ${className}`}
+      className={`pointer-events-none absolute inset-0 h-full w-full ${className}`}
       aria-hidden
     />
   );
