@@ -78,7 +78,7 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 min-h-[100dvh]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 min-h-[100dvh]">
           <div className="pointer-events-auto">
             <Hero />
           </div>

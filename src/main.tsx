@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import App from "./App";
 import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
+import { scheduleResourceLoading } from "./utils/resources";
 import "./index.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -27,6 +28,8 @@ const bootstrap = () => {
     console.warn("[Clerk] VITE_CLERK_PUBLISHABLE_KEY missing — auth disabled.");
     root.render(app);
   }
+
+  scheduleResourceLoading();
 
   requestAnimationFrame(() => {
     document.body.classList.remove("is-loading");

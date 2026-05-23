@@ -9,22 +9,35 @@ export function ThreeScene({ className = "" }: ThreeSceneProps) {
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (!canvasRef.current || initialized.current) return;
+    let cancelled = false;
 
     const init = () => {
-      if (!canvasRef.current || initialized.current) return;
+      if (cancelled || !canvasRef.current || initialized.current) return;
       void import("@/three").then(({ three }) => {
-        if (!canvasRef.current || initialized.current) return;
+        if (cancelled || !canvasRef.current || initialized.current) return;
         three.init(canvasRef.current);
         initialized.current = true;
       });
     };
 
-    if (typeof requestIdleCallback === "function") {
-      requestIdleCallback(init, { timeout: 2000 });
-    } else {
-      window.setTimeout(init, 100);
-    }
+    void import("@/utils/resources").then(({ resources }) => {
+      if (cancelled) return;
+
+      const scheduleInit = () => {
+        if (typeof requestIdleCallback === "function") {
+          requestIdleCallback(init, { timeout: 500 });
+        } else {
+          window.setTimeout(init, 50);
+        }
+      };
+
+      if (resources.isReady) scheduleInit();
+      else resources.once("ready", scheduleInit);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
