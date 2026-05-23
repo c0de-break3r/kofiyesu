@@ -2,7 +2,7 @@ import { playSound } from "../utils/sounds";
 import { sprites } from "../definitions/sprites";
 import { sceneWeights } from "../../../animations/scenes";
 import { clamp } from "../../../utils/math";
-import { projectVisible } from "../../../composables/useRouteObserver";
+import { projectVisible } from "@/lib/routeState";
 import gsap from "gsap";
 
 const SNORE_INTERVAL = 2.0833332538604736 * 2;

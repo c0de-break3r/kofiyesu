@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,19 +37,17 @@
 
     <meta name="theme-color" content="#e85d04" />
     <script>
-      // Fallback if the JS bundle is slow — sync DOM + Vue preloader state.
       setTimeout(function () {
         document.body.classList.remove("is-loading");
         document.querySelector(".preloader")?.classList.add("preloader-hidden");
-        window.dispatchEvent(new Event("preloader:force-dismiss"));
       }, 5000);
     </script>
   </head>
   <body class="is-loading">
-    <div id="app"></div>
+    <div id="root"></div>
     <div class="preloader">
       <img class="preloader-logo" src="/meta/logo-avatar.png" alt="Obed Prince Kofi Yesu" width="120" height="120" />
     </div>
-    <script type="module" src="./src/main.ts"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

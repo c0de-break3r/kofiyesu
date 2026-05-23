@@ -1,4 +1,4 @@
-import { projectVisible } from "../../../composables/useRouteObserver";
+import { projectVisible } from "@/lib/routeState";
 import { clamp } from "../../../utils/math";
 import { sceneWeights } from "../../../animations/scenes";
 import { sprites } from "../definitions/sprites";

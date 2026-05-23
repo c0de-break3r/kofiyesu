@@ -1,32 +1,31 @@
 import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import glsl from "vite-plugin-glsl";
+import path from "path";
 
 export default defineConfig({
   plugins: [
-    vue(),
+    react(),
+    tailwindcss(),
     glsl({
       include: ["**/*.glsl", "**/*.vert", "**/*.frag"],
       defaultExtension: "glsl",
       warnDuplicatedImports: false,
     }),
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+    extensions: [".js", ".jsx", ".ts", ".tsx", ".json", ".ogg", ".wav", ".glsl", ".ktx2"],
+  },
   server: {
     port: 3000,
     strictPort: true,
     host: true,
   },
-  resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx", ".json", ".ogg", ".wav", ".glsl", ".ktx2"],
-  },
   assetsInclude: ["**/*.svg", "**/*.gltf", "**/*.glb", "**/*.png", "**/*.jpg", "**/*.ktx2"],
-  css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: `@use "/src/assets/styles/mixins.scss";`,
-      },
-    },
-  },
   build: {
     outDir: "./dist",
     sourcemap: false,
@@ -34,10 +33,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        inlineDynamicImports: false,
-        assetFileNames: "assets/[hash].[ext]",
-        entryFileNames: "chunks/[name]-[hash].js",
-        chunkFileNames: "chunks/[hash].js",
         manualChunks(id) {
           if (id.includes("node_modules/three")) return "three";
           if (id.includes("node_modules/@clerk")) return "clerk";

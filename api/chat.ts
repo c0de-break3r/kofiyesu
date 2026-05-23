@@ -86,8 +86,9 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
   };
 };
 
-const buildSystemPrompt = (userName?: string, userEmail?: string) =>
+const buildSystemPrompt = (userName?: string, userEmail?: string, intakeContext?: string) =>
   `You are the AI assistant on Obed Prince Kofi Yesu's portfolio site. Kofi is a Software Engineer & Cybersecurity Practitioner from Ghana (backend systems, Python/Bash automation, pentesting & recon tools).
+${intakeContext ? `\nProject intake (already submitted): ${intakeContext}\nReference this when answering; do not ask them to repeat type/timeline unless clarifying.` : ""}
 
 Rules:
 1. **Answer the visitor's question directly** in 2–4 sentences. Be helpful and conversational.
@@ -135,6 +136,7 @@ const callGeminiModel = async (
   messages: ChatMessage[],
   userName?: string,
   userEmail?: string,
+  intakeContext?: string,
 ): Promise<ChatResponse | null> => {
   const contents = toGeminiContents(messages ?? []);
   if (contents.length === 0) return null;
@@ -146,7 +148,7 @@ const callGeminiModel = async (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       systemInstruction: {
-        parts: [{ text: buildSystemPrompt(userName, userEmail) }],
+        parts: [{ text: buildSystemPrompt(userName, userEmail, intakeContext) }],
       },
       contents,
       generationConfig: {
@@ -186,9 +188,10 @@ const callGemini = async (
   messages: ChatMessage[],
   userName?: string,
   userEmail?: string,
+  intakeContext?: string,
 ): Promise<ChatResponse | null> => {
   for (const model of geminiModels()) {
-    const result = await callGeminiModel(apiKey, model, messages, userName, userEmail);
+    const result = await callGeminiModel(apiKey, model, messages, userName, userEmail, intakeContext);
     if (result) return result;
   }
   return null;
@@ -199,6 +202,7 @@ const callOpenAi = async (
   messages: ChatMessage[],
   userName?: string,
   userEmail?: string,
+  intakeContext?: string,
 ): Promise<ChatResponse | null> => {
   const conversation = (messages ?? []).map((m) => `${m.role}: ${m.content}`).join("\n");
 
@@ -211,7 +215,7 @@ const callOpenAi = async (
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       messages: [
-        { role: "system", content: buildSystemPrompt(userName, userEmail) },
+        { role: "system", content: buildSystemPrompt(userName, userEmail, intakeContext) },
         { role: "user", content: conversation },
       ],
       temperature: 0.55,
@@ -249,10 +253,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { messages, userEmail, userName } = req.body as {
+  const { messages, userEmail, userName, intakeContext } = req.body as {
     messages?: ChatMessage[];
     userEmail?: string;
     userName?: string;
+    intakeContext?: string;
   };
 
   const lastUser = [...(messages ?? [])].reverse().find((m) => m.role === "user");
@@ -271,9 +276,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let parsed: ChatResponse | null = null;
 
     if (geminiKey) {
-      parsed = await callGemini(geminiKey, messages ?? [], userName, userEmail);
+      parsed = await callGemini(geminiKey, messages ?? [], userName, userEmail, intakeContext);
     } else if (openAiKey) {
-      parsed = await callOpenAi(openAiKey, messages ?? [], userName, userEmail);
+      parsed = await callOpenAi(openAiKey, messages ?? [], userName, userEmail, intakeContext);
     } else {
       console.warn("[chat] No GEMINI_API_KEY or OPENAI_API_KEY — using keyword fallback");
     }

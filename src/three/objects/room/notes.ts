@@ -7,7 +7,7 @@ import { room } from ".";
 import { resources } from "../../../utils/resources";
 import { sceneWeights } from "../../../animations/scenes";
 import { lerp } from "../../../utils/math";
-import { soundsEnabled } from "../../../features/sounds/composables/useHowler";
+import { soundsEnabled } from "@/features/sounds/soundState";
 
 import type { BufferGeometry } from "three";
 

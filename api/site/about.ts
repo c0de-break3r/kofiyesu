@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAnonSupabase } from "../lib/supabaseServer.js";
+import { isDatabaseConfigured, prisma } from "../lib/prisma.js";
+import { aboutToApi } from "../lib/serializers.js";
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
@@ -7,19 +8,12 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const supabase = getAnonSupabase();
-    if (!supabase) {
+    if (!isDatabaseConfigured()) {
       return res.status(200).json({ about: null });
     }
 
-    const { data, error } = await supabase.from("site_about").select("*").eq("id", "default").maybeSingle();
-
-    if (error) {
-      console.error("[site/about]", error);
-      return res.status(500).json({ error: error.message });
-    }
-
-    return res.status(200).json({ about: data });
+    const row = await prisma.siteAbout.findUnique({ where: { id: "default" } });
+    return res.status(200).json({ about: row ? aboutToApi(row) : null });
   } catch (err) {
     console.error("[site/about] unhandled", err);
     return res.status(200).json({ about: null });

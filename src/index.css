@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Urbanist";
+  src: url(/fonts/urbanist-400.woff2) format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Urbanist";
+  src: url(/fonts/urbanist-700.woff2) format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Urbanist";
+  src: url(/fonts/urbanist-900.woff2) format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --color-accent: #e85d04;
+  --color-accent-muted: #fb923c;
+  --font-sans: "Urbanist", system-ui, sans-serif;
+}
+
+@layer base {
+  :root,
+  [data-theme="light"] {
+    --bg: #f4f7fa;
+    --bg-elevated: #ffffff;
+    --text: #1a1d21;
+    --text-muted: #4a5568;
+    --border: rgba(26, 29, 33, 0.08);
+    --surface-projects: #f4f7fa;
+    --chat-user: #e85d04;
+    --chat-assistant: #eef2f6;
+  }
+
+  [data-theme="dark"] {
+    --bg: #363a3f;
+    --bg-elevated: #42464c;
+    --text: #f1f5f9;
+    --text-muted: #b8bcc4;
+    --border: rgba(255, 255, 255, 0.08);
+    --surface-projects: #363a3f;
+    --chat-user: #e85d04;
+    --chat-assistant: #42464c;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+
+  body.is-loading #root {
+    visibility: hidden;
+  }
+
+  .preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background: var(--bg);
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+
+  .preloader-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .preloader-logo {
+    width: 120px;
+    height: 120px;
+    border-radius: 9999px;
+    object-fit: cover;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

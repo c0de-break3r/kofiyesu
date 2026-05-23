@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ContactInquiry {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inquiryType String   @map("inquiry_type")
+  message     String
+  needsAdmin  Boolean  @default(false) @map("needs_admin")
+  userEmail   String?  @map("user_email")
+  userId      String?  @map("user_id")
+  userName    String?  @map("user_name")
+  intake      Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@map("contact_inquiries")
+}
+
+model SiteProject {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String   @unique
+  title        String
+  theme        String   @default("dark")
+  tags         Json     @default("[]")
+  description  String?
+  thumbnailUrl String?  @map("thumbnail_url")
+  liveUrl      String?  @map("live_url")
+  sourceUrl    String?  @map("source_url")
+  videoBorder  Boolean  @default(false) @map("video_border")
+  components   Json     @default("[]")
+  sortOrder    Int      @default(0) @map("sort_order")
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([sortOrder, createdAt])
+  @@map("site_projects")
+}
+
+model SiteAbout {
+  id          String   @id @default("default")
+  displayName String?  @map("display_name")
+  jobTitle    String?  @map("job_title")
+  aboutIntro  String?  @map("about_intro")
+  aboutTagline String? @map("about_tagline")
+  location    String?
+  services    Json     @default("[]")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("site_about")
+}

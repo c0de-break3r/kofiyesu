@@ -1,4 +1,4 @@
-import { type InquiryType, inquiryRoutes, getInquiryRoute } from "../content/contact";
+import { type InquiryType, inquiryRoutes, getInquiryRoute } from "@/content/contact";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -11,7 +11,6 @@ export interface RoutingResult {
   confidence: "high" | "medium" | "low";
   escalateToAdmin?: boolean;
   showEmailCta?: boolean;
-  /** Set by /api/chat when Gemini/OpenAI is used; "fallback" means keyword routing. */
   source?: "gemini" | "openai" | "fallback";
 }
 
@@ -56,8 +55,6 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
       reply:
         "Kofi is a **Software Engineer & Cybersecurity Practitioner** from Ghana — backend APIs, automation, and offensive-security tooling. What would you like to know more about?",
       confidence: "medium",
-      escalateToAdmin: false,
-      showEmailCta: false,
     };
   }
 
@@ -67,7 +64,6 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
       inquiryType: type,
       reply: `${route.description} Share a few details (scope, timeline, goals) and we can take it from there.`,
       confidence: "medium",
-      escalateToAdmin: false,
       showEmailCta: true,
     };
   }
@@ -76,8 +72,6 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
     inquiryType: type,
     reply: "Ask me anything about Kofi's skills, projects, or experience — I'm happy to help.",
     confidence: "low",
-    escalateToAdmin: false,
-    showEmailCta: false,
   };
 };
 
@@ -92,6 +86,7 @@ export interface RouteInquiryOptions {
   userEmail?: string | null;
   userId?: string | null;
   userName?: string | null;
+  intakeContext?: string;
 }
 
 export const routeInquiryWithAi = async ({
@@ -99,6 +94,7 @@ export const routeInquiryWithAi = async ({
   userEmail,
   userId,
   userName,
+  intakeContext,
 }: RouteInquiryOptions): Promise<RoutingResult> => {
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser?.content.trim()) {
@@ -109,14 +105,8 @@ export const routeInquiryWithAi = async ({
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, userEmail, userId, userName }),
+      body: JSON.stringify({ messages, userEmail, userId, userName, intakeContext }),
     });
-
-    if (res.status === 404 && import.meta.env.DEV) {
-      console.warn(
-        "[chat] /api/chat not found — run `npm run dev:api` (or deploy with GEMINI_API_KEY on Vercel) for live AI replies.",
-      );
-    }
 
     if (!res.ok) {
       return routeInquiryLocally(lastUser.content);
@@ -124,17 +114,10 @@ export const routeInquiryWithAi = async ({
 
     const data = (await res.json()) as RoutingResult;
     if (data.inquiryType && data.reply) {
-      if (import.meta.env.DEV && data.source === "fallback") {
-        console.warn(
-          "[chat] Server used keyword fallback — add GEMINI_API_KEY to Vercel (or .env.local for dev:api).",
-        );
-      }
       return data;
     }
   } catch {
-    if (import.meta.env.DEV) {
-      console.warn("[chat] /api/chat request failed — using local keyword fallback.");
-    }
+    /* fallback */
   }
 
   return routeInquiryLocally(lastUser.content);

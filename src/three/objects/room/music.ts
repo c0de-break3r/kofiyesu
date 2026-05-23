@@ -2,7 +2,7 @@ import { Box3, Mesh } from "three";
 import { raycast } from "../../utils/raycast";
 import { isFeatureEnabled } from "../../../utils/features";
 import { room } from ".";
-import { soundsEnabled } from "../../../features/sounds/composables/useHowler";
+import { soundsEnabled } from "@/features/sounds/soundState";
 import { notes } from "./notes";
 import { playSound } from "../../../features/sounds/utils/sounds";
 

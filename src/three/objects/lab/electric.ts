@@ -1,7 +1,7 @@
 import { ShaderMaterial } from "three";
 import gsap from "gsap";
-import { velocity } from "../../../composables/useScroll";
-import { isTouch } from "../../../composables/useAgent";
+import { velocity } from "@/lib/scrollState";
+import { isTouch } from "@/lib/device";
 import { lerp } from "../../../utils/math";
 import vertexShader from "../../shaders/lab-electric/vertex.glsl";
 import fragmentShader from "../../shaders/lab-electric/fragment.glsl";
