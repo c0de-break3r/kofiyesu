@@ -95,7 +95,9 @@ const navItems: {
 const mobilePillBase =
   "glass-surface flex items-center self-stretch rounded-full px-2 py-2";
 const mobilePillMain = `${mobilePillBase} min-w-0 flex-1`;
-const mobilePillAuth = `${mobilePillBase} shrink-0`;
+
+const MOBILE_AUTH_SIZE = "size-[4.25rem]";
+const mobileAuthCircle = `glass-surface flex ${MOBILE_AUTH_SIZE} shrink-0 items-center justify-center rounded-full`;
 
 const NAV_ICON_SIZE = "h-11 w-11";
 
@@ -128,12 +130,18 @@ function MobileNavCell({
 }
 
 function MobileAuthButton() {
+  const signInIcon = (
+    <span className={`flex ${NAV_ICON_SIZE} items-center justify-center text-neutral-400`}>
+      <NavIcon>
+        <IconUser />
+      </NavIcon>
+    </span>
+  );
+
   if (!isClerkConfigured) {
     return (
-      <Link to="/chat" className={mobilePillAuth} aria-label={t("sign-in")}>
-        <MobileNavCell>
-          <IconUser />
-        </MobileNavCell>
+      <Link to="/chat" className={mobileAuthCircle} aria-label={t("sign-in")}>
+        {signInIcon}
       </Link>
     );
   }
@@ -144,17 +152,15 @@ function MobileAuthButton() {
         <SignInButton mode="modal">
           <button
             type="button"
-            className={`${mobilePillAuth} border-0 bg-transparent p-0 font-[inherit]`}
+            className={`${mobileAuthCircle} border-0 bg-transparent p-0 font-[inherit]`}
             aria-label={t("sign-in")}
           >
-            <MobileNavCell>
-              <IconUser />
-            </MobileNavCell>
+            {signInIcon}
           </button>
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <div className={`${mobilePillAuth} min-w-[4.25rem] justify-center`} aria-label="Account">
+        <div className={mobileAuthCircle} aria-label="Account">
           <UserButton
             appearance={{
               elements: {
@@ -272,7 +278,7 @@ export function MobileNav() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[90] flex items-stretch justify-center gap-3 px-4 md:hidden"
+      className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[90] flex items-center justify-center gap-3 px-4 md:hidden"
       aria-label="Mobile navigation"
     >
       <nav className={`${mobilePillMain} justify-around`}>
