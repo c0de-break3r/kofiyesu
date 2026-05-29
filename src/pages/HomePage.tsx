@@ -7,8 +7,12 @@ import { Projects } from "@/features/home/Projects";
 import { ContactSection } from "@/features/home/ContactSection";
 import { Footer } from "@/components/layout/Footer";
 import { ThreeScene } from "@/components/three/ThreeScene";
+import { getLenis } from "@/hooks/useScroll";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { resetHomeScene } from "@/animations/resetHomeScene";
 
 export function HomePage() {
+  const reducedMotion = useReducedMotion();
   const aboutSpacerRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
   const contentDescriptionRef = useRef<HTMLDivElement>(null);
@@ -17,65 +21,90 @@ export function HomePage() {
   const contentProgressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    void import("@/three/core/renderer").then(({ renderer }) => renderer.setIsActive(true));
-  }, []);
+    resetHomeScene();
+    getLenis()?.scrollTo(0, { immediate: true });
+    void import("@/three/core/renderer").then(({ renderer }) =>
+      renderer.setIsActive(!reducedMotion),
+    );
+  }, [reducedMotion]);
 
   useEffect(() => {
-    const about = aboutSpacerRef.current;
-    const contact = contactRef.current;
-    const contentDescription = contentDescriptionRef.current;
-    const contentServices = contentServicesRef.current;
-    const contentDetails = contentDetailsRef.current;
-    const contentProgressCount = contentProgressRef.current;
-
-    if (!about || !contentDescription || !contentServices || !contentDetails || !contentProgressCount) {
-      return;
-    }
-
-    const tlDescription = gsap.timeline({ paused: true });
-    const tlServices = gsap.timeline({ paused: true });
-    const tlDetails = gsap.timeline({ paused: true });
+    if (reducedMotion) return;
 
     let destroyed = false;
+    let retryTimer = 0;
 
-    void import("@/animations").then(({ transitions }) => {
-      if (destroyed) return;
+    const setup = () => {
+      const about = aboutSpacerRef.current;
+      const contact = contactRef.current;
+      const contentDescription = contentDescriptionRef.current;
+      const contentServices = contentServicesRef.current;
+      const contentDetails = contentDetailsRef.current;
+      const contentProgressCount = contentProgressRef.current;
 
-      transitions.about.setup({
-        about,
-        contentDescription,
-        contentServices,
-        contentDetails,
-        contentProgressCount,
-        tlDescription,
-        tlServices,
-        tlDetails,
+      if (
+        !about ||
+        !contact ||
+        !contentDescription ||
+        !contentServices ||
+        !contentDetails ||
+        !contentProgressCount ||
+        !document.getElementById("hero-content-inner")
+      ) {
+        if (!destroyed) retryTimer = window.setTimeout(setup, 50);
+        return;
+      }
+
+      const tlDescription = gsap.timeline({ paused: true });
+      const tlServices = gsap.timeline({ paused: true });
+      const tlDetails = gsap.timeline({ paused: true });
+
+      void import("@/animations").then(({ transitions }) => {
+        if (destroyed) return;
+
+        transitions.about.setup({
+          about,
+          contentDescription,
+          contentServices,
+          contentDetails,
+          contentProgressCount,
+          tlDescription,
+          tlServices,
+          tlDetails,
+        });
+
+        transitions.contact.setup(contact);
+        requestAnimationFrame(() => ScrollTrigger.refresh());
       });
+    };
 
-      if (contact) transitions.contact.setup(contact);
-      requestAnimationFrame(() => ScrollTrigger.refresh());
-    });
+    setup();
 
     return () => {
       destroyed = true;
+      window.clearTimeout(retryTimer);
       void import("@/animations").then(({ transitions }) => {
         transitions.about.destroy();
-        if (contact) transitions.contact.destroy();
+        transitions.contact.destroy();
       });
     };
-  }, []);
+  }, [reducedMotion]);
 
   return (
-    <div className="relative pb-[calc(88px+env(safe-area-inset-bottom,0px))] md:pb-0">
+    <div id="main-content" className="relative pb-[calc(72px+env(safe-area-inset-bottom,0px))] md:pb-0">
       <div className="relative">
         <div className="sticky top-0 z-0 h-[100dvh] w-full overflow-hidden">
-          <ThreeScene />
-          <div className="pointer-events-none absolute inset-0 opacity-0" aria-hidden>
-            <div ref={contentDetailsRef} className="h-full w-full" />
-            <div ref={contentDescriptionRef} className="h-full w-full" />
-            <div ref={contentServicesRef} className="h-full w-full" />
-            <div ref={contentProgressRef} className="h-full w-full" />
-          </div>
+          {!reducedMotion ? <ThreeScene /> : (
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--room-bg)]/30 to-[var(--bg)]" aria-hidden />
+          )}
+          {!reducedMotion ? (
+            <div className="pointer-events-none absolute inset-0 opacity-0" aria-hidden>
+              <div ref={contentDetailsRef} className="h-full w-full" />
+              <div ref={contentDescriptionRef} className="h-full w-full" />
+              <div ref={contentServicesRef} className="h-full w-full" />
+              <div ref={contentProgressRef} className="h-full w-full" />
+            </div>
+          ) : null}
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 min-h-[100dvh]">
@@ -87,13 +116,16 @@ export function HomePage() {
         <div className="hidden h-[200px] md:block" aria-hidden />
       </div>
 
-      <div ref={aboutSpacerRef} id="about" className="min-h-[250dvh]" aria-hidden />
-      <About />
-      <Projects />
-      <div ref={contactRef}>
+      <div id="about" ref={aboutSpacerRef} className={`relative ${reducedMotion ? "min-h-0" : "min-h-[250dvh]"}`}>
+        <About />
+      </div>
+      <div id="projects" className="relative">
+        <Projects />
+      </div>
+      <div id="contact" ref={contactRef} className="relative">
         <ContactSection />
       </div>
-      <Footer />
+      <Footer className="pb-[calc(72px+env(safe-area-inset-bottom,0px))] md:pb-12" />
     </div>
   );
 }

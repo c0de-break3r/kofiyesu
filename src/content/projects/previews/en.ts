@@ -13,14 +13,14 @@ export default [
   {
     title: "Recon Automation Toolkit",
     slug: "security-recon-toolkit",
-    thumbnail: "/meta/logo-avatar.png",
+    thumbnail: "/meta/portrait.png",
     description: "Recon & automation for bug bounty workflows",
     tags: ["node", "javascript", "postgresql"],
   },
   {
     title: "API Pentest Workflows",
     slug: "api-pentest-workflows",
-    thumbnail: "/meta/logo-avatar.png",
+    thumbnail: "/meta/portrait.png",
     description: "REST API security testing methodology",
     tags: ["node", "postgresql", "react"],
   },

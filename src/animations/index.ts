@@ -3,6 +3,7 @@ import { scenes } from "./scenes";
 import { about } from "./transitions/about";
 import { contact } from "./transitions/contact";
 import { intro } from "./intro";
+import { resetHomeScene } from "./resetHomeScene";
 
 export const transitions = {
   about,
@@ -13,6 +14,7 @@ let isInitialized = false;
 
 const init = () => {
   if (isInitialized) return;
+  resetHomeScene();
   scenes.init();
   waypoints.init();
   intro.play();
@@ -21,6 +23,7 @@ const init = () => {
 
 const destroy = () => {
   if (!isInitialized) return;
+  resetHomeScene();
   scenes.destroy();
   waypoints.destroy();
   isInitialized = false;

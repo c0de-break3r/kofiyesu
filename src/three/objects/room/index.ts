@@ -31,7 +31,13 @@ let objects: {
   shelf: Mesh;
 } | null = null;
 
+let roomInitialized = false;
+
 const init = () => {
+  if (roomInitialized) return;
+  roomInitialized = true;
+
+  group.rotation.set(0, -2.1, 0);
   gsap.ticker.add(tick);
   initObjects();
   shadow.init();
@@ -103,14 +109,21 @@ const tick = () => {
 };
 
 const destroy = () => {
+  if (!roomInitialized) return;
+  roomInitialized = false;
+
   gsap.ticker.remove(tick);
   shadow.destroy();
-  //group.clear();
-  //objects = null;
+  messagePopup.destroy();
   desktops.destroy();
   mouse.destroy();
   penguin.destroy();
   music.destroy();
+
+  group.scale.set(1, 1, 1);
+  group.position.set(0, 0, 0);
+  group.rotation.set(0, -2.1, 0);
+  chairScrollRotation.set(0, 0, 0);
 };
 
 export const room = { init, destroy, group, chairScrollRotation };

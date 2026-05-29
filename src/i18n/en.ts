@@ -47,6 +47,16 @@ export const en = {
   "next-project": "Next project",
   "project-not-found": "Project not found",
   "back-to-work": "Back to work",
+  "scroll-explore": "Scroll to explore",
+  "contact-headline": "Let's work together",
+  "contact-subtitle": "Start with a quick intake, then chat about projects, pentesting, or collaboration.",
+  "download-cv": "Download résumé",
+  "view-github": "View GitHub",
+  "get-in-touch": "Get in touch",
+  "filter-all": "All",
+  "chat-guest-fallback": "Email Kofi directly while chat sign-in is unavailable.",
+  "chat-email-cta": "Send an email",
+  "sign-in": "Sign in",
 } as const;
 
 export type MessageKey = keyof typeof en;

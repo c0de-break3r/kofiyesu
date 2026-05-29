@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import staticPreviews from "@/content/projects/previews/en";
 import { projectModules } from "@/content/projects";
+import { fetchJson } from "@/lib/fetchJson";
 import type { ProjectContent, ProjectPreview } from "@/types/content";
 import { rowToContent, rowToPreview, type SiteAboutRow, type SiteProjectRow } from "@/types/site";
 
@@ -10,26 +11,15 @@ export function useSiteContent() {
   const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
-    try {
-      const [projectsRes, aboutRes] = await Promise.all([
-        fetch("/api/site/projects"),
-        fetch("/api/site/about"),
-      ]);
+    const [projectsData, aboutData] = await Promise.all([
+      fetchJson<{ projects?: SiteProjectRow[] }>("/api/site/projects"),
+      fetchJson<{ about?: SiteAboutRow | null }>("/api/site/about"),
+    ]);
 
-      if (projectsRes.ok) {
-        const data = (await projectsRes.json()) as { projects?: SiteProjectRow[] };
-        setProjects(data.projects ?? []);
-      }
+    if (projectsData?.projects?.length) setProjects(projectsData.projects);
+    if (aboutData?.about) setAbout(aboutData.about);
 
-      if (aboutRes.ok) {
-        const data = (await aboutRes.json()) as { about?: SiteAboutRow | null };
-        setAbout(data.about ?? null);
-      }
-    } catch (err) {
-      console.warn("[site-content] load failed", err);
-    } finally {
-      setLoaded(true);
-    }
+    setLoaded(true);
   }, []);
 
   useEffect(() => {

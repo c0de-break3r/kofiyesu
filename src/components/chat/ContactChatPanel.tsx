@@ -19,6 +19,8 @@ import {
   intakeNeedsAdmin,
 } from "@/lib/chatIntake";
 import { submitInquiry } from "@/lib/submitInquiry";
+import { clearIntakeDraft } from "@/lib/intakeDraft";
+import { social } from "@/content/social";
 
 interface Props {
   fixed?: boolean;
@@ -84,6 +86,7 @@ export function ContactChatPanel({ fixed }: Props) {
 
     setIntakeData(intake);
     sessionStorage.setItem(INTAKE_SESSION_KEY, "1");
+    clearIntakeDraft();
     setPhase("chat");
   };
 
@@ -144,6 +147,10 @@ export function ContactChatPanel({ fixed }: Props) {
           <SignInButton mode="modal">
             <Button>{t("chat-sign-in")}</Button>
           </SignInButton>
+          <p className="text-xs text-[var(--text-muted)]">{t("chat-guest-fallback")}</p>
+          <a href={social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev"}>
+            <Button variant="border">{t("chat-email-cta")}</Button>
+          </a>
         </div>
       )}
 

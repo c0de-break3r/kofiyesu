@@ -55,4 +55,19 @@ const destroy = () => {
   gsap.ticker.remove(tick);
 };
 
-export const scenes = { init, destroy };
+const resetSceneWeights = () => {
+  sceneWeightsInOut.hero.in = 1;
+  sceneWeightsInOut.hero.out = 0;
+  sceneWeightsInOut.about.in = 0;
+  sceneWeightsInOut.about.out = 0;
+  sceneWeightsInOut["about-1"].in = 0;
+  sceneWeightsInOut["about-1"].out = 0;
+  sceneWeightsInOut["about-2"].in = 0;
+  sceneWeightsInOut["about-2"].out = 0;
+  sceneWeightsInOut.contact.in = 0;
+  sceneWeightsInOut.contact.out = 0;
+  sceneWeights.projects = 0;
+  tick();
+};
+
+export const scenes = { init, destroy, resetSceneWeights };

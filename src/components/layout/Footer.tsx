@@ -8,11 +8,19 @@ const labels: Record<string, string> = {
   x: "X",
 };
 
-export function Footer({ withSocial = true }: { withSocial?: boolean }) {
+export function Footer({
+  withSocial = true,
+  className = "",
+}: {
+  withSocial?: boolean;
+  className?: string;
+}) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative w-full border-t border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-12">
+    <footer
+      className={`relative w-full border-t border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-12 ${className}`}
+    >
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6">
         {withSocial ? (
           <nav className="flex flex-wrap justify-center gap-3" aria-label="Social links">

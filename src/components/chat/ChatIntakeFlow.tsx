@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { t } from "@/i18n/en";
 import { inquiryRoutes, type InquiryType } from "@/content/contact";
@@ -9,24 +9,31 @@ import {
   intakeBudgetLabels,
   intakeTimelineLabels,
 } from "@/lib/chatIntake";
+import { clearIntakeDraft, loadIntakeDraft, saveIntakeDraft } from "@/lib/intakeDraft";
 
 interface Props {
   onComplete: (payload: ChatIntakeData) => void;
 }
 
 export function ChatIntakeFlow({ onComplete }: Props) {
-  const [step, setStep] = useState(0);
-  const [projectType, setProjectType] = useState<InquiryType | null>(null);
-  const [timeline, setTimeline] = useState<IntakeTimeline | null>(null);
-  const [budget, setBudget] = useState<IntakeBudget | null>(null);
-  const [summary, setSummary] = useState("");
-  const [urgent, setUrgent] = useState(false);
+  const draft = loadIntakeDraft();
+  const [step, setStep] = useState(draft?.step ?? 0);
+  const [projectType, setProjectType] = useState<InquiryType | null>(draft?.projectType ?? null);
+  const [timeline, setTimeline] = useState<IntakeTimeline | null>(draft?.timeline ?? null);
+  const [budget, setBudget] = useState<IntakeBudget | null>(draft?.budget ?? null);
+  const [summary, setSummary] = useState(draft?.summary ?? "");
+  const [urgent, setUrgent] = useState(draft?.urgent ?? false);
+
+  useEffect(() => {
+    saveIntakeDraft({ step, projectType, timeline, budget, summary, urgent });
+  }, [step, projectType, timeline, budget, summary, urgent]);
 
   const timelines = Object.entries(intakeTimelineLabels) as [IntakeTimeline, string][];
   const budgets = Object.entries(intakeBudgetLabels) as [IntakeBudget, string][];
 
   const submit = () => {
     if (!projectType || !timeline || summary.trim().length < 12) return;
+    clearIntakeDraft();
     onComplete({ projectType, timeline, budget, summary: summary.trim(), urgent });
   };
 

@@ -4,8 +4,8 @@ export type Theme = "light" | "dark";
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof document === "undefined") return "dark";
-    return (document.documentElement.dataset.theme as Theme) || "dark";
+    if (typeof document === "undefined") return "light";
+    return (document.documentElement.dataset.theme as Theme) || "light";
   });
 
   useEffect(() => {

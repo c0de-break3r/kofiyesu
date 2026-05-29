@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import Lenis from "lenis";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getReducedMotionPreference } from "@/hooks/useReducedMotion";
 
 let lenisInstance: Lenis | null = null;
 
@@ -21,6 +22,8 @@ export function useScroll() {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    const reducedMotion = getReducedMotionPreference();
+
     const tick = (time: number) => {
       lenisRef.current?.raf(time * 1000);
     };
@@ -30,7 +33,10 @@ export function useScroll() {
       lenisRef.current.off("scroll", handleScroll);
     }
 
-    lenisRef.current = new Lenis({ lerp: 0.08 });
+    lenisRef.current = new Lenis({
+      lerp: reducedMotion ? 1 : 0.08,
+      smoothWheel: !reducedMotion,
+    });
     lenisInstance = lenisRef.current;
     lenisRef.current.on("scroll", handleScroll);
     document.documentElement.classList.add("lenis");
@@ -38,7 +44,7 @@ export function useScroll() {
     ScrollTrigger.scrollerProxy(document.documentElement, {
       scrollTop(value?: number) {
         if (value !== undefined && lenisRef.current) {
-          lenisRef.current.scrollTo(value, { immediate: true });
+          lenisRef.current.scrollTo(value, { immediate: reducedMotion });
         }
         return lenisRef.current?.scroll ?? 0;
       },

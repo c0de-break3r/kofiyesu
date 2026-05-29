@@ -6,6 +6,7 @@ import { ProjectHero } from "@/features/projects/ProjectHero";
 import { ProjectBlocks } from "@/features/projects/ProjectBlocks";
 import { NextProject } from "@/features/projects/NextProject";
 import { Footer } from "@/components/layout/Footer";
+import { ProjectBackFab } from "@/components/layout/ProjectBackFab";
 import { t } from "@/i18n/en";
 
 export function ProjectPage() {
@@ -37,19 +38,24 @@ export function ProjectPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen px-6 py-24 pt-28">
+      <>
+        <ProjectBackFab />
+        <main id="main-content" className="min-h-screen px-6 py-24 pt-20 md:pt-28">
         <div className="mx-auto max-w-4xl animate-pulse space-y-4">
           <div className="h-4 w-24 rounded bg-[var(--border)]" />
           <div className="h-12 w-2/3 rounded bg-[var(--border)]" />
           <div className="h-24 rounded bg-[var(--border)]" />
         </div>
       </main>
+      </>
     );
   }
 
   if (notFound || !content) {
     return (
-      <main className="min-h-screen px-6 py-24 pt-28">
+      <>
+        <ProjectBackFab />
+        <main id="main-content" className="min-h-screen px-6 py-24 pt-20 md:pt-28">
         <div className="mx-auto max-w-4xl">
           <p className="text-lg font-bold">{t("project-not-found")}</p>
           <Link to="/#projects" className="mt-4 inline-block font-semibold text-[var(--color-accent)]">
@@ -57,12 +63,16 @@ export function ProjectPage() {
           </Link>
         </div>
       </main>
+      </>
     );
   }
 
   return (
-    <main
-      className={`min-h-screen px-6 py-24 pt-28 ${
+    <>
+      <ProjectBackFab />
+      <main
+        id="main-content"
+        className={`min-h-screen px-6 py-24 pt-20 md:pt-28 ${
         isLight ? "bg-zinc-100 text-zinc-900 [--text-muted:#52525b]" : "bg-zinc-950 text-zinc-50"
       }`}
     >
@@ -82,5 +92,6 @@ export function ProjectPage() {
       </div>
       <Footer withSocial={false} />
     </main>
+    </>
   );
 }

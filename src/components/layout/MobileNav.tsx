@@ -1,13 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { isClerkConfigured } from "@/lib/clerk";
+import { social } from "@/content/social";
 import { t } from "@/i18n/en";
 import { getLenis } from "@/hooks/useScroll";
+import { scrollToSectionHash } from "@/hooks/useHashScroll";
 
-type NavSection = "hero" | "about" | "projects" | "chat";
+type NavSection = "hero" | "about" | "projects" | "contact";
 
 function NavIcon({ children }: { children: ReactNode }) {
-  return <span className="h-5 w-5 [&_svg]:h-full [&_svg]:w-full">{children}</span>;
+  return <span className="h-[18px] w-[18px] [&_svg]:h-full [&_svg]:w-full">{children}</span>;
 }
 
 function IconHome() {
@@ -51,38 +55,146 @@ function IconProjects() {
   );
 }
 
-function IconChat() {
+function IconContact() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        d="M12 3C7.03 3 3 6.58 3 11c0 2.03.9 3.88 2.4 5.28L4 21l5.05-1.35A9.8 9.8 0 0 0 12 19c4.97 0 9-3.58 9-8s-4.03-8-9-8z"
+        d="M4 6h16v12H4V6z"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinejoin="round"
+      />
+      <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconUser() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
       />
     </svg>
   );
 }
 
-const scrollItems: { id: Exclude<NavSection, "chat" | "hero">; icon: typeof IconAbout; labelKey: "about" | "projects" }[] = [
+const navItems: {
+  id: NavSection;
+  icon: typeof IconHome;
+  labelKey: "home" | "about" | "projects" | "contact";
+}[] = [
+  { id: "hero", icon: IconHome, labelKey: "home" },
   { id: "about", icon: IconAbout, labelKey: "about" },
   { id: "projects", icon: IconProjects, labelKey: "projects" },
+  { id: "contact", icon: IconContact, labelKey: "contact" },
 ];
+
+const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev";
+
+function MobileAuthButton() {
+  if (!isClerkConfigured) {
+    return (
+      <a
+        href={mailLink}
+        className="flex h-[52px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full bg-white px-3 shadow-[0_4px_24px_rgba(0,0,0,0.1)] transition hover:text-[var(--color-accent)]"
+        aria-label={t("chat-email-cta")}
+      >
+        <span className="h-5 w-5 text-neutral-500 [&_svg]:h-full [&_svg]:w-full">
+          <IconContact />
+        </span>
+        <span className="text-[9px] font-bold leading-none text-neutral-500">{t("get-in-touch")}</span>
+      </a>
+    );
+  }
+
+  return (
+    <div className="flex h-[52px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full bg-white px-3 shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
+      <SignedOut>
+        <SignInButton mode="modal">
+          <button
+            type="button"
+            className="flex flex-col items-center gap-0.5 border-0 bg-transparent font-[inherit] text-neutral-500 transition hover:text-[var(--color-accent)]"
+            aria-label={t("sign-in")}
+          >
+            <span className="h-5 w-5 [&_svg]:h-full [&_svg]:w-full">
+              <IconUser />
+            </span>
+            <span className="text-[9px] font-bold leading-none">{t("sign-in")}</span>
+          </button>
+        </SignInButton>
+      </SignedOut>
+      <SignedIn>
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "h-9 w-9",
+            },
+          }}
+        />
+        <span className="text-[9px] font-bold leading-none text-neutral-400">Account</span>
+      </SignedIn>
+    </div>
+  );
+}
+
+function NavItem({
+  active,
+  label,
+  onClick,
+  icon: Icon,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+  icon: typeof IconHome;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-current={active ? "page" : undefined}
+      className="flex min-w-0 flex-1 flex-col items-center gap-1 border-0 bg-transparent px-0.5 py-0.5 font-[inherit]"
+    >
+      <span
+        className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+          active ? "bg-[var(--color-accent)] text-white" : "text-neutral-400"
+        }`}
+      >
+        <NavIcon>
+          <Icon />
+        </NavIcon>
+      </span>
+      <span
+        className={`text-[11px] font-semibold leading-none ${
+          active ? "text-[var(--color-accent)]" : "text-neutral-400"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
 
 export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection | null>("hero");
 
-  const isChatRoute = location.pathname.startsWith("/chat");
-  const isProjectRoute = location.pathname.startsWith("/project/");
   const isHome = location.pathname === "/";
-  const hidden = isProjectRoute;
+  const isProjectRoute = location.pathname.startsWith("/project/");
 
   const scrollToSection = (section: NavSection) => {
     setActiveSection(section);
     const lenis = getLenis();
     const target = section === "hero" ? 0 : `#${section}`;
+
+    if (section !== "hero") scrollToSectionHash(section);
 
     if (lenis) {
       lenis.scrollTo(target, { immediate: section === "hero" });
@@ -99,14 +211,8 @@ export function MobileNav() {
   };
 
   const scrollTo = (section: NavSection) => {
-    if (section === "chat") {
-      navigate("/chat");
-      setActiveSection("chat");
-      return;
-    }
-
     if (!isHome) {
-      navigate("/");
+      navigate(section === "hero" ? "/" : `/#${section}`);
       window.setTimeout(() => scrollToSection(section), 50);
       return;
     }
@@ -115,20 +221,16 @@ export function MobileNav() {
   };
 
   useEffect(() => {
-    if (isChatRoute) {
-      setActiveSection("chat");
-      return;
-    }
-
     if (!isHome) {
       setActiveSection(null);
       return;
     }
 
-    const sections: { id: Exclude<NavSection, "chat">; trigger: string }[] = [
+    const sections: { id: NavSection; trigger: string }[] = [
       { id: "hero", trigger: "#hero" },
       { id: "about", trigger: "#about" },
       { id: "projects", trigger: "#projects" },
+      { id: "contact", trigger: "#contact" },
     ];
 
     const observers = sections.map(({ id, trigger }) => {
@@ -146,70 +248,27 @@ export function MobileNav() {
     });
 
     return () => observers.forEach((o) => o?.disconnect());
-  }, [isChatRoute, isHome, location.pathname]);
+  }, [isHome, location.pathname]);
 
-  if (hidden) return null;
+  if (isProjectRoute) return null;
 
   return (
     <div
-      className="fixed bottom-[calc(12px+env(safe-area-inset-bottom,0px))] left-1/2 z-[90] flex w-[calc(100%-24px)] max-w-[420px] -translate-x-1/2 items-center justify-center md:hidden"
+      className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[90] flex items-end justify-center gap-3 px-4 md:hidden"
       aria-label="Mobile navigation"
     >
-      <nav className="flex w-full items-center justify-around gap-0.5 rounded-full border border-white/10 bg-[rgba(15,20,25,0.88)] px-2 py-1.5 shadow-[0_8px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl [data-theme=light]:border-[rgba(26,29,33,0.08)] [data-theme=light]:bg-[rgba(255,255,255,0.92)] [data-theme=light]:shadow-[0_8px_40px_rgba(0,0,0,0.12)]">
-        <button
-          type="button"
-          className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full border-0 bg-transparent px-1 py-2 font-[inherit] text-[10px] font-semibold tracking-wide transition ${
-            activeSection === "hero"
-              ? "bg-white/12 text-white [data-theme=light]:text-[var(--text)]"
-              : "text-white/55 [data-theme=light]:text-[rgba(26,29,33,0.45)]"
-          }`}
-          onClick={() => scrollTo("hero")}
-          aria-label={t("home")}
-          aria-current={activeSection === "hero" ? "page" : undefined}
-        >
-          <NavIcon>
-            <IconHome />
-          </NavIcon>
-          <span>{t("home")}</span>
-        </button>
-
-        {scrollItems.map(({ id, icon: Icon, labelKey }) => (
-          <button
+      <nav className="flex min-w-0 flex-1 items-center justify-around rounded-full bg-white px-2 py-2 shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
+        {navItems.map(({ id, icon, labelKey }) => (
+          <NavItem
             key={id}
-            type="button"
-            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full border-0 bg-transparent px-1 py-2 font-[inherit] text-[10px] font-semibold tracking-wide transition ${
-              activeSection === id
-                ? "bg-white/12 text-white [data-theme=light]:text-[var(--text)]"
-                : "text-white/55 [data-theme=light]:text-[rgba(26,29,33,0.45)]"
-            }`}
+            active={activeSection === id}
+            label={t(labelKey)}
+            icon={icon}
             onClick={() => scrollTo(id)}
-            aria-label={t(labelKey)}
-            aria-current={activeSection === id ? "page" : undefined}
-          >
-            <NavIcon>
-              <Icon />
-            </NavIcon>
-            <span>{t(labelKey)}</span>
-          </button>
+          />
         ))}
-
-        <button
-          type="button"
-          className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full border-0 bg-transparent px-1 py-2 font-[inherit] text-[10px] font-semibold tracking-wide transition ${
-            activeSection === "chat"
-              ? "bg-white/12 text-white [data-theme=light]:text-[var(--text)]"
-              : "text-white/55 [data-theme=light]:text-[rgba(26,29,33,0.45)]"
-          }`}
-          onClick={() => scrollTo("chat")}
-          aria-label={t("chat")}
-          aria-current={activeSection === "chat" ? "page" : undefined}
-        >
-          <NavIcon>
-            <IconChat />
-          </NavIcon>
-          <span>{t("chat")}</span>
-        </button>
       </nav>
+      <MobileAuthButton />
     </div>
   );
 }
