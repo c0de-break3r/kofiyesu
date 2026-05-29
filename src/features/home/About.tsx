@@ -1,5 +1,6 @@
 import { t } from "@/i18n/en";
 import { social } from "@/content/social";
+import { defaultAbout, defaultAboutIntroParagraphs } from "@/content/about";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { Button } from "@/components/ui/Button";
 
@@ -7,6 +8,12 @@ const github = social.find((s) => s.name === "github");
 
 export function About() {
   const { aboutText, services } = useSiteContent();
+
+  const introRaw = aboutText("about_intro", defaultAbout.about_intro);
+  const introParagraphs =
+    introRaw.includes("\n\n") ? introRaw.split(/\n\n+/).filter(Boolean) : [introRaw];
+
+  const tagline = aboutText("about_tagline", defaultAbout.about_tagline);
 
   return (
     <section id="about-content" className="relative w-full scroll-mt-[calc(var(--height-header,4.5rem)+0.5rem)] bg-[var(--bg)] px-6 pb-10 pt-10 md:pb-12 md:pt-12">
@@ -16,15 +23,14 @@ export function About() {
             {t("about")}
           </span>
           <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Background</h2>
-          <p className="mt-4 text-base leading-relaxed text-[var(--text-muted)]">
-            {aboutText(
-              "about_intro",
-              "I'm a Software Engineer and Cybersecurity Practitioner based in Ghana. I build production backend systems and security automation.",
-            )}
-          </p>
-          <p className="mt-4 text-sm font-medium text-[var(--text-muted)]">
-            {aboutText("about_tagline", "")}
-          </p>
+          <div className="mt-4 space-y-4 text-base leading-relaxed text-[var(--text-muted)]">
+            {(introParagraphs.length ? introParagraphs : defaultAboutIntroParagraphs).map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
+          </div>
+          {tagline ? (
+            <p className="mt-4 text-sm font-medium leading-relaxed text-[var(--text-muted)]">{tagline}</p>
+          ) : null}
           <div className="mt-6 flex flex-wrap gap-3">
             {github ? (
               <a href={github.url} target="_blank" rel="noreferrer">

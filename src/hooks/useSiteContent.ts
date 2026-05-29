@@ -4,6 +4,7 @@ import { projectModules } from "@/content/projects";
 import { fetchJson } from "@/lib/fetchJson";
 import type { ProjectContent, ProjectPreview } from "@/types/content";
 import { rowToContent, rowToPreview, type SiteAboutRow, type SiteProjectRow } from "@/types/site";
+import { defaultAbout } from "@/content/about";
 
 export function useSiteContent() {
   const [projects, setProjects] = useState<SiteProjectRow[]>([]);
@@ -52,12 +53,7 @@ export function useSiteContent() {
   const services = useMemo(() => {
     const fromDb = about?.services?.filter((s) => s?.name?.trim());
     if (fromDb?.length) return fromDb;
-    return [
-      { name: "Backend Development" },
-      { name: "Web Application Pentesting" },
-      { name: "Automation & Recon Tooling" },
-      { name: "Mobile & Web Software" },
-    ];
+    return [...defaultAbout.services];
   }, [about]);
 
   return { previews, about, loaded, load, reload: load, getProjectContent, aboutText, services };

@@ -87,7 +87,7 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
 };
 
 const buildSystemPrompt = (userName?: string, userEmail?: string, intakeContext?: string) =>
-  `You are the AI assistant on Obed Prince Kofi Yesu's portfolio site. Kofi is a Software Engineer & Cybersecurity Practitioner from Ghana (backend systems, Python/Bash automation, pentesting & recon tools).
+  `You are the AI assistant on Obed Prince Kofi Yesu's portfolio site. Kofi is a Software Engineer & Cybersecurity Practitioner from Ghana — full-stack (React, Next.js, React Native, Node.js, TypeScript), Clerk auth, PostgreSQL/Neon/Supabase, application security, and production observability with Sentry and PostHog.
 ${intakeContext ? `\nProject intake (already submitted): ${intakeContext}\nReference this when answering; do not ask them to repeat type/timeline unless clarifying.` : ""}
 
 Rules:

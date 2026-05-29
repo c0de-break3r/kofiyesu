@@ -96,6 +96,8 @@ const mobilePillBase =
   "glass-surface flex items-center self-stretch rounded-full px-2 py-2";
 const mobilePillMain = `${mobilePillBase} min-w-0 flex-1`;
 const mobilePillAuth = `${mobilePillBase} shrink-0`;
+const mobilePillAuthAvatar =
+  "glass-surface flex shrink-0 items-center justify-center self-stretch rounded-full p-1";
 
 function MobileNavCell({
   active,
@@ -117,7 +119,9 @@ function MobileNavCell({
   }`;
 
   return (
-    <div className={`flex min-w-[4.25rem] flex-col items-center gap-1 px-0.5 py-0.5 ${className}`}>
+    <div
+      className={`flex min-w-[4.25rem] flex-col items-center ${hideLabel ? "gap-0" : "gap-1"} px-0.5 py-0.5 ${className}`}
+    >
       {bareIcon ? (
         <div className="flex h-10 w-10 shrink-0 items-center justify-center">{children}</div>
       ) : (
@@ -169,15 +173,16 @@ function MobileAuthButton() {
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <MobileNavCell label="" bareIcon hideLabel>
+        <div className={mobilePillAuthAvatar} aria-label="Account">
           <UserButton
             appearance={{
               elements: {
-                avatarBox: "h-10 w-10",
+                avatarBox: "h-12 w-12",
+                userButtonTrigger: "focus:shadow-none",
               },
             }}
           />
-        </MobileNavCell>
+        </div>
       </SignedIn>
     </div>
   );
