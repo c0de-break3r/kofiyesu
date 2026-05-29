@@ -93,35 +93,28 @@ const navItems: {
 ];
 
 const mobilePillBase =
-  "glass-surface flex items-center self-stretch rounded-full px-2 py-2";
+  "glass-surface flex items-center self-stretch rounded-full px-1.5 py-1.5";
 const mobilePillMain = `${mobilePillBase} min-w-0 flex-1`;
-const mobilePillAuth = `${mobilePillBase} shrink-0`;
 const mobilePillAuthAvatar =
   "glass-surface flex shrink-0 items-center justify-center self-stretch rounded-full p-1";
 
 function MobileNavCell({
   active,
-  label,
   children,
   className = "",
   bareIcon = false,
-  hideLabel = false,
 }: {
   active?: boolean;
-  label: string;
   children: ReactNode;
   className?: string;
   bareIcon?: boolean;
-  hideLabel?: boolean;
 }) {
   const iconClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
     active && !bareIcon ? "bg-[var(--color-accent)] text-white" : bareIcon ? "" : "text-neutral-400"
   }`;
 
   return (
-    <div
-      className={`flex min-w-[4.25rem] flex-col items-center ${hideLabel ? "gap-0" : "gap-1"} px-0.5 py-0.5 ${className}`}
-    >
+    <div className={`flex min-w-0 flex-col items-center px-0.5 py-0.5 ${className}`} aria-hidden>
       {bareIcon ? (
         <div className="flex h-10 w-10 shrink-0 items-center justify-center">{children}</div>
       ) : (
@@ -129,15 +122,6 @@ function MobileNavCell({
           <NavIcon>{children}</NavIcon>
         </span>
       )}
-      {!hideLabel ? (
-        <span
-          className={`text-[11px] font-semibold leading-none ${
-            active ? "text-[var(--color-accent)]" : "text-neutral-400"
-          }`}
-        >
-          {label}
-        </span>
-      ) : null}
     </div>
   );
 }
@@ -145,12 +129,8 @@ function MobileNavCell({
 function MobileAuthButton() {
   if (!isClerkConfigured) {
     return (
-      <Link
-        to="/chat"
-        className={mobilePillAuth}
-        aria-label={t("sign-in")}
-      >
-        <MobileNavCell label={t("sign-in")}>
+      <Link to="/chat" className={mobilePillAuthAvatar} aria-label={t("sign-in")}>
+        <MobileNavCell active={false}>
           <IconUser />
         </MobileNavCell>
       </Link>
@@ -158,15 +138,15 @@ function MobileAuthButton() {
   }
 
   return (
-    <div className={mobilePillAuth}>
+    <>
       <SignedOut>
         <SignInButton mode="modal">
           <button
             type="button"
-            className="border-0 bg-transparent p-0 font-[inherit]"
+            className={`${mobilePillAuthAvatar} border-0 bg-transparent p-0 font-[inherit]`}
             aria-label={t("sign-in")}
           >
-            <MobileNavCell label={t("sign-in")}>
+            <MobileNavCell>
               <IconUser />
             </MobileNavCell>
           </button>
@@ -184,7 +164,7 @@ function MobileAuthButton() {
           />
         </div>
       </SignedIn>
-    </div>
+    </>
   );
 }
 
@@ -207,7 +187,7 @@ function NavItem({
       aria-current={active ? "page" : undefined}
       className="min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit]"
     >
-      <MobileNavCell active={active} label={label} className="mx-auto w-full min-w-0">
+      <MobileNavCell active={active} className="mx-auto w-full min-w-0">
         <Icon />
       </MobileNavCell>
     </button>
