@@ -25,34 +25,41 @@
 }
 
 @theme {
-  --color-accent: #f58220;
-  --color-accent-muted: #ff9a4d;
+  --color-accent: #f6672a;
+  --color-accent-muted: #f54900;
+  --color-accent-deep: #f54900;
   --font-sans: "Urbanist", system-ui, sans-serif;
 }
 
 @layer base {
   :root,
   [data-theme="light"] {
-    --room-bg: #f58220;
+    --color-accent: #f6672a;
+    --color-accent-muted: #f54900;
+    --color-accent-deep: #f54900;
+    --room-bg: #f6672a;
     --bg: #ffffff;
     --bg-elevated: #ffffff;
     --text: #1a1d21;
     --text-muted: #6b7280;
     --border: rgba(26, 29, 33, 0.08);
     --surface-projects: #f9fafb;
-    --chat-user: #f58220;
+    --chat-user: #f6672a;
     --chat-assistant: #f3f4f6;
   }
 
   [data-theme="dark"] {
-    --room-bg: #f58220;
+    --color-accent: #f6672a;
+    --color-accent-muted: #f54900;
+    --color-accent-deep: #f54900;
+    --room-bg: #f6672a;
     --bg: #ffffff;
     --bg-elevated: #ffffff;
     --text: #1a1d21;
     --text-muted: #6b7280;
     --border: rgba(26, 29, 33, 0.08);
     --surface-projects: #f9fafb;
-    --chat-user: #f58220;
+    --chat-user: #f6672a;
     --chat-assistant: #f3f4f6;
   }
 

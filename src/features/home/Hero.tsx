@@ -38,7 +38,7 @@ export function Hero() {
             <br />
             Kofi Yesu
           </h1>
-          <p className="inline-flex w-fit rotate-[-3deg] rounded-lg bg-[var(--color-accent)] px-4 py-1.5 text-sm font-bold text-white shadow-lg shadow-orange-500/25">
+          <p className="inline-flex w-fit rotate-[-3deg] rounded-lg bg-[var(--color-accent)] px-4 py-1.5 text-sm font-bold text-white shadow-lg shadow-[color-mix(in_srgb,var(--color-accent-deep)_30%,transparent)]">
             {aboutText("job_title", t("job-title"))}
           </p>
           <p className="text-sm font-semibold text-[var(--text-muted)]">

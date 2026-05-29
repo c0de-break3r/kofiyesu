@@ -117,7 +117,7 @@ export function HomePage() {
       </div>
 
       <div id="about" ref={aboutSpacerRef} className={`relative ${reducedMotion ? "min-h-0" : "min-h-[250dvh]"}`}>
-        <About />
+        <About scrollRootRef={aboutSpacerRef} />
       </div>
       <div id="projects" className="relative">
         <Projects />

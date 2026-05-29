@@ -4,7 +4,7 @@ type Variant = "accent" | "border" | "ghost" | "glass";
 
 const variantClass: Record<Variant, string> = {
   accent:
-    "bg-[var(--color-accent)] text-white hover:brightness-110 shadow-sm",
+    "bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-deep)] shadow-sm",
   border:
     "border border-[var(--border)] bg-transparent text-[var(--text)] hover:border-[var(--color-accent)]",
   ghost: "bg-transparent text-[var(--text-muted)] hover:text-[var(--text)]",

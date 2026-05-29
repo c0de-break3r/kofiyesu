@@ -185,7 +185,7 @@ export function ContactChatPanel({ fixed }: Props) {
           {(routing?.escalateToAdmin || mailtoUrl) && (
             <div className="shrink-0 space-y-2 border-t border-[var(--border)] px-4 py-3">
               {routing?.escalateToAdmin && (
-                <p className="rounded-lg bg-orange-500/10 px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
+                <p className="rounded-lg bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
                   {t("chat-escalated")}
                 </p>
               )}

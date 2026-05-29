@@ -53,13 +53,13 @@ export function AdminInquiriesSection() {
         <li
           key={item.id}
           className={`rounded-xl border p-3 text-sm ${
-            item.needs_admin ? "border-[var(--color-accent)] bg-orange-500/5" : "border-[var(--border)]"
+            item.needs_admin ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_5%,transparent)]" : "border-[var(--border)]"
           }`}
         >
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold uppercase text-[var(--color-accent)]">{item.inquiry_type}</span>
             {item.needs_admin && (
-              <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-bold uppercase">
+              <span className="rounded-full bg-[color-mix(in_srgb,var(--color-accent)_15%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase">
                 Urgent
               </span>
             )}

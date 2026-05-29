@@ -1,0 +1,16 @@
+---
+description: Brand orange palette — use these hex values whenever orange or accent colors are needed
+alwaysApply: true
+---
+
+# Brand orange
+
+When the user says "orange" or when choosing accent / brand orange colors:
+
+| Role | Hex | CSS variable |
+|------|-----|--------------|
+| Primary orange | `#f6672a` | `--color-accent` |
+| Deep orange (hover, shadows, secondary) | `#f54900` | `--color-accent-deep`, `--color-accent-muted` |
+
+- Prefer `var(--color-accent)` and `var(--color-accent-deep)` over Tailwind `orange-*` utilities or other hex values.
+- Do not use legacy oranges (`#f58220`, `#e85d04`, `#ff9a4d`, `orange-500`, etc.).
