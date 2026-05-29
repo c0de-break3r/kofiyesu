@@ -103,12 +103,14 @@ function MobileNavCell({
   children,
   className = "",
   bareIcon = false,
+  hideLabel = false,
 }: {
   active?: boolean;
   label: string;
   children: ReactNode;
   className?: string;
   bareIcon?: boolean;
+  hideLabel?: boolean;
 }) {
   const iconClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
     active && !bareIcon ? "bg-[var(--color-accent)] text-white" : bareIcon ? "" : "text-neutral-400"
@@ -123,13 +125,15 @@ function MobileNavCell({
           <NavIcon>{children}</NavIcon>
         </span>
       )}
-      <span
-        className={`text-[11px] font-semibold leading-none ${
-          active ? "text-[var(--color-accent)]" : "text-neutral-400"
-        }`}
-      >
-        {label}
-      </span>
+      {!hideLabel ? (
+        <span
+          className={`text-[11px] font-semibold leading-none ${
+            active ? "text-[var(--color-accent)]" : "text-neutral-400"
+          }`}
+        >
+          {label}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -165,7 +169,7 @@ function MobileAuthButton() {
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <MobileNavCell label="Account" bareIcon>
+        <MobileNavCell label="" bareIcon hideLabel>
           <UserButton
             appearance={{
               elements: {
