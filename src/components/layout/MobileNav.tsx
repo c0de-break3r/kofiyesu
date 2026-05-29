@@ -10,7 +10,7 @@ import { scrollToSectionHash } from "@/hooks/useHashScroll";
 type NavSection = "hero" | "about" | "projects" | "chat";
 
 function NavIcon({ children }: { children: ReactNode }) {
-  return <span className="h-[18px] w-[18px] [&_svg]:h-full [&_svg]:w-full">{children}</span>;
+  return <span className="h-5 w-5 [&_svg]:h-full [&_svg]:w-full">{children}</span>;
 }
 
 function IconHome() {
@@ -93,10 +93,11 @@ const navItems: {
 ];
 
 const mobilePillBase =
-  "glass-surface flex items-center self-stretch rounded-full px-1.5 py-1.5";
+  "glass-surface flex items-center self-stretch rounded-full px-2 py-2";
 const mobilePillMain = `${mobilePillBase} min-w-0 flex-1`;
-const mobilePillAuthAvatar =
-  "glass-surface flex shrink-0 items-center justify-center self-stretch rounded-full p-1";
+const mobilePillAuth = `${mobilePillBase} shrink-0`;
+
+const NAV_ICON_SIZE = "h-11 w-11";
 
 function MobileNavCell({
   active,
@@ -109,14 +110,14 @@ function MobileNavCell({
   className?: string;
   bareIcon?: boolean;
 }) {
-  const iconClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+  const iconClass = `flex ${NAV_ICON_SIZE} shrink-0 items-center justify-center rounded-full transition-colors ${
     active && !bareIcon ? "bg-[var(--color-accent)] text-white" : bareIcon ? "" : "text-neutral-400"
   }`;
 
   return (
-    <div className={`flex min-w-0 flex-col items-center px-0.5 py-0.5 ${className}`} aria-hidden>
+    <div className={`flex min-w-[4.25rem] flex-col items-center px-0.5 py-0.5 ${className}`} aria-hidden>
       {bareIcon ? (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center">{children}</div>
+        <div className={`flex ${NAV_ICON_SIZE} shrink-0 items-center justify-center`}>{children}</div>
       ) : (
         <span className={iconClass}>
           <NavIcon>{children}</NavIcon>
@@ -129,8 +130,8 @@ function MobileNavCell({
 function MobileAuthButton() {
   if (!isClerkConfigured) {
     return (
-      <Link to="/chat" className={mobilePillAuthAvatar} aria-label={t("sign-in")}>
-        <MobileNavCell active={false}>
+      <Link to="/chat" className={mobilePillAuth} aria-label={t("sign-in")}>
+        <MobileNavCell>
           <IconUser />
         </MobileNavCell>
       </Link>
@@ -143,7 +144,7 @@ function MobileAuthButton() {
         <SignInButton mode="modal">
           <button
             type="button"
-            className={`${mobilePillAuthAvatar} border-0 bg-transparent p-0 font-[inherit]`}
+            className={`${mobilePillAuth} border-0 bg-transparent p-0 font-[inherit]`}
             aria-label={t("sign-in")}
           >
             <MobileNavCell>
@@ -153,11 +154,11 @@ function MobileAuthButton() {
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <div className={mobilePillAuthAvatar} aria-label="Account">
+        <div className={`${mobilePillAuth} min-w-[4.25rem] justify-center`} aria-label="Account">
           <UserButton
             appearance={{
               elements: {
-                avatarBox: "h-12 w-12",
+                avatarBox: "h-14 w-14",
                 userButtonTrigger: "focus:shadow-none",
               },
             }}

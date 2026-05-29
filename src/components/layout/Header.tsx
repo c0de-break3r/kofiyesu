@@ -11,10 +11,9 @@ import { t } from "@/i18n/en";
 
 const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev";
 
-function DesktopAuthActions({ atHero }: { atHero: boolean }) {
-  const signInClass = atHero
-    ? "rounded-full border border-white/80 bg-white/95 px-4 py-2 text-sm font-bold text-[var(--text)] shadow-[0_4px_24px_rgba(0,0,0,0.12)] backdrop-blur transition hover:text-[var(--color-accent)]"
-    : "rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90";
+function DesktopAuthActions() {
+  const signInClass =
+    "glass-surface rounded-full px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-white/50 hover:border-white/70";
 
   if (!isClerkConfigured) {
     return (
@@ -34,13 +33,16 @@ function DesktopAuthActions({ atHero }: { atHero: boolean }) {
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-9 w-9 ring-2 ring-white/80 shadow-sm",
-            },
-          }}
-        />
+        <div className="glass-surface rounded-full p-1">
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "h-9 w-9",
+                userButtonTrigger: "focus:shadow-none",
+              },
+            }}
+          />
+        </div>
       </SignedIn>
     </>
   );
@@ -85,7 +87,6 @@ export function Header() {
   };
 
   const pillMode = isHome && scrolledPastHero;
-  const atHero = isHome && !scrolledPastHero;
 
   return (
     <header
@@ -148,7 +149,7 @@ export function Header() {
         )}
 
         <div className={`flex items-center gap-2 sm:gap-3 ${pillMode ? "pl-2" : "justify-self-end"}`}>
-          <DesktopAuthActions atHero={atHero} />
+          <DesktopAuthActions />
         </div>
       </div>
       </div>
