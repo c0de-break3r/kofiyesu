@@ -1,5 +1,6 @@
 import { scenes } from "./scenes";
 import { aboutProgress } from "./transitions/about";
+import { resources } from "../utils/resources";
 import { room } from "../three/objects/room";
 import { lab } from "../three/objects/lab";
 import { desktops } from "../three/objects/room/desktops";
@@ -17,5 +18,7 @@ export function resetHomeScene() {
   lab.group.rotation.set(0, 0, 0);
   lab.group.scale.set(1, 1, 1);
 
-  desktops.realign();
+  if (resources.items["room-model"]?.scene) {
+    desktops.realign();
+  }
 }

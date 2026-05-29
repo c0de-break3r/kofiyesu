@@ -39,6 +39,8 @@ const tick = () => {
 
   if (sceneWeights.hero < 0.95) return;
 
+  if (!isFeatureEnabled("avatar")) return;
+
   const bone = avatar.getRightHandBone();
   if (!bone) return;
 

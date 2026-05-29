@@ -35,24 +35,32 @@ let roomInitialized = false;
 
 const init = () => {
   if (roomInitialized) return;
-  roomInitialized = true;
 
   group.rotation.set(0, -2.1, 0);
-  gsap.ticker.add(tick);
   initObjects();
+  if (!objects) return;
+
+  roomInitialized = true;
+  gsap.ticker.add(tick);
   shadow.init();
   desktops.init();
   messagePopup.init();
-  if (objects?.mouse) mouse.init(objects.mouse);
-  if (objects?.penguin)
+  if (objects.mouse) mouse.init(objects.mouse);
+  if (objects.penguin && objects["penguin-wing-left"] && objects["penguin-wing-right"]) {
     penguin.init(objects.penguin, { left: objects["penguin-wing-left"], right: objects["penguin-wing-right"] });
+  }
 
-  if (objects?.music) music.init(objects.music);
+  if (objects.music) music.init(objects.music);
 };
 
 const initObjects = () => {
   if (objects) return;
+
   const resource = resources.items["room-model"];
+  if (!resource?.scene) {
+    if (import.meta.env.DEV) console.warn("[room] room-model not loaded — skipping room objects");
+    return;
+  }
 
   const penguin = resource.scene.children.find((child: Object3D) => child.name === "penguin") as
     | Object3D

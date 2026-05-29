@@ -51,6 +51,13 @@ const setupMesh = () => {
   teardownMesh();
 
   const resource = resources.items["room-model"];
+  if (!resource?.scene) {
+    if (import.meta.env.DEV) {
+      console.warn("[desktops] room-model not loaded — skipping screen mesh");
+    }
+    return;
+  }
+
   const desktop1 = findDesktopMesh(resource.scene, "desktop-plane-0");
   const desktop2 = findDesktopMesh(resource.scene, "desktop-plane-1");
 
@@ -86,6 +93,13 @@ const setupMesh = () => {
   geometry = merged;
 
   const texture = resources.items["desktops-texture"];
+  if (!texture) {
+    geometry.dispose();
+    geometry = null;
+    if (import.meta.env.DEV) console.warn("[desktops] desktops-texture not loaded");
+    return;
+  }
+
   texture.colorSpace = LinearSRGBColorSpace;
   texture.flipY = false;
   texture.wrapS = RepeatWrapping;

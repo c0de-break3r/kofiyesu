@@ -11,7 +11,7 @@ export function ChatPage() {
   return (
     <main
       id="main-content"
-      className="mx-auto flex h-[calc(100dvh-72px-env(safe-area-inset-bottom,0px))] max-w-3xl flex-col px-4 pb-4 pt-6 md:h-[calc(100dvh-5rem)] md:pb-6 md:pt-20 sm:px-6"
+      className="mx-auto flex h-[calc(100dvh-72px-env(safe-area-inset-bottom,0px))] max-w-3xl flex-col px-4 pb-4 pt-6 sm:px-6 md:h-[calc(100dvh-5rem)] md:pb-6 md:pt-20"
     >
       <div className="mb-4 hidden shrink-0 md:block">
         <Link to="/" className="text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--color-accent)]">

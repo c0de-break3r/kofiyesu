@@ -16,6 +16,11 @@ const init = () => {
 const initObjects = () => {
   const resource = resources.items["room-model"];
   const texture = resources.items["room-shadow-texture"];
+  if (!resource?.scene || !texture) {
+    if (import.meta.env.DEV) console.warn("[room/shadow] Missing room-model or room-shadow-texture");
+    return;
+  }
+
   texture.flipY = false;
 
   const mesh = resource.scene.children.find((child: Object3D) => child.name === "shadow-catcher");

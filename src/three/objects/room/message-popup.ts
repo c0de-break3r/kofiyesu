@@ -18,6 +18,11 @@ const initMesh = () => {
   if (mesh) return;
 
   const texture = resources.items["icon-spritesheet"];
+  if (!texture) {
+    if (import.meta.env.DEV) console.warn("[message-popup] icon-spritesheet not loaded");
+    return;
+  }
+
   texture.colorSpace = LinearSRGBColorSpace;
   texture.generateMipmaps = false;
   texture.minFilter = LinearFilter;
