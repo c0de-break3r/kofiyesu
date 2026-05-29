@@ -2,10 +2,49 @@ import { type MouseEvent, type PropsWithChildren } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/clerk";
+import { social } from "@/content/social";
 import { useHeaderScroll } from "@/hooks/useHeaderScroll";
+import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
 import { Logo } from "@/components/layout/Logo";
 import { t } from "@/i18n/en";
+
+const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev";
+
+function DesktopAuthActions({ atHero }: { atHero: boolean }) {
+  const signInClass = atHero
+    ? "rounded-full border border-white/80 bg-white/95 px-4 py-2 text-sm font-bold text-[var(--text)] shadow-[0_4px_24px_rgba(0,0,0,0.12)] backdrop-blur transition hover:text-[var(--color-accent)]"
+    : "rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90";
+
+  if (!isClerkConfigured) {
+    return (
+      <a href={mailLink} className={signInClass}>
+        {t("get-in-touch")}
+      </a>
+    );
+  }
+
+  return (
+    <>
+      <SignedOut>
+        <SignInButton mode="modal">
+          <button type="button" className={signInClass}>
+            {t("sign-in")}
+          </button>
+        </SignInButton>
+      </SignedOut>
+      <SignedIn>
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "h-9 w-9 ring-2 ring-white/80 shadow-sm",
+            },
+          }}
+        />
+      </SignedIn>
+    </>
+  );
+}
 
 function NavLink({
   href,
@@ -32,6 +71,13 @@ export function Header() {
   const isHome = location.pathname === "/";
   const scrolledPastHero = useHeaderScroll(isHome);
 
+  const handleHomeClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!isHome) return;
+    e.preventDefault();
+    getLenis()?.scrollTo(0, { immediate: false });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleSectionClick = (section: string) => (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome) return;
     e.preventDefault();
@@ -39,6 +85,7 @@ export function Header() {
   };
 
   const pillMode = isHome && scrolledPastHero;
+  const atHero = isHome && !scrolledPastHero;
 
   return (
     <header
@@ -72,14 +119,14 @@ export function Header() {
           <nav
             className={`flex items-center gap-1 ${pillMode ? "" : "justify-self-center gap-8 text-sm font-semibold"}`}
           >
+            <NavLink href="/" onClick={handleHomeClick}>
+              {t("home")}
+            </NavLink>
             <NavLink href="#about" onClick={handleSectionClick("about")}>
               {t("about")}
             </NavLink>
             <NavLink href="#projects" onClick={handleSectionClick("projects")}>
               {t("projects")}
-            </NavLink>
-            <NavLink href="#contact" onClick={handleSectionClick("contact")}>
-              {t("contact")}
             </NavLink>
             <button
               type="button"
@@ -101,30 +148,7 @@ export function Header() {
         )}
 
         <div className={`flex items-center gap-2 sm:gap-3 ${pillMode ? "pl-2" : "justify-self-end"}`}>
-          {isClerkConfigured ? (
-            <>
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <button
-                    type="button"
-                    className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-bold text-white transition hover:opacity-90"
-                  >
-                    {t("sign-in")}
-                  </button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-            </>
-          ) : (
-            <a
-              href="mailto:hello@kofiyesu.dev"
-              className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-bold text-white transition hover:opacity-90"
-            >
-              {t("get-in-touch")}
-            </a>
-          )}
+          <DesktopAuthActions atHero={atHero} />
         </div>
       </div>
       </div>

@@ -1,14 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { isClerkConfigured } from "@/lib/clerk";
-import { social } from "@/content/social";
 import { t } from "@/i18n/en";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
 
-type NavSection = "hero" | "about" | "projects" | "contact";
+type NavSection = "hero" | "about" | "projects" | "chat";
 
 function NavIcon({ children }: { children: ReactNode }) {
   return <span className="h-[18px] w-[18px] [&_svg]:h-full [&_svg]:w-full">{children}</span>;
@@ -55,16 +54,15 @@ function IconProjects() {
   );
 }
 
-function IconContact() {
+function IconChat() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        d="M4 6h16v12H4V6z"
+        d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3V6a1 1 0 0 1 1-1z"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
-      <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -86,45 +84,55 @@ function IconUser() {
 const navItems: {
   id: NavSection;
   icon: typeof IconHome;
-  labelKey: "home" | "about" | "projects" | "contact";
+  labelKey: "home" | "about" | "projects" | "chat";
 }[] = [
   { id: "hero", icon: IconHome, labelKey: "home" },
   { id: "about", icon: IconAbout, labelKey: "about" },
   { id: "projects", icon: IconProjects, labelKey: "projects" },
-  { id: "contact", icon: IconContact, labelKey: "contact" },
+  { id: "chat", icon: IconChat, labelKey: "chat" },
 ];
 
-const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev";
+const mobilePillClass =
+  "rounded-full bg-white px-2 py-2 shadow-[0_4px_24px_rgba(0,0,0,0.1)]";
 
 function MobileAuthButton() {
+  const iconWrap = (children: ReactNode, active = false) => (
+    <span
+      className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+        active ? "bg-[var(--color-accent)] text-white" : "text-neutral-400"
+      }`}
+    >
+      <NavIcon>{children}</NavIcon>
+    </span>
+  );
+
+  const labelClass = (active = false) =>
+    `text-[11px] font-semibold leading-none ${active ? "text-[var(--color-accent)]" : "text-neutral-400"}`;
+
   if (!isClerkConfigured) {
     return (
-      <a
-        href={mailLink}
-        className="flex h-[52px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full bg-white px-3 shadow-[0_4px_24px_rgba(0,0,0,0.1)] transition hover:text-[var(--color-accent)]"
-        aria-label={t("chat-email-cta")}
+      <Link
+        to="/chat"
+        className={`flex shrink-0 flex-col items-center gap-1 px-0.5 py-0.5 ${mobilePillClass}`}
+        aria-label={t("sign-in")}
       >
-        <span className="h-5 w-5 text-neutral-500 [&_svg]:h-full [&_svg]:w-full">
-          <IconContact />
-        </span>
-        <span className="text-[9px] font-bold leading-none text-neutral-500">{t("get-in-touch")}</span>
-      </a>
+        {iconWrap(<IconUser />)}
+        <span className={labelClass()}>{t("sign-in")}</span>
+      </Link>
     );
   }
 
   return (
-    <div className="flex h-[52px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full bg-white px-3 shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
+    <div className={`flex shrink-0 flex-col items-center gap-1 px-0.5 py-0.5 ${mobilePillClass}`}>
       <SignedOut>
         <SignInButton mode="modal">
           <button
             type="button"
-            className="flex flex-col items-center gap-0.5 border-0 bg-transparent font-[inherit] text-neutral-500 transition hover:text-[var(--color-accent)]"
+            className="flex flex-col items-center gap-1 border-0 bg-transparent p-0 font-[inherit]"
             aria-label={t("sign-in")}
           >
-            <span className="h-5 w-5 [&_svg]:h-full [&_svg]:w-full">
-              <IconUser />
-            </span>
-            <span className="text-[9px] font-bold leading-none">{t("sign-in")}</span>
+            {iconWrap(<IconUser />)}
+            <span className={labelClass()}>{t("sign-in")}</span>
           </button>
         </SignInButton>
       </SignedOut>
@@ -132,11 +140,11 @@ function MobileAuthButton() {
         <UserButton
           appearance={{
             elements: {
-              avatarBox: "h-9 w-9",
+              avatarBox: "h-10 w-10",
             },
           }}
         />
-        <span className="text-[9px] font-bold leading-none text-neutral-400">Account</span>
+        <span className={labelClass()}>Account</span>
       </SignedIn>
     </div>
   );
@@ -211,6 +219,11 @@ export function MobileNav() {
   };
 
   const scrollTo = (section: NavSection) => {
+    if (section === "chat") {
+      navigate("/chat");
+      return;
+    }
+
     if (!isHome) {
       navigate(section === "hero" ? "/" : `/#${section}`);
       window.setTimeout(() => scrollToSection(section), 50);
@@ -230,7 +243,6 @@ export function MobileNav() {
       { id: "hero", trigger: "#hero" },
       { id: "about", trigger: "#about" },
       { id: "projects", trigger: "#projects" },
-      { id: "contact", trigger: "#contact" },
     ];
 
     const observers = sections.map(({ id, trigger }) => {
@@ -257,11 +269,11 @@ export function MobileNav() {
       className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[90] flex items-end justify-center gap-3 px-4 md:hidden"
       aria-label="Mobile navigation"
     >
-      <nav className="flex min-w-0 flex-1 items-center justify-around rounded-full bg-white px-2 py-2 shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
+      <nav className={`flex min-w-0 flex-1 items-center justify-around ${mobilePillClass}`}>
         {navItems.map(({ id, icon, labelKey }) => (
           <NavItem
             key={id}
-            active={activeSection === id}
+            active={id === "chat" ? location.pathname.startsWith("/chat") : activeSection === id}
             label={t(labelKey)}
             icon={icon}
             onClick={() => scrollTo(id)}
