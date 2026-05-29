@@ -92,59 +92,88 @@ const navItems: {
   { id: "chat", icon: IconChat, labelKey: "chat" },
 ];
 
-const mobilePillClass =
-  "rounded-full bg-white px-2 py-2 shadow-[0_4px_24px_rgba(0,0,0,0.1)]";
+const mobilePillBase =
+  "glass-surface flex items-center self-stretch rounded-full px-2 py-2";
+const mobilePillMain = `${mobilePillBase} min-w-0 flex-1`;
+const mobilePillAuth = `${mobilePillBase} shrink-0`;
+
+function MobileNavCell({
+  active,
+  label,
+  children,
+  className = "",
+  bareIcon = false,
+}: {
+  active?: boolean;
+  label: string;
+  children: ReactNode;
+  className?: string;
+  bareIcon?: boolean;
+}) {
+  const iconClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+    active && !bareIcon ? "bg-[var(--color-accent)] text-white" : bareIcon ? "" : "text-neutral-400"
+  }`;
+
+  return (
+    <div className={`flex min-w-[4.25rem] flex-col items-center gap-1 px-0.5 py-0.5 ${className}`}>
+      {bareIcon ? (
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center">{children}</div>
+      ) : (
+        <span className={iconClass}>
+          <NavIcon>{children}</NavIcon>
+        </span>
+      )}
+      <span
+        className={`text-[11px] font-semibold leading-none ${
+          active ? "text-[var(--color-accent)]" : "text-neutral-400"
+        }`}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
 
 function MobileAuthButton() {
-  const iconWrap = (children: ReactNode, active = false) => (
-    <span
-      className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-        active ? "bg-[var(--color-accent)] text-white" : "text-neutral-400"
-      }`}
-    >
-      <NavIcon>{children}</NavIcon>
-    </span>
-  );
-
-  const labelClass = (active = false) =>
-    `text-[11px] font-semibold leading-none ${active ? "text-[var(--color-accent)]" : "text-neutral-400"}`;
-
   if (!isClerkConfigured) {
     return (
       <Link
         to="/chat"
-        className={`flex shrink-0 flex-col items-center gap-1 px-0.5 py-0.5 ${mobilePillClass}`}
+        className={mobilePillAuth}
         aria-label={t("sign-in")}
       >
-        {iconWrap(<IconUser />)}
-        <span className={labelClass()}>{t("sign-in")}</span>
+        <MobileNavCell label={t("sign-in")}>
+          <IconUser />
+        </MobileNavCell>
       </Link>
     );
   }
 
   return (
-    <div className={`flex shrink-0 flex-col items-center gap-1 px-0.5 py-0.5 ${mobilePillClass}`}>
+    <div className={mobilePillAuth}>
       <SignedOut>
         <SignInButton mode="modal">
           <button
             type="button"
-            className="flex flex-col items-center gap-1 border-0 bg-transparent p-0 font-[inherit]"
+            className="border-0 bg-transparent p-0 font-[inherit]"
             aria-label={t("sign-in")}
           >
-            {iconWrap(<IconUser />)}
-            <span className={labelClass()}>{t("sign-in")}</span>
+            <MobileNavCell label={t("sign-in")}>
+              <IconUser />
+            </MobileNavCell>
           </button>
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-10 w-10",
-            },
-          }}
-        />
-        <span className={labelClass()}>Account</span>
+        <MobileNavCell label="Account" bareIcon>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "h-10 w-10",
+              },
+            }}
+          />
+        </MobileNavCell>
       </SignedIn>
     </div>
   );
@@ -167,24 +196,11 @@ function NavItem({
       onClick={onClick}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className="flex min-w-0 flex-1 flex-col items-center gap-1 border-0 bg-transparent px-0.5 py-0.5 font-[inherit]"
+      className="min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit]"
     >
-      <span
-        className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-          active ? "bg-[var(--color-accent)] text-white" : "text-neutral-400"
-        }`}
-      >
-        <NavIcon>
-          <Icon />
-        </NavIcon>
-      </span>
-      <span
-        className={`text-[11px] font-semibold leading-none ${
-          active ? "text-[var(--color-accent)]" : "text-neutral-400"
-        }`}
-      >
-        {label}
-      </span>
+      <MobileNavCell active={active} label={label} className="mx-auto w-full min-w-0">
+        <Icon />
+      </MobileNavCell>
     </button>
   );
 }
@@ -266,10 +282,10 @@ export function MobileNav() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[90] flex items-end justify-center gap-3 px-4 md:hidden"
+      className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[90] flex items-stretch justify-center gap-3 px-4 md:hidden"
       aria-label="Mobile navigation"
     >
-      <nav className={`flex min-w-0 flex-1 items-center justify-around ${mobilePillClass}`}>
+      <nav className={`${mobilePillMain} justify-around`}>
         {navItems.map(({ id, icon, labelKey }) => (
           <NavItem
             key={id}

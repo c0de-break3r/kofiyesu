@@ -1,4 +1,5 @@
 import { social } from "@/content/social";
+import { getCurrentYear } from "@/lib/currentYear";
 
 const labels: Record<string, string> = {
   mail: "Email",
@@ -15,7 +16,7 @@ export function Footer({
   withSocial?: boolean;
   className?: string;
 }) {
-  const year = new Date().getFullYear();
+  const year = getCurrentYear();
 
   return (
     <footer

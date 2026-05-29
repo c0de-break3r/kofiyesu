@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "accent" | "border" | "ghost";
+type Variant = "accent" | "border" | "ghost" | "glass";
 
 const variantClass: Record<Variant, string> = {
   accent:
@@ -8,6 +8,8 @@ const variantClass: Record<Variant, string> = {
   border:
     "border border-[var(--border)] bg-transparent text-[var(--text)] hover:border-[var(--color-accent)]",
   ghost: "bg-transparent text-[var(--text-muted)] hover:text-[var(--text)]",
+  glass:
+    "glass-surface text-[var(--text)] transition hover:bg-white/50 hover:border-white/70",
 };
 
 export function Button({

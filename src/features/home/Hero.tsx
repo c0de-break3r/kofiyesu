@@ -1,4 +1,3 @@
-import { type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/layout/Logo";
@@ -6,15 +5,12 @@ import { ScrollCue } from "@/components/layout/ScrollCue";
 import { t } from "@/i18n/en";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
+import { getCurrentYear } from "@/lib/currentYear";
 
 export function Hero() {
   const navigate = useNavigate();
   const { aboutText } = useSiteContent();
-
-  const scrollTo = (id: string) => (e: MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    scrollToSectionHash(id);
-  };
+  const year = getCurrentYear();
 
   return (
     <section
@@ -32,8 +28,10 @@ export function Hero() {
         <Logo size={72} className="md:hidden" linked />
 
         <div className="flex flex-col gap-3 md:gap-4">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-accent)]">
-            Portfolio · {new Date().getFullYear()}
+          <p className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-accent)] md:justify-start">
+            Portfolio
+            <span className="hero-portfolio-dot" aria-hidden />
+            <time dateTime={String(year)}>{year}</time>
           </p>
           <h1 className="text-balance text-4xl font-black leading-[1.05] tracking-tight text-[var(--text)] sm:text-5xl xl:text-7xl">
             Obed Prince
@@ -48,36 +46,11 @@ export function Hero() {
           </p>
         </div>
 
-        <div className="flex w-full max-w-md flex-col items-center gap-3 md:max-w-none md:items-start">
-          <div className="flex flex-wrap justify-center gap-3 md:justify-start">
-            <Button onClick={() => navigate("/chat")}>{t("start-a-project")}</Button>
-            <Button variant="border" onClick={() => scrollToSectionHash("projects")}>
-              {t("view-work")}
-            </Button>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 md:justify-start">
-            <a
-              href="#about"
-              onClick={scrollTo("about")}
-              className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)] transition hover:text-[var(--color-accent)]"
-            >
-              {t("about")} ↓
-            </a>
-            <a
-              href="#projects"
-              onClick={scrollTo("projects")}
-              className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)] transition hover:text-[var(--color-accent)]"
-            >
-              {t("projects")} ↓
-            </a>
-            <a
-              href="#contact"
-              onClick={scrollTo("contact")}
-              className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)] transition hover:text-[var(--color-accent)]"
-            >
-              {t("contact")} ↓
-            </a>
-          </div>
+        <div className="flex flex-wrap justify-center gap-3 md:justify-start">
+          <Button onClick={() => navigate("/chat")}>{t("start-a-project")}</Button>
+          <Button variant="glass" onClick={() => scrollToSectionHash("projects")}>
+            {t("view-work")}
+          </Button>
         </div>
       </div>
       <ScrollCue />
