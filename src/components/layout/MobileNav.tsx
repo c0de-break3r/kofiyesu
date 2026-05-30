@@ -4,6 +4,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-reac
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { isClerkConfigured } from "@/lib/clerk";
 import { t } from "@/i18n/en";
+import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
 
@@ -204,6 +205,7 @@ function NavItem({
 export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { open: adminOpen } = useAdminPanel();
   const [activeSection, setActiveSection] = useState<NavSection | null>("hero");
 
   const isHome = location.pathname === "/";
@@ -274,7 +276,7 @@ export function MobileNav() {
     return () => observers.forEach((o) => o?.disconnect());
   }, [isHome, location.pathname]);
 
-  if (isProjectRoute) return null;
+  if (isProjectRoute || adminOpen) return null;
 
   return (
     <div
