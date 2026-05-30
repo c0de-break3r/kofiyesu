@@ -48,7 +48,7 @@ export const rowToPreview = (row: SiteProjectRow): ProjectPreview => ({
 
 export const rowToContent = (row: SiteProjectRow): ProjectContent => ({
   title: row.title,
-  theme: row.theme,
+  theme: "light",
   tags: row.tags ?? [],
   description: row.description ?? undefined,
   videoBorder: row.video_border,

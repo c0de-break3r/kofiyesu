@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { requireSignedInUserId } from "./lib/clerkAuth.js";
 import { isDatabaseConfigured, prisma } from "./lib/prisma.js";
 import { notifyAdminUrgentInquiry } from "./lib/notifyAdmin.js";
+import { toInputJson } from "./lib/prismaJson.js";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
 
@@ -52,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       userEmail: body.userEmail ?? null,
       userId,
       userName: body.userName ?? null,
-      intake: body.intake ?? undefined,
+      intake: toInputJson(body.intake),
     },
   });
 

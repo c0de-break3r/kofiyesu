@@ -23,7 +23,7 @@ export function ProjectHero({ content }: Props) {
       ) : null}
       {content.description ? (
         <div
-          className="prose prose-invert mt-6 max-w-none text-base leading-relaxed text-[var(--text-muted)] [&_a]:text-[var(--color-accent)]"
+          className="prose mt-6 max-w-none text-base leading-relaxed text-[var(--text-muted)] [&_a]:text-[var(--color-accent)]"
           dangerouslySetInnerHTML={{ __html: content.description }}
         />
       ) : null}

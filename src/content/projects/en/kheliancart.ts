@@ -4,7 +4,7 @@ import type { ProjectContent } from "../../types";
 
 export default {
   title: "KhelianCart",
-  theme: "dark",
+  theme: "light",
   tags: ["node", "postgresql", "javascript", "html", "css"],
   videoBorder: false,
   live: "https://kheliancart.com",

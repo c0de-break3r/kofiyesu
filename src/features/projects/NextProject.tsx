@@ -14,7 +14,7 @@ export function NextProject({ project }: Props) {
       to={`/project/${project.slug}`}
       className="group mt-16 flex flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] transition hover:border-[var(--color-accent)] md:flex-row"
     >
-      <div className="aspect-video w-full shrink-0 bg-zinc-800/20 md:aspect-auto md:w-2/5">
+      <div className="aspect-video w-full shrink-0 bg-zinc-100 md:aspect-auto md:w-2/5">
         {project.thumbnail ? (
           <img
             src={project.thumbnail}

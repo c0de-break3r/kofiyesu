@@ -7,8 +7,10 @@ import { ProjectHero } from "@/features/projects/ProjectHero";
 import { ProjectBlocks } from "@/features/projects/ProjectBlocks";
 import { NextProject } from "@/features/projects/NextProject";
 import { Footer } from "@/components/layout/Footer";
-import { ProjectBackFab } from "@/components/layout/ProjectBackFab";
 import { t } from "@/i18n/en";
+
+const projectPageClass =
+  "min-h-screen bg-white px-6 py-24 pt-20 text-[var(--text)] md:pt-28 [--bg:#ffffff] [--bg-elevated:#fafafa] [--border:rgba(26,29,33,0.08)] [--text:#1a1d21] [--text-muted:#6b7280]";
 
 export function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,8 +37,6 @@ export function ProjectPage() {
     return previews[(idx + 1) % previews.length] ?? null;
   }, [slug, previews]);
 
-  const isLight = content?.theme === "light";
-
   const projectDescription = useMemo(
     () => content?.description?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160),
     [content?.description],
@@ -50,60 +50,36 @@ export function ProjectPage() {
 
   if (loading) {
     return (
-      <>
-        <ProjectBackFab />
-        <main id="main-content" className="min-h-screen px-6 py-24 pt-20 md:pt-28">
+      <main id="main-content" className={projectPageClass}>
         <div className="mx-auto max-w-4xl animate-pulse space-y-4">
-          <div className="h-4 w-24 rounded bg-[var(--border)]" />
           <div className="h-12 w-2/3 rounded bg-[var(--border)]" />
           <div className="h-24 rounded bg-[var(--border)]" />
         </div>
       </main>
-      </>
     );
   }
 
   if (notFound || !content) {
     return (
-      <>
-        <ProjectBackFab />
-        <main id="main-content" className="min-h-screen px-6 py-24 pt-20 md:pt-28">
+      <main id="main-content" className={projectPageClass}>
         <div className="mx-auto max-w-4xl">
           <p className="text-lg font-bold">{t("project-not-found")}</p>
           <Link to="/#projects" className="mt-4 inline-block font-semibold text-[var(--color-accent)]">
-            {t("back-to-work")}
+            {t("projects")}
           </Link>
         </div>
       </main>
-      </>
     );
   }
 
   return (
-    <>
-      <ProjectBackFab />
-      <main
-        id="main-content"
-        className={`min-h-screen px-6 py-24 pt-20 md:pt-28 ${
-        isLight ? "bg-zinc-100 text-zinc-900 [--text-muted:#52525b]" : "bg-zinc-950 text-zinc-50"
-      }`}
-    >
+    <main id="main-content" className={projectPageClass}>
       <div className="mx-auto max-w-4xl">
-        <Link
-          to="/#projects"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-accent)] transition hover:opacity-80"
-        >
-          ← {t("back-to-work")}
-        </Link>
-
-        <div className="mt-8">
-          <ProjectHero content={content} />
-          <ProjectBlocks components={content.components} videoBorder={content.videoBorder} />
-          {nextProject && slug !== nextProject.slug ? <NextProject project={nextProject} /> : null}
-        </div>
+        <ProjectHero content={content} />
+        <ProjectBlocks components={content.components} videoBorder={content.videoBorder} />
+        {nextProject && slug !== nextProject.slug ? <NextProject project={nextProject} /> : null}
       </div>
       <Footer withSocial={false} />
     </main>
-    </>
   );
 }

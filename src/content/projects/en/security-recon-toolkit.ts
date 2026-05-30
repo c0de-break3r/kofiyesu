@@ -2,7 +2,7 @@ import type { ProjectContent } from "../../types";
 
 export default {
   title: "Recon Automation Toolkit",
-  theme: "dark",
+  theme: "light",
   tags: ["node", "javascript", "postgresql"],
   videoBorder: false,
   description:

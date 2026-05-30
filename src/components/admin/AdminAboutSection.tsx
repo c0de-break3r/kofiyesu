@@ -110,73 +110,76 @@ export function AdminAboutSection() {
   };
 
   return (
-    <section className="space-y-5">
-      <div>
-        <h2 className="text-lg font-black">About & vision</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Edit hero details, the three Background scroll paragraphs, your long-term vision, and service cards.
-        </p>
+    <section className="relative pb-24">
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-lg font-black">About & vision</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Edit hero details, the three Background scroll paragraphs, your long-term vision, and service cards.
+          </p>
+        </div>
+
+        <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Hero</p>
+          <AdminField label="Display name">
+            <AdminInput value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+          </AdminField>
+          <AdminField label="Job title">
+            <AdminInput value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
+          </AdminField>
+          <AdminField label="Location">
+            <AdminInput value={location} onChange={(e) => setLocation(e.target.value)} />
+          </AdminField>
+        </div>
+
+        <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Background (3 paragraphs)</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            These cycle on scroll in the About section. Leave a field empty to skip it.
+          </p>
+          <AdminField label="Paragraph 1">
+            <AdminTextarea rows={4} value={intro1} onChange={(e) => setIntro1(e.target.value)} />
+          </AdminField>
+          <AdminField label="Paragraph 2">
+            <AdminTextarea rows={4} value={intro2} onChange={(e) => setIntro2(e.target.value)} />
+          </AdminField>
+          <AdminField label="Paragraph 3">
+            <AdminTextarea rows={4} value={intro3} onChange={(e) => setIntro3(e.target.value)} />
+          </AdminField>
+        </div>
+
+        <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Vision</p>
+          <AdminField label="Long-term vision (tagline under Background)">
+            <AdminTextarea rows={3} value={vision} onChange={(e) => setVision(e.target.value)} />
+          </AdminField>
+        </div>
+
+        <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Services</p>
+          <AdminServicesEditor services={services} onChange={setServices} />
+        </div>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Hero</p>
-        <AdminField label="Display name">
-          <AdminInput value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-        </AdminField>
-        <AdminField label="Job title">
-          <AdminInput value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
-        </AdminField>
-        <AdminField label="Location">
-          <AdminInput value={location} onChange={(e) => setLocation(e.target.value)} />
-        </AdminField>
-      </div>
-
-      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Background (3 paragraphs)</p>
-        <p className="text-xs text-[var(--text-muted)]">
-          These cycle on scroll in the About section. Leave a field empty to skip it.
-        </p>
-        <AdminField label="Paragraph 1">
-          <AdminTextarea rows={4} value={intro1} onChange={(e) => setIntro1(e.target.value)} />
-        </AdminField>
-        <AdminField label="Paragraph 2">
-          <AdminTextarea rows={4} value={intro2} onChange={(e) => setIntro2(e.target.value)} />
-        </AdminField>
-        <AdminField label="Paragraph 3">
-          <AdminTextarea rows={4} value={intro3} onChange={(e) => setIntro3(e.target.value)} />
-        </AdminField>
-      </div>
-
-      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Vision</p>
-        <AdminField label="Long-term vision (tagline under Background)">
-          <AdminTextarea rows={3} value={vision} onChange={(e) => setVision(e.target.value)} />
-        </AdminField>
-      </div>
-
-      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Services</p>
-        <AdminServicesEditor services={services} onChange={setServices} />
-      </div>
-
-      {error ? <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p> : null}
-      {saved ? (
-        <p className="rounded-lg bg-green-500/10 px-3 py-2 text-sm font-semibold text-green-700">
-          Saved — changes are live on the home page.
-        </p>
-      ) : null}
-
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={() => void save()} disabled={saving}>
-          {saving ? "Saving…" : "Save about page"}
-        </Button>
-        <button
-          type="button"
-          onClick={resetToDefaults}
-          className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--color-accent)]"
-        >
-          Reset to defaults
-        </button>
+      <div className="sticky bottom-0 -mx-4 mt-6 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
+        {error ? <p className="mb-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p> : null}
+        {saved ? (
+          <p className="mb-2 rounded-lg bg-green-500/10 px-3 py-2 text-sm font-semibold text-green-700">
+            Saved — changes are live on the home page.
+          </p>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button className="min-w-[8rem]" onClick={() => void save()} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+          <button
+            type="button"
+            onClick={resetToDefaults}
+            className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--color-accent)]"
+          >
+            Reset to defaults
+          </button>
+        </div>
       </div>
     </section>
   );

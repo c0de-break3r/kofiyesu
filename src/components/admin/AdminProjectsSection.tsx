@@ -10,7 +10,6 @@ import type { SiteProjectRow } from "@/types/site";
 const emptyForm = () => ({
   slug: "",
   title: "",
-  theme: "dark" as "light" | "dark",
   tags: "",
   description: "",
   thumbnail_url: "",
@@ -61,7 +60,6 @@ export function AdminProjectsSection() {
     setForm({
       slug: row.slug,
       title: row.title,
-      theme: row.theme,
       tags: (row.tags ?? []).join(", "),
       description: row.description ?? "",
       thumbnail_url: row.thumbnail_url ?? "",
@@ -95,7 +93,6 @@ export function AdminProjectsSection() {
       const payload = {
         slug: form.slug,
         title: form.title,
-        theme: form.theme,
         tags: form.tags
           .split(",")
           .map((t) => t.trim())
@@ -265,17 +262,6 @@ export function AdminProjectsSection() {
               <AdminInput value={form.source_url} onChange={(e) => set("source_url", e.target.value)} />
             </AdminField>
           </div>
-
-          <AdminField label="Theme">
-            <select
-              value={form.theme}
-              onChange={(e) => set("theme", e.target.value as "light" | "dark")}
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
-            >
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </AdminField>
 
           <AdminField label="Tags (comma-separated)">
             <AdminInput

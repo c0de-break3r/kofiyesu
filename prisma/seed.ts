@@ -7,7 +7,7 @@ const projects = [
   {
     slug: "kheliancart",
     title: "KhelianCart",
-    theme: "dark",
+    theme: "light",
     tags: ["node", "postgresql", "javascript", "html", "css"],
     description:
       "Grocery ecommerce platform for Ho, Ghana — catalog, cart, checkout, and delivery partner workflows.",
@@ -49,7 +49,7 @@ const projects = [
   {
     slug: "security-recon-toolkit",
     title: "Recon Automation Toolkit",
-    theme: "dark",
+    theme: "light",
     tags: ["node", "javascript", "postgresql"],
     description:
       "Python and Bash tooling for bug bounty recon — asset discovery, scope tracking, and repeatable scan pipelines.",
