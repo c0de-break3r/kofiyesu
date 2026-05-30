@@ -6,6 +6,8 @@ import { AdminMediaUpload } from "./AdminMediaUpload";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { buildProjectComponents, extractProjectFormFromComponents } from "@/lib/projectComponents";
+import { normalizeProjectTags } from "@/lib/normalizeProjectTags";
+import { parseCommaList } from "@/lib/parseCommaList";
 import type { SiteProjectRow } from "@/types/site";
 
 const emptyForm = () => ({
@@ -113,14 +115,8 @@ export function AdminProjectsSection() {
       const payload = {
         slug: form.slug,
         title: form.title,
-        tags: form.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        tech_stack: form.tech_stack
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
+        tags: normalizeProjectTags(parseCommaList(form.tags)),
+        tech_stack: parseCommaList(form.tech_stack),
         description: form.description,
         thumbnail_url: form.thumbnail_url || null,
         preview_video_url: form.preview_video_url || null,
@@ -320,11 +316,11 @@ export function AdminProjectsSection() {
               </AdminField>
             </div>
 
-            <AdminField label="Tags (comma-separated slugs for filters)">
+            <AdminField label="Tags (comma-separated — filters on home page)">
               <AdminInput
                 value={form.tags}
                 onChange={(e) => set("tags", e.target.value)}
-                placeholder="react, node, postgresql"
+                placeholder="node, postgresql, react (or Node.js, PostgreSQL, React)"
               />
             </AdminField>
 

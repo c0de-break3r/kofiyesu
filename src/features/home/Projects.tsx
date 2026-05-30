@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 import { Tag } from "@/components/ui/Tag";
@@ -8,6 +8,7 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import type { TagVariant } from "@/lib/tagVariants";
 import { tagLabels } from "@/lib/tagVariants";
+import { normalizeProjectTags } from "@/lib/normalizeProjectTags";
 
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -28,16 +29,31 @@ export function Projects() {
   const { previews, loaded } = useSiteContent();
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
+  const previewsWithTags = useMemo(
+    () =>
+      previews.map((p) => ({
+        ...p,
+        tags: normalizeProjectTags(p.tags) as TagVariant[],
+      })),
+    [previews],
+  );
+
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    previews.forEach((p) => p.tags?.forEach((tag) => tags.add(tag)));
+    previewsWithTags.forEach((p) => p.tags?.forEach((tag) => tags.add(tag)));
     return Array.from(tags).sort();
-  }, [previews]);
+  }, [previewsWithTags]);
 
   const filtered = useMemo(() => {
-    if (!activeTag) return previews;
-    return previews.filter((p) => p.tags?.includes(activeTag as TagVariant));
-  }, [previews, activeTag]);
+    if (!activeTag) return previewsWithTags;
+    return previewsWithTags.filter((p) => p.tags?.includes(activeTag as TagVariant));
+  }, [previewsWithTags, activeTag]);
+
+  useEffect(() => {
+    if (!activeTag) return;
+    const stillValid = previewsWithTags.some((p) => p.tags?.includes(activeTag as TagVariant));
+    if (!stillValid) setActiveTag(null);
+  }, [previewsWithTags, activeTag]);
 
   const animate = !reducedMotion && inView;
   const revealTransition = reducedMotion ? { duration: 0 } : { duration: 0.65, ease: REVEAL_EASE };
@@ -198,8 +214,21 @@ export function Projects() {
               ))}
         </CardGrid>
 
-        {loaded && filtered.length === 0 ? (
-          <p className="py-12 text-center text-sm text-[var(--text-muted)]">No projects match this filter.</p>
+        {loaded && previewsWithTags.length === 0 ? (
+          <p className="py-12 text-center text-sm text-[var(--text-muted)]">
+            No projects published yet. Add and publish projects in the admin CMS.
+          </p>
+        ) : loaded && activeTag && filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <p className="text-sm text-[var(--text-muted)]">No projects match this filter.</p>
+            <button
+              type="button"
+              onClick={() => setActiveTag(null)}
+              className="mt-3 text-sm font-bold text-[var(--color-accent)] hover:underline"
+            >
+              {t("filter-all")}
+            </button>
+          </div>
         ) : null}
       </div>
     </section>
