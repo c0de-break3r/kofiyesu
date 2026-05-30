@@ -8,6 +8,7 @@ export interface SiteProjectRow {
   title: string;
   theme: "light" | "dark";
   tags: TagVariant[];
+  tech_stack: string[];
   description: string | null;
   thumbnail_url: string | null;
   preview_video_url: string | null;
@@ -50,6 +51,7 @@ export const rowToContent = (row: SiteProjectRow): ProjectContent => ({
   title: row.title,
   theme: "light",
   tags: row.tags ?? [],
+  techStack: (row.tech_stack ?? []).filter(Boolean),
   description: row.description ?? undefined,
   videoBorder: row.video_border,
   live: row.live_url ?? undefined,

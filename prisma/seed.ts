@@ -9,6 +9,7 @@ const projects = [
     title: "KhelianCart",
     theme: "light",
     tags: ["node", "postgresql", "javascript", "html", "css"],
+    techStack: ["Node.js", "PostgreSQL", "Express.js", "JavaScript", "HTML", "CSS"],
     description:
       "Grocery ecommerce platform for Ho, Ghana — catalog, cart, checkout, and delivery partner workflows.",
     thumbnailUrl: "/thumbnails/kheliancart.webp",
@@ -51,6 +52,7 @@ const projects = [
     title: "Recon Automation Toolkit",
     theme: "light",
     tags: ["node", "javascript", "postgresql"],
+    techStack: ["Node.js", "JavaScript", "PostgreSQL", "Python", "Bash"],
     description:
       "Python and Bash tooling for bug bounty recon — asset discovery, scope tracking, and repeatable scan pipelines.",
     thumbnailUrl: "/meta/logo-avatar.png",
@@ -83,6 +85,7 @@ const projects = [
     title: "API Pentest Workflows",
     theme: "light",
     tags: ["node", "postgresql", "react"],
+    techStack: ["Node.js", "PostgreSQL", "React", "REST API"],
     description:
       "Methodology and automation for testing REST APIs — auth flows, IDOR checks, and rate-limit validation.",
     thumbnailUrl: "/meta/logo-avatar.png",
@@ -142,6 +145,7 @@ async function main() {
         title: p.title,
         theme: p.theme,
         tags: p.tags,
+        techStack: "techStack" in p ? p.techStack : [],
         description: p.description,
         thumbnailUrl: p.thumbnailUrl,
         liveUrl: "liveUrl" in p ? p.liveUrl : null,
@@ -153,6 +157,7 @@ async function main() {
         title: p.title,
         theme: p.theme,
         tags: p.tags,
+        techStack: "techStack" in p ? p.techStack : [],
         description: p.description,
         thumbnailUrl: p.thumbnailUrl,
         liveUrl: "liveUrl" in p ? p.liveUrl : null,

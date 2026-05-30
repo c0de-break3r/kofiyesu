@@ -22,7 +22,7 @@ export function ServiceCard({ name, info }: { name: string; info?: string }) {
 
   return (
     <li
-      className={`rounded-xl border bg-[var(--bg-elevated)] px-4 py-3.5 transition-[border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      className={`rounded-xl border bg-[var(--bg-elevated)] px-4 py-3.5 transition-[border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hover:border-[color-mix(in_srgb,var(--color-accent)_45%,var(--border))] md:hover:shadow-[0_8px_24px_color-mix(in_srgb,var(--color-accent)_10%,transparent)] ${
         open ? "border-[color-mix(in_srgb,var(--color-accent)_40%,var(--border))] shadow-[0_8px_24px_color-mix(in_srgb,var(--color-accent)_10%,transparent)]" : "border-[var(--border)]"
       }`}
     >

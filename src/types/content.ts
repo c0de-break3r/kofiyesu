@@ -7,6 +7,7 @@ export interface ProjectContent {
   title: string;
   theme: "light" | "dark";
   tags: TagVariant[];
+  techStack?: string[];
   description?: string;
   videoBorder?: boolean;
   live?: string;

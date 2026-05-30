@@ -84,72 +84,58 @@ export function Header() {
     scrollToSectionHash(section);
   };
 
-  const pillMode = isHome && scrolledPastHero;
+  const handleNavSectionClick = (section: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (isHome) {
+      handleSectionClick(section)(e);
+      return;
+    }
+    e.preventDefault();
+    navigate(section === "hero" ? "/" : `/#${section}`);
+  };
+
+  const showLogo = !isHome || scrolledPastHero;
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 hidden md:block transition-all duration-300 ${
-        pillMode ? "pt-4" : ""
-      }`}
-    >
-      <div className={pillMode ? "flex justify-center px-4" : ""}>
+    <header className="fixed inset-x-0 top-0 z-50 hidden md:block transition-all duration-300">
       <div
-        className={`transition-all duration-300 ${
-          pillMode
-            ? "flex max-w-fit items-center gap-2 rounded-full border border-[var(--border)] bg-white/95 px-3 py-2 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl"
-            : `mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-4 ${
-                isHome
-                  ? "border-b border-transparent bg-transparent"
-                  : "border-b border-[var(--border)] bg-white/95 backdrop-blur-xl"
-              }`
+        className={`mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-4 transition-all duration-300 ${
+          isHome && !scrolledPastHero
+            ? "border-b border-transparent bg-transparent"
+            : "border-b border-[var(--border)] bg-white/95 backdrop-blur-xl"
         }`}
       >
         <Link
           to="/"
-          className={`flex items-center gap-3 transition hover:opacity-90 ${
-            pillMode ? "pr-2" : "justify-self-start"
-          } ${isHome && !scrolledPastHero ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          className={`flex items-center gap-3 justify-self-start transition hover:opacity-90 ${
+            showLogo ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         >
-          <Logo size={pillMode ? 32 : 40} />
+          <Logo size={40} />
           <span className="text-sm font-black tracking-tight text-[var(--text)]">Kofi Yesu</span>
         </Link>
 
-        {isHome ? (
-          <nav
-            className={`flex items-center gap-1 ${pillMode ? "" : "justify-self-center gap-8 text-sm font-semibold"}`}
-          >
-            <NavLink href="/" onClick={handleHomeClick}>
-              {t("home")}
-            </NavLink>
-            <NavLink href="#about" onClick={handleSectionClick("about")}>
-              {t("about")}
-            </NavLink>
-            <NavLink href="#projects" onClick={handleSectionClick("projects")}>
-              {t("projects")}
-            </NavLink>
-            <button
-              type="button"
-              onClick={() => navigate("/chat")}
-              className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
-            >
-              {t("chat")}
-            </button>
-          </nav>
-        ) : (
-          <Link
-            to="/"
-            className={`text-sm font-semibold text-[var(--text-muted)] transition hover:text-[var(--color-accent)] ${
-              pillMode ? "" : "justify-self-center"
-            }`}
-          >
+        <nav className="flex items-center justify-self-center gap-8 text-sm font-semibold">
+          <NavLink href="/" onClick={isHome ? handleHomeClick : undefined}>
             {t("home")}
-          </Link>
-        )}
+          </NavLink>
+          <NavLink href={isHome ? "#about" : "/#about"} onClick={handleNavSectionClick("about")}>
+            {t("about")}
+          </NavLink>
+          <NavLink href={isHome ? "#projects" : "/#projects"} onClick={handleNavSectionClick("projects")}>
+            {t("projects")}
+          </NavLink>
+          <button
+            type="button"
+            onClick={() => navigate("/chat")}
+            className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
+          >
+            {t("chat")}
+          </button>
+        </nav>
 
-        <div className={`flex items-center gap-2 sm:gap-3 ${pillMode ? "pl-2" : "justify-self-end"}`}>
+        <div className="flex items-center gap-2 sm:gap-3 justify-self-end">
           <DesktopAuthActions />
         </div>
-      </div>
       </div>
     </header>
   );

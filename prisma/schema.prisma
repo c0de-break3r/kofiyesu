@@ -28,6 +28,7 @@ model SiteProject {
   title        String
   theme        String   @default("dark")
   tags         Json     @default("[]")
+  techStack    Json     @default("[]") @map("tech_stack")
   description  String?
   thumbnailUrl String?  @map("thumbnail_url")
   previewVideoUrl String? @map("preview_video_url")

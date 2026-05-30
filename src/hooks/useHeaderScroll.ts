@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLenis } from "@/hooks/useScroll";
 
+/** True once the user has scrolled past the hero (desktop header shows logo + solid bar). */
 export function useHeaderScroll(enabled: boolean) {
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
 
@@ -11,19 +12,9 @@ export function useHeaderScroll(enabled: boolean) {
     }
 
     const update = () => {
-      const about = document.getElementById("about");
-      if (!about) {
-        setScrolledPastHero(false);
-        return;
-      }
-
-      const { top, bottom } = about.getBoundingClientRect();
-      const isLandscape = window.matchMedia("(orientation: landscape)").matches;
-      const heroOffset = isLandscape ? window.innerHeight * 0.225 : 0;
-      const enteredAbout = top - heroOffset < 0;
-      const leftAbout = bottom - 36 < 0;
-
-      setScrolledPastHero(enteredAbout && !leftAbout);
+      const lenisScroll = getLenis()?.scroll ?? 0;
+      const scrollY = lenisScroll || window.scrollY;
+      setScrolledPastHero(scrollY > 64);
     };
 
     update();

@@ -6,6 +6,7 @@ export const projectToApi = (row: SiteProject) => ({
   title: row.title,
   theme: row.theme,
   tags: row.tags,
+  tech_stack: row.techStack,
   description: row.description,
   thumbnail_url: row.thumbnailUrl,
   preview_video_url: row.previewVideoUrl,

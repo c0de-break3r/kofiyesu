@@ -12,6 +12,7 @@ const emptyForm = () => ({
   slug: "",
   title: "",
   tags: "",
+  tech_stack: "",
   description: "",
   thumbnail_url: "",
   preview_video_url: "",
@@ -76,6 +77,7 @@ export function AdminProjectsSection() {
       slug: row.slug,
       title: row.title,
       tags: (row.tags ?? []).join(", "),
+      tech_stack: (row.tech_stack ?? []).join(", "),
       description: row.description ?? "",
       thumbnail_url: row.thumbnail_url ?? "",
       preview_video_url: row.preview_video_url ?? "",
@@ -112,6 +114,10 @@ export function AdminProjectsSection() {
         slug: form.slug,
         title: form.title,
         tags: form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        tech_stack: form.tech_stack
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
@@ -314,11 +320,19 @@ export function AdminProjectsSection() {
               </AdminField>
             </div>
 
-            <AdminField label="Tags (comma-separated)">
+            <AdminField label="Tags (comma-separated slugs for filters)">
               <AdminInput
                 value={form.tags}
                 onChange={(e) => set("tags", e.target.value)}
                 placeholder="react, node, postgresql"
+              />
+            </AdminField>
+
+            <AdminField label="Tech stack (comma-separated, shown on project page)">
+              <AdminInput
+                value={form.tech_stack}
+                onChange={(e) => set("tech_stack", e.target.value)}
+                placeholder="Node.js, PostgreSQL, React, Express.js"
               />
             </AdminField>
 

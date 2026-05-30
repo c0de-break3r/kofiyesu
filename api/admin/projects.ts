@@ -38,6 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           title: String(body.title ?? slug),
           theme: body.theme === "light" ? "light" : "dark",
           tags: Array.isArray(body.tags) ? body.tags : [],
+          techStack: Array.isArray(body.tech_stack) ? body.tech_stack : [],
           description: body.description ? String(body.description) : null,
           thumbnailUrl: body.thumbnail_url ? String(body.thumbnail_url) : null,
           previewVideoUrl: body.preview_video_url ? String(body.preview_video_url) : null,
@@ -63,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (body.title !== undefined) data.title = String(body.title);
       if (body.theme !== undefined) data.theme = body.theme === "light" ? "light" : "dark";
       if (body.tags !== undefined) data.tags = body.tags;
+      if (body.tech_stack !== undefined) data.techStack = body.tech_stack;
       if (body.description !== undefined) data.description = body.description;
       if (body.thumbnail_url !== undefined) data.thumbnailUrl = body.thumbnail_url;
       if (body.preview_video_url !== undefined) data.previewVideoUrl = body.preview_video_url;
