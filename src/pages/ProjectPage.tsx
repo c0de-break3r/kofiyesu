@@ -6,7 +6,7 @@ import type { ProjectContent } from "@/types/content";
 import { ProjectHero } from "@/features/projects/ProjectHero";
 import { ProjectBlocks } from "@/features/projects/ProjectBlocks";
 import { NextProject } from "@/features/projects/NextProject";
-import { Footer } from "@/components/layout/Footer";
+import { ProjectBackLink } from "@/components/layout/ProjectBackLink";
 import { t } from "@/i18n/en";
 
 const projectPageClass =
@@ -51,9 +51,12 @@ export function ProjectPage() {
   if (loading) {
     return (
       <main id="main-content" className={projectPageClass}>
-        <div className="mx-auto max-w-4xl animate-pulse space-y-4">
-          <div className="h-12 w-2/3 rounded bg-[var(--border)]" />
-          <div className="h-24 rounded bg-[var(--border)]" />
+        <div className="mx-auto max-w-4xl space-y-6">
+          <ProjectBackLink />
+          <div className="animate-pulse space-y-4">
+            <div className="h-12 w-2/3 rounded bg-[var(--border)]" />
+            <div className="h-24 rounded bg-[var(--border)]" />
+          </div>
         </div>
       </main>
     );
@@ -62,9 +65,10 @@ export function ProjectPage() {
   if (notFound || !content) {
     return (
       <main id="main-content" className={projectPageClass}>
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-4xl space-y-4">
+          <ProjectBackLink />
           <p className="text-lg font-bold">{t("project-not-found")}</p>
-          <Link to="/#projects" className="mt-4 inline-block font-semibold text-[var(--color-accent)]">
+          <Link to="/#projects" className="inline-block font-semibold text-[var(--color-accent)]">
             {t("projects")}
           </Link>
         </div>
@@ -75,11 +79,11 @@ export function ProjectPage() {
   return (
     <main id="main-content" className={projectPageClass}>
       <div className="mx-auto max-w-4xl">
+        <ProjectBackLink className="mb-8" />
         <ProjectHero content={content} />
         <ProjectBlocks components={content.components} videoBorder={content.videoBorder} />
         {nextProject && slug !== nextProject.slug ? <NextProject project={nextProject} /> : null}
       </div>
-      <Footer withSocial={false} />
     </main>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { AdminActionBar } from "./AdminActionBar";
 import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
 import { AdminServicesEditor } from "./AdminServicesEditor";
 import { useAdminApi } from "@/hooks/useAdminApi";
@@ -110,8 +110,9 @@ export function AdminAboutSection() {
   };
 
   return (
-    <section className="relative pb-24">
-      <div className="space-y-5">
+    <section className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-5">
+        <div className="space-y-5">
         <div>
           <h2 className="text-lg font-black">About & vision</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
@@ -159,28 +160,26 @@ export function AdminAboutSection() {
           <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Services</p>
           <AdminServicesEditor services={services} onChange={setServices} />
         </div>
+        </div>
       </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-6 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
-        {error ? <p className="mb-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p> : null}
-        {saved ? (
-          <p className="mb-2 rounded-lg bg-green-500/10 px-3 py-2 text-sm font-semibold text-green-700">
-            Saved — changes are live on the home page.
-          </p>
-        ) : null}
-        <div className="flex flex-wrap items-center gap-3">
-          <Button className="min-w-[8rem]" onClick={() => void save()} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
+      <AdminActionBar
+        error={error}
+        success={saved ? "Saved — changes are live on the home page." : null}
+        saving={saving}
+        onSave={() => void save()}
+        saveLabel="Save"
+        extra={
           <button
             type="button"
             onClick={resetToDefaults}
-            className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--color-accent)]"
+            disabled={saving}
+            className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--color-accent)] disabled:opacity-50"
           >
             Reset to defaults
           </button>
-        </div>
-      </div>
+        }
+      />
     </section>
   );
 }

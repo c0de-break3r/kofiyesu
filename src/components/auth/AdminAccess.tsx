@@ -29,7 +29,7 @@ export function AdminFab() {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { toggle, open } = useAdminPanel();
 
-  if (!isClerkConfigured || !isLoaded || !isSignedIn || !isClerkAdminUser(userId)) {
+  if (!isClerkConfigured || !isLoaded || !isSignedIn || !isClerkAdminUser(userId) || open) {
     return null;
   }
 

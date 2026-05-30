@@ -1,5 +1,6 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { isCloudinaryConfigured, uploadMediaToCloudinary } from "@/lib/cloudinary";
+import { AdminStatusMessage } from "./AdminStatusMessage";
 
 type AdminMediaUploadProps = {
   label: string;
@@ -8,6 +9,7 @@ type AdminMediaUploadProps = {
   value: string;
   onChange: (url: string) => void;
   onError: (message: string) => void;
+  onSuccess?: (message: string) => void;
   previewType?: "image" | "video";
 };
 
@@ -18,10 +20,27 @@ export function AdminMediaUpload({
   value,
   onChange,
   onError,
+  onSuccess,
   previewType = "image",
 }: AdminMediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showUploadStatus = (message: string) => {
+    setUploadStatus(message);
+    onSuccess?.(message);
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+    statusTimer.current = setTimeout(() => setUploadStatus(null), 4000);
+  };
+
+  useEffect(
+    () => () => {
+      if (statusTimer.current) clearTimeout(statusTimer.current);
+    },
+    [],
+  );
 
   const onPick = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,13 +54,20 @@ export function AdminMediaUpload({
 
     try {
       setUploading(true);
+      setUploadStatus(null);
       const url = await uploadMediaToCloudinary(file);
       onChange(url);
+      showUploadStatus("Upload successful");
     } catch (err) {
       onError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
+  };
+
+  const removeMedia = () => {
+    onChange("");
+    showUploadStatus("Media removed");
   };
 
   const isVideo = previewType === "video" || /\.(mp4|webm|mov)(\?|$)/i.test(value);
@@ -70,15 +96,17 @@ export function AdminMediaUpload({
         {value ? (
           <button
             type="button"
-            onClick={() => onChange("")}
-            className="rounded-lg px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10"
+            onClick={removeMedia}
+            className="rounded-lg border border-red-500/30 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-500/10"
           >
-            Clear
+            Delete
           </button>
         ) : null}
       </div>
 
       <input ref={inputRef} type="file" accept={accept} className="sr-only" onChange={(e) => void onPick(e)} />
+
+      {uploadStatus ? <AdminStatusMessage type="success" message={uploadStatus} /> : null}
 
       {value ? (
         <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)]">
