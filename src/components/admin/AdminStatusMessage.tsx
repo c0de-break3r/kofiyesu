@@ -4,9 +4,9 @@ type AdminStatusMessageProps = {
 };
 
 const styles: Record<AdminStatusMessageProps["type"], string> = {
-  success: "bg-green-500/10 text-green-700",
-  error: "bg-red-500/10 text-red-600",
-  info: "bg-sky-500/10 text-sky-800",
+  success: "border border-green-600/35 bg-green-500/15 text-green-700",
+  error: "border border-red-600/35 bg-red-500/15 text-red-700",
+  info: "border border-sky-600/35 bg-sky-500/15 text-sky-800",
 };
 
 export function AdminStatusMessage({ type, message }: AdminStatusMessageProps) {

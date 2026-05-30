@@ -6,6 +6,7 @@ import type { ProjectContent } from "@/types/content";
 import { ProjectHero } from "@/features/projects/ProjectHero";
 import { ProjectBlocks } from "@/features/projects/ProjectBlocks";
 import { NextProject } from "@/features/projects/NextProject";
+import { ProjectPreviewVideo } from "@/features/projects/ProjectPreviewVideo";
 import { ProjectBackLink } from "@/components/layout/ProjectBackLink";
 import { t } from "@/i18n/en";
 
@@ -29,6 +30,11 @@ export function ProjectPage() {
       setLoading(false);
     });
   }, [slug, getProjectContent]);
+
+  const projectPreview = useMemo(
+    () => (slug ? previews.find((p) => p.slug === slug) : undefined),
+    [slug, previews],
+  );
 
   const nextProject = useMemo(() => {
     if (!slug || !previews.length) return null;
@@ -80,6 +86,15 @@ export function ProjectPage() {
     <main id="main-content" className={projectPageClass}>
       <div className="mx-auto max-w-4xl">
         <ProjectBackLink className="mb-8" />
+        {projectPreview?.previewVideo ? (
+          <div className="mb-8">
+            <ProjectPreviewVideo
+              src={projectPreview.previewVideo}
+              poster={projectPreview.thumbnail || undefined}
+              title={content.title}
+            />
+          </div>
+        ) : null}
         <ProjectHero content={content} />
         <ProjectBlocks components={content.components} videoBorder={content.videoBorder} />
         {nextProject && slug !== nextProject.slug ? <NextProject project={nextProject} /> : null}
