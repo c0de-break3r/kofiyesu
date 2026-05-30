@@ -51,9 +51,15 @@ export function useSiteContent() {
   );
 
   const services = useMemo(() => {
+    const defaultByName = Object.fromEntries(
+      defaultAbout.services.map((s) => [s.name, s.info ?? ""]),
+    );
     const fromDb = about?.services?.filter((s) => s?.name?.trim());
-    if (fromDb?.length) return fromDb;
-    return [...defaultAbout.services];
+    const list = fromDb?.length ? fromDb : [...defaultAbout.services];
+    return list.map((s) => ({
+      name: s.name,
+      info: s.info?.trim() || defaultByName[s.name] || "",
+    }));
   }, [about]);
 
   return { previews, about, loaded, load, reload: load, getProjectContent, aboutText, services };

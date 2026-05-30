@@ -20,6 +20,11 @@ export interface SiteProjectRow {
   updated_at: string;
 }
 
+export interface SiteService {
+  name: string;
+  info?: string;
+}
+
 export interface SiteAboutRow {
   id: string;
   display_name: string | null;
@@ -27,7 +32,7 @@ export interface SiteAboutRow {
   about_intro: string | null;
   about_tagline: string | null;
   location: string | null;
-  services: { name: string }[];
+  services: SiteService[];
   updated_at: string;
 }
 

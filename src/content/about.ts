@@ -9,12 +9,30 @@ export const defaultAbout = {
   about_tagline:
     "Driven by a long-term vision of building interactive, immersive, and gamified platforms inspired by modern digital ecosystems and social gaming experiences — creating applications that encourage creativity, collaboration, engagement, and digital identity at scale.",
   services: [
-    { name: "Full-Stack Web & Mobile" },
-    { name: "Secure Backend & REST APIs" },
-    { name: "Application & API Security" },
-    { name: "Auth & Real-time Systems" },
-    { name: "PostgreSQL & Cloud Data" },
-    { name: "Production Observability" },
+    {
+      name: "Full-Stack Web & Mobile",
+      info: "React, Next.js, React Native with Expo, TypeScript, Vite, Tailwind CSS, and shadcn/ui — from landing pages to cross-platform mobile apps.",
+    },
+    {
+      name: "Secure Backend & REST APIs",
+      info: "Node.js and Express APIs with validation, structured error handling, rate limiting, and architectures built for production traffic.",
+    },
+    {
+      name: "Application & API Security",
+      info: "Secure SDLC practices, OWASP-aware reviews, API hardening, auth security, and penetration-testing fundamentals baked into delivery.",
+    },
+    {
+      name: "Auth & Real-time Systems",
+      info: "Clerk authentication, session and role models, WebSockets, and live features that stay reliable under real user load.",
+    },
+    {
+      name: "PostgreSQL & Cloud Data",
+      info: "PostgreSQL on Neon and Supabase, MongoDB, Firebase Firestore, migrations, branching, and data layers that scale with the product.",
+    },
+    {
+      name: "Production Observability",
+      info: "Sentry for errors, PostHog for product analytics, logging, and monitoring so issues surface before users report them.",
+    },
   ],
 } as const;
 

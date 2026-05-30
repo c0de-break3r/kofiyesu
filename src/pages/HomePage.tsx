@@ -116,10 +116,22 @@ export function HomePage() {
         <div className="hidden h-[200px] md:block" aria-hidden />
       </div>
 
-      <div id="about" ref={aboutSpacerRef} className={`relative ${reducedMotion ? "min-h-0" : "min-h-[250dvh]"}`}>
-        <About scrollRootRef={aboutSpacerRef} />
+      <div
+        id="about"
+        ref={aboutSpacerRef}
+        className={`relative ${reducedMotion ? "min-h-0" : "min-h-[155dvh] md:min-h-[195dvh]"}`}
+      >
+        <div
+          className={
+            reducedMotion
+              ? undefined
+              : "sticky top-[calc(var(--height-header,4.5rem)+0.25rem)] z-10 bg-[var(--bg)] pb-2"
+          }
+        >
+          <About scrollRootRef={aboutSpacerRef} />
+        </div>
       </div>
-      <div id="projects" className="relative">
+      <div id="projects" className="relative -mt-1 md:mt-0">
         <Projects />
       </div>
       <div id="contact" ref={contactRef} className="relative">

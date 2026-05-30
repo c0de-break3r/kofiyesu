@@ -12,13 +12,19 @@ export function Logo({
   linked?: boolean;
 }) {
   const image = (
-    <img
-      src={PORTRAIT_SRC}
-      alt="Obed Prince Kofi Yesu"
-      width={size}
-      height={size}
-      className={`rounded-[22%] object-cover shadow-sm ${className}`}
-    />
+    <span
+      className={`app-icon-shell ${className}`}
+      style={{ width: size, height: size }}
+    >
+      <img
+        src={PORTRAIT_SRC}
+        alt="Obed Prince Kofi Yesu"
+        width={size}
+        height={size}
+        className="app-icon-img"
+        decoding="async"
+      />
+    </span>
   );
 
   if (linked) {
