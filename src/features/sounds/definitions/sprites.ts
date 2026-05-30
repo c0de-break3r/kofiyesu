@@ -1,3 +1,4 @@
+import "@/features/sounds/howlerConfig";
 import { Howl } from "howler";
 import contactSprite from "../../../assets/sounds/sprites/contact.ogg";
 import roomSprite from "../../../assets/sounds/sprites/room.mp3";

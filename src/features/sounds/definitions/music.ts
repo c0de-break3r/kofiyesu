@@ -1,3 +1,4 @@
+import "@/features/sounds/howlerConfig";
 import { Howl } from "howler";
 
 import trackLuci from "../../../assets/music/luci.ogg";

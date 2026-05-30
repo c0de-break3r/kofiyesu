@@ -15,6 +15,7 @@ import { AdminFab, AdminSignInOpenPanel } from "@/components/auth/AdminAccess";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import { SeoManager } from "@/components/seo/SeoManager";
 import { SiteContentProvider } from "@/hooks/useSiteContent";
+import { attachAudioUnlockOnGesture } from "@/features/sounds/unlockAudio";
 import { HomePage } from "@/pages/HomePage";
 import { ChatPage } from "@/pages/ChatPage";
 import { ProjectPage } from "@/pages/ProjectPage";
@@ -53,6 +54,10 @@ function AppRoutes() {
 export default function App() {
   useTheme();
   useScroll();
+
+  useEffect(() => {
+    attachAudioUnlockOnGesture();
+  }, []);
 
   return (
     <SiteContentProvider>
