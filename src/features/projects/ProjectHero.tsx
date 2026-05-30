@@ -1,9 +1,8 @@
-import { Tag } from "@/components/ui/Tag";
+import { ProjectTag } from "@/components/ui/ProjectTag";
 import { Button } from "@/components/ui/Button";
 import { ProjectTechStack } from "@/features/projects/ProjectTechStack";
 import { t } from "@/i18n/en";
 import type { ProjectContent } from "@/types/content";
-import type { TagVariant } from "@/lib/tagVariants";
 
 interface Props {
   content: ProjectContent;
@@ -24,7 +23,7 @@ export function ProjectHero({ content }: Props) {
         <ul className="mt-5 flex flex-wrap gap-2">
           {content.tags.map((tag) => (
             <li key={tag}>
-              <Tag variant={tag as TagVariant} />
+              <ProjectTag tag={tag} />
             </li>
           ))}
         </ul>

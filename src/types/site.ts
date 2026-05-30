@@ -1,5 +1,4 @@
 import type { ProjectComponent } from "./projects";
-import type { TagVariant } from "@/lib/tagVariants";
 import { normalizeProjectTags } from "@/lib/normalizeProjectTags";
 import type { ProjectContent, ProjectPreview } from "./content";
 
@@ -8,7 +7,7 @@ export interface SiteProjectRow {
   slug: string;
   title: string;
   theme: "light" | "dark";
-  tags: TagVariant[];
+  tags: string[];
   tech_stack: string[];
   description: string | null;
   thumbnail_url: string | null;
@@ -45,13 +44,13 @@ export const rowToPreview = (row: SiteProjectRow): ProjectPreview => ({
   thumbnail: row.thumbnail_url ?? "",
   previewVideo: row.preview_video_url ?? undefined,
   description: row.description?.replace(/<[^>]+>/g, " ").slice(0, 120) ?? "",
-  tags: normalizeProjectTags(row.tags as string[]).slice(0, 4) as TagVariant[],
+  tags: normalizeProjectTags(row.tags as string[]).slice(0, 4),
 });
 
 export const rowToContent = (row: SiteProjectRow): ProjectContent => ({
   title: row.title,
   theme: "light",
-  tags: normalizeProjectTags(row.tags as string[]) as TagVariant[],
+  tags: normalizeProjectTags(row.tags as string[]),
   techStack: (row.tech_stack ?? []).filter(Boolean),
   description: row.description ?? undefined,
   videoBorder: row.video_border,

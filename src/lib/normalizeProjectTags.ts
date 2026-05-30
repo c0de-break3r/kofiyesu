@@ -20,7 +20,24 @@ const aliases: Record<string, TagVariant> = {
   threejs: "three",
 };
 
-/** Map admin input (slug or display name) to a filter slug when possible. */
+/** Case-insensitive key used for filter matching. */
+export function tagFilterKey(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+/** Human-readable label for filters and pills. */
+export function tagDisplayLabel(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+
+  const lower = trimmed.toLowerCase();
+  if (slugSet.has(lower)) return tagLabels[lower as TagVariant];
+  if (labelToSlug.has(lower)) return tagLabels[labelToSlug.get(lower)!];
+
+  return trimmed;
+}
+
+/** Canonical stored tag: known tech → slug; categories keep readable label. */
 export function normalizeProjectTag(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
@@ -34,7 +51,7 @@ export function normalizeProjectTag(raw: string): string {
   if (slugSet.has(compact)) return compact;
   if (aliases[compact]) return aliases[compact];
 
-  return lower.replace(/\s+/g, "-");
+  return trimmed;
 }
 
 export function normalizeProjectTags(raw: string[] | null | undefined): string[] {
@@ -42,10 +59,15 @@ export function normalizeProjectTags(raw: string[] | null | undefined): string[]
   const out: string[] = [];
   for (const tag of raw ?? []) {
     const normalized = normalizeProjectTag(String(tag));
-    if (normalized && !seen.has(normalized)) {
-      seen.add(normalized);
-      out.push(normalized);
-    }
+    if (!normalized) continue;
+    const key = tagFilterKey(normalized);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(normalized);
   }
   return out;
+}
+
+export function projectHasTag(projectTags: string[] | undefined, filterKey: string): boolean {
+  return (projectTags ?? []).some((tag) => tagFilterKey(tag) === filterKey);
 }

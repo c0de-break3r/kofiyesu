@@ -1,12 +1,10 @@
 import { type MouseEvent, type PropsWithChildren } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/clerk";
 import { social } from "@/content/social";
-import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
-import { Logo } from "@/components/layout/Logo";
 import { t } from "@/i18n/en";
 
 const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.com";
@@ -74,7 +72,6 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
-  const scrolledPastHero = useHeaderScroll(isHome);
 
   const handleHomeClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome) return;
@@ -98,22 +95,10 @@ export function Header() {
     navigate(section === "hero" ? "/" : `/#${section}`);
   };
 
-  const showLogo = !isHome || scrolledPastHero;
-
   return (
     <header className="fixed inset-x-0 top-0 z-50 hidden bg-transparent md:block">
-      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 bg-transparent px-6 py-4">
-        <Link
-          to="/"
-          className={`flex items-center gap-3 justify-self-start transition hover:opacity-90 ${
-            showLogo ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
-        >
-          <Logo size={40} />
-          <span className="text-sm font-black tracking-tight text-[var(--text)]">Kofi Yesu</span>
-        </Link>
-
-        <nav className="flex items-center justify-self-center gap-8 text-sm font-semibold">
+      <div className="relative mx-auto flex max-w-6xl items-center justify-end bg-transparent px-6 py-4">
+        <nav className="absolute left-1/2 flex -translate-x-1/2 items-center gap-8 text-sm font-semibold">
           <NavLink href="/" onClick={isHome ? handleHomeClick : undefined}>
             {t("home")}
           </NavLink>
@@ -132,7 +117,7 @@ export function Header() {
           </button>
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3 justify-self-end">
+        <div className="flex items-center gap-2 sm:gap-3">
           <DesktopAuthActions />
         </div>
       </div>

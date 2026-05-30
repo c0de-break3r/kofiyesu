@@ -1,12 +1,9 @@
-import type { TagVariant } from "@/lib/tagVariants";
 import type { ProjectComponent } from "./projects";
-
-export type { TagVariant };
 
 export interface ProjectContent {
   title: string;
   theme: "light" | "dark";
-  tags: TagVariant[];
+  tags: string[];
   techStack?: string[];
   description?: string;
   videoBorder?: boolean;
@@ -21,5 +18,5 @@ export interface ProjectPreview {
   thumbnail: string;
   previewVideo?: string;
   description: string;
-  tags?: TagVariant[];
+  tags?: string[];
 }

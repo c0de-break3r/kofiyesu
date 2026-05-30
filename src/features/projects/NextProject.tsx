@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import { Tag } from "@/components/ui/Tag";
+import { ProjectTag } from "@/components/ui/ProjectTag";
 import { t } from "@/i18n/en";
 import type { ProjectPreview } from "@/types/content";
-import type { TagVariant } from "@/lib/tagVariants";
 
 interface Props {
   project: ProjectPreview;
@@ -32,7 +31,7 @@ export function NextProject({ project }: Props) {
           <ul className="flex flex-wrap gap-1.5">
             {project.tags.slice(0, 3).map((tag) => (
               <li key={tag}>
-                <Tag variant={tag as TagVariant} />
+                <ProjectTag tag={tag} />
               </li>
             ))}
           </ul>

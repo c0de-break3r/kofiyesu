@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Tag } from "@/components/ui/Tag";
+import { ProjectTag } from "@/components/ui/ProjectTag";
 import { ProjectCardSkeleton } from "@/components/ui/ProjectCardSkeleton";
 import { t } from "@/i18n/en";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import type { TagVariant } from "@/lib/tagVariants";
-import { tagLabels } from "@/lib/tagVariants";
-import { normalizeProjectTags } from "@/lib/normalizeProjectTags";
+import {
+  normalizeProjectTags,
+  projectHasTag,
+  tagDisplayLabel,
+  tagFilterKey,
+} from "@/lib/normalizeProjectTags";
 
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -33,25 +36,32 @@ export function Projects() {
     () =>
       previews.map((p) => ({
         ...p,
-        tags: normalizeProjectTags(p.tags) as TagVariant[],
+        tags: normalizeProjectTags(p.tags),
       })),
     [previews],
   );
 
   const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    previewsWithTags.forEach((p) => p.tags?.forEach((tag) => tags.add(tag)));
-    return Array.from(tags).sort();
+    const byKey = new Map<string, string>();
+    previewsWithTags.forEach((p) => {
+      p.tags?.forEach((tag) => {
+        const key = tagFilterKey(tag);
+        if (!byKey.has(key)) byKey.set(key, tag);
+      });
+    });
+    return Array.from(byKey.entries()).sort(([, a], [, b]) =>
+      tagDisplayLabel(a).localeCompare(tagDisplayLabel(b)),
+    );
   }, [previewsWithTags]);
 
   const filtered = useMemo(() => {
     if (!activeTag) return previewsWithTags;
-    return previewsWithTags.filter((p) => p.tags?.includes(activeTag as TagVariant));
+    return previewsWithTags.filter((p) => projectHasTag(p.tags, activeTag));
   }, [previewsWithTags, activeTag]);
 
   useEffect(() => {
     if (!activeTag) return;
-    const stillValid = previewsWithTags.some((p) => p.tags?.includes(activeTag as TagVariant));
+    const stillValid = previewsWithTags.some((p) => projectHasTag(p.tags, activeTag));
     if (!stillValid) setActiveTag(null);
   }, [previewsWithTags, activeTag]);
 
@@ -128,18 +138,18 @@ export function Projects() {
             >
               {t("filter-all")}
             </button>
-            {allTags.map((tag) => (
+            {allTags.map(([filterKey, tag]) => (
               <button
-                key={tag}
+                key={filterKey}
                 type="button"
-                onClick={() => setActiveTag(tag)}
+                onClick={() => setActiveTag(filterKey)}
                 className={`rounded-full border px-4 py-1.5 text-xs font-bold transition ${
-                  activeTag === tag
+                  activeTag === filterKey
                     ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-sm shadow-[color-mix(in_srgb,var(--color-accent-deep)_25%,transparent)]"
                     : "glass-surface border-transparent text-[var(--text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
                 }`}
               >
-                {tagLabels[tag as TagVariant] ?? tag}
+                {tagDisplayLabel(tag)}
               </button>
             ))}
           </FilterRow>
@@ -202,7 +212,7 @@ export function Projects() {
                         <ul className="flex flex-wrap gap-1.5">
                           {preview.tags.slice(0, 3).map((tag) => (
                             <li key={tag}>
-                              <Tag variant={tag as TagVariant} />
+                              <ProjectTag tag={tag} />
                             </li>
                           ))}
                         </ul>
