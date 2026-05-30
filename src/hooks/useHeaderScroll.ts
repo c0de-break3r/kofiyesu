@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { getLenis } from "@/hooks/useScroll";
 
-/** True once the user has scrolled past the hero (desktop header shows logo + solid bar). */
-export function useHeaderScroll(enabled: boolean) {
+/** True once scroll passes threshold (desktop header glass bar). */
+export function useHeaderScroll(enabled: boolean, threshold = 64) {
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export function useHeaderScroll(enabled: boolean) {
     const update = () => {
       const lenisScroll = getLenis()?.scroll ?? 0;
       const scrollY = lenisScroll || window.scrollY;
-      setScrolledPastHero(scrollY > 64);
+      setScrolledPastHero(scrollY > threshold);
     };
 
     update();
@@ -27,7 +27,7 @@ export function useHeaderScroll(enabled: boolean) {
       lenis?.off("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [enabled]);
+  }, [enabled, threshold]);
 
   return scrolledPastHero;
 }

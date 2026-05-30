@@ -1,4 +1,4 @@
-import { normalizeProjectTags, tagFilterKey } from "@/lib/normalizeProjectTags";
+import { featureTagsOnly, normalizeProjectTags, tagFilterKey } from "@/lib/normalizeProjectTags";
 
 export type ProjectFeature = {
   id: string;
@@ -10,7 +10,7 @@ export type ProjectFeature = {
 export const PROJECT_FEATURES: ProjectFeature[] = [
   {
     id: "web-applications",
-    label: "Web Applications",
+    label: "Web Application",
     match: [
       "web applications",
       "web application",
@@ -24,7 +24,7 @@ export const PROJECT_FEATURES: ProjectFeature[] = [
   },
   {
     id: "mobile-applications",
-    label: "Mobile Applications",
+    label: "Mobile Application",
     match: [
       "mobile applications",
       "mobile application",
@@ -36,7 +36,7 @@ export const PROJECT_FEATURES: ProjectFeature[] = [
   },
   {
     id: "recon-automation-tools",
-    label: "Recon Automation Tools",
+    label: "Recon Automation Tool",
     match: [
       "recon automation tools",
       "recon automation tool",
@@ -57,9 +57,7 @@ function featureTokensEqual(a: string, b: string): boolean {
   if (left === right) return true;
 
   const singular = (value: string) => (value.endsWith("s") ? value.slice(0, -1) : value);
-  if (singular(left) === singular(right)) return true;
-
-  return left.includes(right) || right.includes(left);
+  return singular(left) === singular(right);
 }
 
 function tagMatchesFeaturePattern(tag: string, pattern: string): boolean {
@@ -74,7 +72,7 @@ export function projectMatchesFeature(projectTags: string[] | undefined, feature
     return keys.includes(featureId);
   }
 
-  const tagKeys = normalizeProjectTags(projectTags).map(tagFilterKey);
+  const tagKeys = featureTagsOnly(projectTags).map(tagFilterKey);
   return tagKeys.some((tag) => feature.match.some((pattern) => tagMatchesFeaturePattern(tag, pattern)));
 }
 

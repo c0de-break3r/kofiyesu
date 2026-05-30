@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/clerk";
 import { social } from "@/content/social";
+import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
 import { t } from "@/i18n/en";
@@ -73,6 +74,10 @@ export function Header() {
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const isProjectRoute = location.pathname.startsWith("/project/");
+  const isChatRoute = location.pathname.startsWith("/chat");
+  const isMinimalNav = isProjectRoute || isChatRoute;
+  const scrolled = useHeaderScroll(true, 48);
+  const showGlass = scrolled || isMinimalNav;
 
   const handleHomeClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome) return;
@@ -97,38 +102,46 @@ export function Header() {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 hidden bg-transparent md:block">
-      <div className="relative mx-auto flex max-w-6xl items-center justify-end bg-transparent px-6 py-4">
-        <nav className="absolute left-1/2 flex -translate-x-1/2 items-center gap-8 text-sm font-semibold">
-          {isProjectRoute ? (
-            <NavLink href="/">{t("home")}</NavLink>
-          ) : (
-            <>
-              <NavLink href="/" onClick={isHome ? handleHomeClick : undefined}>
-                {t("home")}
-              </NavLink>
-              <NavLink href={isHome ? "#about" : "/#about"} onClick={handleNavSectionClick("about")}>
-                {t("about")}
-              </NavLink>
-              <NavLink
-                href={isHome ? "#projects" : "/#projects"}
-                onClick={handleNavSectionClick("projects")}
-              >
-                {t("projects")}
-              </NavLink>
-              <button
-                type="button"
-                onClick={() => navigate("/chat")}
-                className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
-              >
-                {t("chat")}
-              </button>
-            </>
-          )}
-        </nav>
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 hidden md:block">
+      <div className="pointer-events-auto mx-auto max-w-6xl px-4 pt-3">
+        <div
+          className={`relative flex items-center justify-end transition-all duration-500 ease-out ${
+            showGlass
+              ? "glass-surface rounded-2xl px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
+              : "bg-transparent px-2 py-4"
+          }`}
+        >
+          <nav className="absolute left-1/2 flex -translate-x-1/2 items-center gap-8 text-sm font-semibold">
+            {isMinimalNav ? (
+              <NavLink href="/">{t("home")}</NavLink>
+            ) : (
+              <>
+                <NavLink href="/" onClick={isHome ? handleHomeClick : undefined}>
+                  {t("home")}
+                </NavLink>
+                <NavLink href={isHome ? "#about" : "/#about"} onClick={handleNavSectionClick("about")}>
+                  {t("about")}
+                </NavLink>
+                <NavLink
+                  href={isHome ? "#projects" : "/#projects"}
+                  onClick={handleNavSectionClick("projects")}
+                >
+                  {t("projects")}
+                </NavLink>
+                <button
+                  type="button"
+                  onClick={() => navigate("/chat")}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
+                >
+                  {t("chat")}
+                </button>
+              </>
+            )}
+          </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <DesktopAuthActions />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <DesktopAuthActions />
+          </div>
         </div>
       </div>
     </header>
