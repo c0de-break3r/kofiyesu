@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "@/hooks/useTheme";
@@ -17,8 +17,9 @@ import { SeoManager } from "@/components/seo/SeoManager";
 import { SiteContentProvider } from "@/hooks/useSiteContent";
 import { attachAudioUnlockOnGesture } from "@/features/sounds/unlockAudio";
 import { HomePage } from "@/pages/HomePage";
-import { ChatPage } from "@/pages/ChatPage";
-import { ProjectPage } from "@/pages/ProjectPage";
+
+const ChatPage = lazy(() => import("@/pages/ChatPage").then((m) => ({ default: m.ChatPage })));
+const ProjectPage = lazy(() => import("@/pages/ProjectPage").then((m) => ({ default: m.ProjectPage })));
 
 function AppRoutes() {
   const location = useLocation();
@@ -43,11 +44,13 @@ function AppRoutes() {
   }, [location.pathname, reducedMotion]);
 
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/chat/*" element={<ChatPage />} />
-      <Route path="/project/:slug" element={<ProjectPage />} />
-    </Routes>
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/chat/*" element={<ChatPage />} />
+        <Route path="/project/:slug" element={<ProjectPage />} />
+      </Routes>
+    </Suspense>
   );
 }
 

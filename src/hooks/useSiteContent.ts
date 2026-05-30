@@ -11,7 +11,7 @@ import {
 import staticPreviews from "@/content/projects/previews/en";
 import { projectModules } from "@/content/projects";
 import { fetchJson } from "@/lib/fetchJson";
-import { takePrefetchedAbout, takePrefetchedProjects } from "@/lib/prefetchSiteContent";
+import { takePrefetchedAbout, takePrefetchedProjects, readCachedProjects, writeCachedProjects } from "@/lib/prefetchSiteContent";
 import type { ProjectContent, ProjectPreview } from "@/types/content";
 import { rowToContent, rowToPreview, type SiteAboutRow, type SiteProjectRow } from "@/types/site";
 import { defaultAbout } from "@/content/about";
@@ -35,10 +35,13 @@ type SiteContentContextValue = {
 const SiteContentContext = createContext<SiteContentContextValue | null>(null);
 
 function SiteContentProviderInner({ children }: { children: ReactNode }) {
-  const [projects, setProjects] = useState<SiteProjectRow[]>([]);
+  const cachedProjects = readCachedProjects();
+  const [projects, setProjects] = useState<SiteProjectRow[]>(() => cachedProjects ?? []);
   const [about, setAbout] = useState<SiteAboutRow | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [source, setSource] = useState<SiteDataSource>("loading");
+  const [loaded, setLoaded] = useState(() => cachedProjects !== null);
+  const [source, setSource] = useState<SiteDataSource>(() =>
+    cachedProjects !== null ? "api" : "loading",
+  );
 
   const load = useCallback(async () => {
     const projectsPromise =
@@ -53,7 +56,9 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
     const projectsData = await projectsPromise;
 
     if (projectsData !== null) {
-      setProjects(projectsData.projects ?? []);
+      const rows = projectsData.projects ?? [];
+      setProjects(rows);
+      writeCachedProjects(rows);
       setSource("api");
     } else if (import.meta.env.DEV) {
       setSource("static");

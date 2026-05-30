@@ -42,11 +42,6 @@ const bootstrap = () => {
   }
 
   scheduleResourceLoading();
-
-  requestAnimationFrame(() => {
-    document.body.classList.remove("is-loading");
-    document.querySelector(".preloader")?.classList.add("preloader-hidden");
-  });
 };
 
 bootstrap();

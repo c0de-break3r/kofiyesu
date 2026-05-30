@@ -101,12 +101,8 @@ export function Header() {
   const showLogo = !isHome || scrolledPastHero;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 hidden md:block transition-all duration-300">
-      <div
-        className={`mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-4 transition-all duration-300 ${
-          isHome && !scrolledPastHero ? "bg-transparent" : "bg-white/95 backdrop-blur-xl"
-        }`}
-      >
+    <header className="fixed inset-x-0 top-0 z-50 hidden bg-transparent md:block">
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 bg-transparent px-6 py-4">
         <Link
           to="/"
           className={`flex items-center gap-3 justify-self-start transition hover:opacity-90 ${

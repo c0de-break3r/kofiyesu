@@ -94,29 +94,7 @@
     visibility: hidden;
   }
 
-  .preloader {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: grid;
-    place-items: center;
-    background: var(--bg);
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-  }
-
-  .preloader-hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .preloader-logo {
-    width: 120px;
-    height: 120px;
-    object-fit: cover;
-    object-position: center 12%;
-    transform: scale(1.08);
-  }
+  /* preloader removed — content paints immediately */
 
   .app-icon-shell {
     display: inline-flex;

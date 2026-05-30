@@ -48,7 +48,6 @@
     <meta name="format-detection" content="telephone=no" />
 
     <link rel="preload" href="/fonts/urbanist-400.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high" />
-    <link rel="preload" href="/fonts/urbanist-900.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high" />
     <link rel="prefetch" href="/api/site/projects" as="fetch" crossorigin="anonymous" />
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -87,19 +86,27 @@
     </script>
 
     <script>
-      setTimeout(function () {
-        document.body.classList.remove("is-loading");
-        document.querySelector(".preloader")?.classList.add("preloader-hidden");
-      }, 5000);
+      (function () {
+        try {
+          fetch("/api/site/projects", { cache: "no-store" })
+            .then(function (r) {
+              return r.ok ? r.json() : null;
+            })
+            .then(function (d) {
+              if (d && d.projects) {
+                sessionStorage.setItem(
+                  "kofiyesu-site-projects",
+                  JSON.stringify({ projects: d.projects, at: Date.now() }),
+                );
+              }
+            })
+            .catch(function () {});
+        } catch (e) {}
+      })();
     </script>
   </head>
-  <body class="is-loading">
+  <body>
     <div id="root"></div>
-    <div class="preloader">
-      <span class="app-icon-shell" style="width: 120px; height: 120px">
-        <img class="preloader-logo app-icon-img" src="/meta/portrait.png" alt="Obed Prince Kofi Yesu" width="120" height="120" />
-      </span>
-    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

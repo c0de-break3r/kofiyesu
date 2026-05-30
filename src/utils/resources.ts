@@ -101,13 +101,13 @@ class Resources extends EventEmitter<{
 
 export const resources = new Resources();
 
-/** Defer heavy GLTF/texture loads until after first paint to avoid "page unresponsive". */
+/** Defer heavy GLTF/texture loads until the browser is idle. */
 export const scheduleResourceLoading = () => {
   const start = () => resources.startLoading();
 
   if (typeof requestIdleCallback === "function") {
-    requestIdleCallback(start, { timeout: 1500 });
+    requestIdleCallback(start, { timeout: 4000 });
   } else {
-    window.setTimeout(start, 50);
+    window.setTimeout(start, 200);
   }
 };
