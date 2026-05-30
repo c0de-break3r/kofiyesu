@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ProjectTag } from "@/components/ui/ProjectTag";
 import { t } from "@/i18n/en";
 import type { ProjectPreview } from "@/types/content";
 
@@ -27,15 +26,6 @@ export function NextProject({ project }: Props) {
           {t("next-project")}
         </span>
         <h3 className="text-2xl font-black">{project.title}</h3>
-        {project.tags?.length ? (
-          <ul className="flex flex-wrap gap-1.5">
-            {project.tags.slice(0, 3).map((tag) => (
-              <li key={tag}>
-                <ProjectTag tag={tag} />
-              </li>
-            ))}
-          </ul>
-        ) : null}
         <p className="text-sm text-[var(--text-muted)]">{project.description}</p>
       </div>
     </Link>

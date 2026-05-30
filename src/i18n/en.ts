@@ -54,6 +54,7 @@ export const en = {
   "view-github": "View GitHub",
   "get-in-touch": "Get in touch",
   "filter-all": "All",
+  "filter-feature": "Feature",
   "chat-guest-fallback": "Email Kofi directly while chat sign-in is unavailable.",
   "chat-email-cta": "Send an email",
   "sign-in": "Sign in",

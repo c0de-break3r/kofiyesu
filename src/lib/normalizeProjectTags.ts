@@ -71,3 +71,14 @@ export function normalizeProjectTags(raw: string[] | null | undefined): string[]
 export function projectHasTag(projectTags: string[] | undefined, filterKey: string): boolean {
   return (projectTags ?? []).some((tag) => tagFilterKey(tag) === filterKey);
 }
+
+/** Category/feature tags used for home-page filters (excludes known tech slugs). */
+export function isFeatureTag(raw: string): boolean {
+  const normalized = normalizeProjectTag(raw);
+  if (!normalized) return false;
+  return !slugSet.has(normalized.toLowerCase());
+}
+
+export function featureTagsOnly(raw: string[] | null | undefined): string[] {
+  return normalizeProjectTags(raw).filter(isFeatureTag);
+}

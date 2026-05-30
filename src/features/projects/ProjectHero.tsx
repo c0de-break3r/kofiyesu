@@ -1,4 +1,3 @@
-import { ProjectTag } from "@/components/ui/ProjectTag";
 import { Button } from "@/components/ui/Button";
 import { ProjectTechStack } from "@/features/projects/ProjectTechStack";
 import { t } from "@/i18n/en";
@@ -18,15 +17,6 @@ export function ProjectHero({ content }: Props) {
           className="prose mt-6 max-w-none text-base leading-relaxed text-[var(--text-muted)] [&_a]:text-[var(--color-accent)]"
           dangerouslySetInnerHTML={{ __html: content.description }}
         />
-      ) : null}
-      {content.tags?.length ? (
-        <ul className="mt-5 flex flex-wrap gap-2">
-          {content.tags.map((tag) => (
-            <li key={tag}>
-              <ProjectTag tag={tag} />
-            </li>
-          ))}
-        </ul>
       ) : null}
       {(content.live || content.source) && (
         <div className="mt-8 flex flex-wrap gap-3">

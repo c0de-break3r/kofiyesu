@@ -41,9 +41,6 @@ export function ContactSection() {
           <Link to="/chat">
             <Button>{t("start-a-project")}</Button>
           </Link>
-          <p className="max-w-xs text-xs text-[var(--text-muted)]">
-            Or use the chat tab from the desktop header for AI-assisted intake.
-          </p>
         </div>
       </div>
     </section>

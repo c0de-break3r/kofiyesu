@@ -316,11 +316,11 @@ export function AdminProjectsSection() {
               </AdminField>
             </div>
 
-            <AdminField label="Tags (comma-separated — filters on home page)">
+            <AdminField label="Features (comma-separated — filters on home page)">
               <AdminInput
                 value={form.tags}
                 onChange={(e) => set("tags", e.target.value)}
-                placeholder="node, postgresql, react (or Node.js, PostgreSQL, React)"
+                placeholder="Web Applications, Mobile Applications, Recon Automation Tools"
               />
             </AdminField>
 

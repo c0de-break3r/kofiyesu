@@ -25,7 +25,7 @@ export default defineConfig({
         "meta/icon-512.png",
       ],
       manifest: {
-        name: "Obed Prince Kofi Yesu — Portfolio",
+        name: "Kofi Yesu Portfolio",
         short_name: "Kofi Yesu",
         description:
           "Portfolio of Obed Prince Kofi Yesu — projects, about, and chat. Install for quick access and a smoother experience.",

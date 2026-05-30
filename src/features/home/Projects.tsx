@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { ProjectTag } from "@/components/ui/ProjectTag";
 import { ProjectCardSkeleton } from "@/components/ui/ProjectCardSkeleton";
 import { t } from "@/i18n/en";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
-  normalizeProjectTags,
+  featureTagsOnly,
   projectHasTag,
   tagDisplayLabel,
   tagFilterKey,
@@ -36,7 +35,7 @@ export function Projects() {
     () =>
       previews.map((p) => ({
         ...p,
-        tags: normalizeProjectTags(p.tags),
+        tags: featureTagsOnly(p.tags),
       })),
     [previews],
   );
@@ -117,7 +116,7 @@ export function Projects() {
 
         {allTags.length > 0 ? (
           <FilterRow
-            className="mb-8 flex flex-wrap gap-2"
+            className="mb-8 flex flex-wrap items-center gap-2"
             {...(animate
               ? {
                   initial: "hidden",
@@ -127,6 +126,9 @@ export function Projects() {
                 }
               : {})}
           >
+            <span className="mr-1 text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+              {t("filter-feature")}
+            </span>
             <button
               type="button"
               onClick={() => setActiveTag(null)}
@@ -208,15 +210,6 @@ export function Projects() {
                       <h3 className="text-lg font-bold transition-colors group-hover:text-[var(--color-accent)]">
                         {preview.title}
                       </h3>
-                      {preview.tags?.length ? (
-                        <ul className="flex flex-wrap gap-1.5">
-                          {preview.tags.slice(0, 3).map((tag) => (
-                            <li key={tag}>
-                              <ProjectTag tag={tag} />
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
                       <p className="line-clamp-2 text-sm text-[var(--text-muted)]">{preview.description}</p>
                     </div>
                   </Link>

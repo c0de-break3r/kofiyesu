@@ -72,6 +72,7 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
+  const isProjectRoute = location.pathname.startsWith("/project/");
 
   const handleHomeClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome) return;
@@ -99,22 +100,31 @@ export function Header() {
     <header className="fixed inset-x-0 top-0 z-50 hidden bg-transparent md:block">
       <div className="relative mx-auto flex max-w-6xl items-center justify-end bg-transparent px-6 py-4">
         <nav className="absolute left-1/2 flex -translate-x-1/2 items-center gap-8 text-sm font-semibold">
-          <NavLink href="/" onClick={isHome ? handleHomeClick : undefined}>
-            {t("home")}
-          </NavLink>
-          <NavLink href={isHome ? "#about" : "/#about"} onClick={handleNavSectionClick("about")}>
-            {t("about")}
-          </NavLink>
-          <NavLink href={isHome ? "#projects" : "/#projects"} onClick={handleNavSectionClick("projects")}>
-            {t("projects")}
-          </NavLink>
-          <button
-            type="button"
-            onClick={() => navigate("/chat")}
-            className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
-          >
-            {t("chat")}
-          </button>
+          {isProjectRoute ? (
+            <NavLink href="/">{t("home")}</NavLink>
+          ) : (
+            <>
+              <NavLink href="/" onClick={isHome ? handleHomeClick : undefined}>
+                {t("home")}
+              </NavLink>
+              <NavLink href={isHome ? "#about" : "/#about"} onClick={handleNavSectionClick("about")}>
+                {t("about")}
+              </NavLink>
+              <NavLink
+                href={isHome ? "#projects" : "/#projects"}
+                onClick={handleNavSectionClick("projects")}
+              >
+                {t("projects")}
+              </NavLink>
+              <button
+                type="button"
+                onClick={() => navigate("/chat")}
+                className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
+              >
+                {t("chat")}
+              </button>
+            </>
+          )}
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
