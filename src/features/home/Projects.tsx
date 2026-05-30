@@ -6,11 +6,10 @@ import { t } from "@/i18n/en";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
-  featureTagsOnly,
-  projectHasTag,
-  tagDisplayLabel,
-  tagFilterKey,
-} from "@/lib/normalizeProjectTags";
+  PROJECT_FEATURES,
+  featureLabel,
+  projectMatchesFeature,
+} from "@/lib/projectFeatures";
 
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -29,40 +28,33 @@ export function Projects() {
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { once: true, amount: 0.12 });
   const { previews, loaded } = useSiteContent();
-  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeFeature, setActiveFeature] = useState<string | null>(null);
 
-  const previewsWithTags = useMemo(
-    () =>
-      previews.map((p) => ({
-        ...p,
-        tags: featureTagsOnly(p.tags),
-      })),
+  const sortedPreviews = useMemo(
+    () => [...previews].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     [previews],
   );
 
-  const allTags = useMemo(() => {
-    const byKey = new Map<string, string>();
-    previewsWithTags.forEach((p) => {
-      p.tags?.forEach((tag) => {
-        const key = tagFilterKey(tag);
-        if (!byKey.has(key)) byKey.set(key, tag);
-      });
-    });
-    return Array.from(byKey.entries()).sort(([, a], [, b]) =>
-      tagDisplayLabel(a).localeCompare(tagDisplayLabel(b)),
-    );
-  }, [previewsWithTags]);
+  const availableFeatures = useMemo(
+    () =>
+      PROJECT_FEATURES.filter((feature) =>
+        sortedPreviews.some((project) => projectMatchesFeature(project.tags, feature.id)),
+      ),
+    [sortedPreviews],
+  );
 
   const filtered = useMemo(() => {
-    if (!activeTag) return previewsWithTags;
-    return previewsWithTags.filter((p) => projectHasTag(p.tags, activeTag));
-  }, [previewsWithTags, activeTag]);
+    if (!activeFeature) return sortedPreviews;
+    return sortedPreviews.filter((project) => projectMatchesFeature(project.tags, activeFeature));
+  }, [sortedPreviews, activeFeature]);
 
   useEffect(() => {
-    if (!activeTag) return;
-    const stillValid = previewsWithTags.some((p) => projectHasTag(p.tags, activeTag));
-    if (!stillValid) setActiveTag(null);
-  }, [previewsWithTags, activeTag]);
+    if (!activeFeature) return;
+    const stillValid = sortedPreviews.some((project) =>
+      projectMatchesFeature(project.tags, activeFeature),
+    );
+    if (!stillValid) setActiveFeature(null);
+  }, [sortedPreviews, activeFeature]);
 
   const animate = !reducedMotion && inView;
   const revealTransition = reducedMotion ? { duration: 0 } : { duration: 0.65, ease: REVEAL_EASE };
@@ -114,7 +106,7 @@ export function Projects() {
           <p className="mt-4 text-base leading-relaxed text-[var(--text-muted)]">{t("projects-subtitle")}</p>
         </HeaderBlock>
 
-        {allTags.length > 0 ? (
+        {availableFeatures.length > 0 ? (
           <FilterRow
             className="mb-8 flex flex-wrap items-center gap-2"
             {...(animate
@@ -131,27 +123,27 @@ export function Projects() {
             </span>
             <button
               type="button"
-              onClick={() => setActiveTag(null)}
+              onClick={() => setActiveFeature(null)}
               className={`rounded-full border px-4 py-1.5 text-xs font-bold transition ${
-                activeTag === null
+                activeFeature === null
                   ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-sm shadow-[color-mix(in_srgb,var(--color-accent-deep)_25%,transparent)]"
                   : "glass-surface border-transparent text-[var(--text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
               }`}
             >
               {t("filter-all")}
             </button>
-            {allTags.map(([filterKey, tag]) => (
+            {availableFeatures.map((feature) => (
               <button
-                key={filterKey}
+                key={feature.id}
                 type="button"
-                onClick={() => setActiveTag(filterKey)}
+                onClick={() => setActiveFeature(feature.id)}
                 className={`rounded-full border px-4 py-1.5 text-xs font-bold transition ${
-                  activeTag === filterKey
+                  activeFeature === feature.id
                     ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-sm shadow-[color-mix(in_srgb,var(--color-accent-deep)_25%,transparent)]"
                     : "glass-surface border-transparent text-[var(--text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
                 }`}
               >
-                {tagDisplayLabel(tag)}
+                {feature.label}
               </button>
             ))}
           </FilterRow>
@@ -217,16 +209,18 @@ export function Projects() {
               ))}
         </CardGrid>
 
-        {loaded && previewsWithTags.length === 0 ? (
+        {loaded && sortedPreviews.length === 0 ? (
           <p className="py-12 text-center text-sm text-[var(--text-muted)]">
             No projects published yet. Add and publish projects in the admin CMS.
           </p>
-        ) : loaded && activeTag && filtered.length === 0 ? (
+        ) : loaded && activeFeature && filtered.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-[var(--text-muted)]">No projects match this filter.</p>
+            <p className="text-sm text-[var(--text-muted)]">
+              No projects match {featureLabel(activeFeature)}.
+            </p>
             <button
               type="button"
-              onClick={() => setActiveTag(null)}
+              onClick={() => setActiveFeature(null)}
               className="mt-3 text-sm font-bold text-[var(--color-accent)] hover:underline"
             >
               {t("filter-all")}

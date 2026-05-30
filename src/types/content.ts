@@ -19,4 +19,5 @@ export interface ProjectPreview {
   previewVideo?: string;
   description: string;
   tags?: string[];
+  sortOrder?: number;
 }

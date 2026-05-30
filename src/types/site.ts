@@ -44,7 +44,8 @@ export const rowToPreview = (row: SiteProjectRow): ProjectPreview => ({
   thumbnail: row.thumbnail_url ?? "",
   previewVideo: row.preview_video_url ?? undefined,
   description: row.description?.replace(/<[^>]+>/g, " ").slice(0, 120) ?? "",
-  tags: normalizeProjectTags(row.tags as string[]).slice(0, 4),
+  tags: normalizeProjectTags(row.tags as string[]),
+  sortOrder: row.sort_order ?? 0,
 });
 
 export const rowToContent = (row: SiteProjectRow): ProjectContent => ({

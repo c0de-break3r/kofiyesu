@@ -76,7 +76,11 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
 
   const previews = useMemo<ProjectPreview[]>(() => {
     if (source === "loading") return [];
-    if (source === "api") return projects.map(rowToPreview);
+    if (source === "api") {
+      return [...projects]
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map(rowToPreview);
+    }
     return [...staticPreviews];
   }, [source, projects]);
 
