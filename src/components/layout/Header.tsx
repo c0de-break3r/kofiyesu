@@ -1,6 +1,6 @@
 import { type MouseEvent, type PropsWithChildren } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/clerk";
 import { social } from "@/content/social";
 import { useHeaderScroll } from "@/hooks/useHeaderScroll";
@@ -12,8 +12,9 @@ import { t } from "@/i18n/en";
 const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.com";
 
 function DesktopAuthActions() {
+  const { isLoaded } = useAuth();
   const signInClass =
-    "glass-surface rounded-full px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-white/50 hover:border-white/70";
+    "rounded-full px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-white/50 hover:text-[var(--color-accent)]";
 
   if (!isClerkConfigured) {
     return (
@@ -21,6 +22,10 @@ function DesktopAuthActions() {
         {t("get-in-touch")}
       </a>
     );
+  }
+
+  if (!isLoaded) {
+    return <span className="inline-block h-9 w-9 shrink-0 rounded-full bg-white/30" aria-hidden />;
   }
 
   return (
@@ -33,14 +38,14 @@ function DesktopAuthActions() {
         </SignInButton>
       </SignedOut>
       <SignedIn>
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: "h-9 w-9 ring-0",
-                userButtonTrigger: "focus:shadow-none shadow-none ring-0",
-              },
-            }}
-          />
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "h-9 w-9 ring-0",
+              userButtonTrigger: "focus:shadow-none shadow-none ring-0",
+            },
+          }}
+        />
       </SignedIn>
     </>
   );
@@ -99,9 +104,7 @@ export function Header() {
     <header className="fixed inset-x-0 top-0 z-50 hidden md:block transition-all duration-300">
       <div
         className={`mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-4 transition-all duration-300 ${
-          isHome && !scrolledPastHero
-            ? "border-b border-transparent bg-transparent"
-            : "border-b border-[var(--border)] bg-white/95 backdrop-blur-xl"
+          isHome && !scrolledPastHero ? "bg-transparent" : "bg-white/95 backdrop-blur-xl"
         }`}
       >
         <Link

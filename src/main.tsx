@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
+import { prefetchSiteContent } from "./lib/prefetchSiteContent";
 import { scheduleResourceLoading } from "./utils/resources";
 import "./index.css";
 
@@ -17,6 +18,8 @@ if (import.meta.env.PROD) {
 }
 
 gsap.registerPlugin(ScrollTrigger);
+
+prefetchSiteContent();
 
 const bootstrap = () => {
   const root = createRoot(document.getElementById("root")!);

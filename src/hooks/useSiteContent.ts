@@ -11,6 +11,7 @@ import {
 import staticPreviews from "@/content/projects/previews/en";
 import { projectModules } from "@/content/projects";
 import { fetchJson } from "@/lib/fetchJson";
+import { takePrefetchedAbout, takePrefetchedProjects } from "@/lib/prefetchSiteContent";
 import type { ProjectContent, ProjectPreview } from "@/types/content";
 import { rowToContent, rowToPreview, type SiteAboutRow, type SiteProjectRow } from "@/types/site";
 import { defaultAbout } from "@/content/about";
@@ -40,10 +41,16 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
   const [source, setSource] = useState<SiteDataSource>("loading");
 
   const load = useCallback(async () => {
-    const [projectsData, aboutData] = await Promise.all([
-      fetchJson<{ projects?: SiteProjectRow[] }>("/api/site/projects"),
-      fetchJson<{ about?: SiteAboutRow | null }>("/api/site/about"),
-    ]);
+    const projectsPromise =
+      takePrefetchedProjects() ?? fetchJson<{ projects?: SiteProjectRow[] }>("/api/site/projects");
+    const aboutPromise =
+      takePrefetchedAbout() ?? fetchJson<{ about?: SiteAboutRow | null }>("/api/site/about");
+
+    void aboutPromise.then((aboutData) => {
+      if (aboutData !== null) setAbout(aboutData.about ?? null);
+    });
+
+    const projectsData = await projectsPromise;
 
     if (projectsData !== null) {
       setProjects(projectsData.projects ?? []);
@@ -53,10 +60,6 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
     } else {
       setProjects([]);
       setSource("api");
-    }
-
-    if (aboutData !== null) {
-      setAbout(aboutData.about ?? null);
     }
 
     setLoaded(true);
