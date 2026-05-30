@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import type { ProjectContent } from "@/types/content";
 import { ProjectHero } from "@/features/projects/ProjectHero";
 import { ProjectBlocks } from "@/features/projects/ProjectBlocks";
@@ -35,6 +36,17 @@ export function ProjectPage() {
   }, [slug, previews]);
 
   const isLight = content?.theme === "light";
+
+  const projectDescription = useMemo(
+    () => content?.description?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160),
+    [content?.description],
+  );
+
+  useDocumentMeta({
+    title: content ? `${content.title} — Obed Prince Kofi Yesu` : undefined,
+    description: projectDescription,
+    canonicalPath: slug ? `/project/${slug}` : "/",
+  });
 
   if (loading) {
     return (

@@ -10,6 +10,12 @@ import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
 import { scheduleResourceLoading } from "./utils/resources";
 import "./index.css";
 
+if (import.meta.env.PROD) {
+  void import("virtual:pwa-register").then(({ registerSW }) => {
+    registerSW({ immediate: true });
+  });
+}
+
 gsap.registerPlugin(ScrollTrigger);
 
 const bootstrap = () => {

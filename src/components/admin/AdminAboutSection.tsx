@@ -1,36 +1,58 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
+import { AdminServicesEditor } from "./AdminServicesEditor";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import type { SiteAboutRow } from "@/types/site";
+import { defaultAbout } from "@/content/about";
+import type { SiteAboutRow, SiteService } from "@/types/site";
 
-const emptyForm = () => ({
-  display_name: "",
-  job_title: "",
-  about_intro: "",
-  about_tagline: "",
-  location: "",
-  servicesText: "",
-});
+function splitIntro(intro: string | null | undefined) {
+  const raw = intro?.trim() ?? "";
+  const parts = raw.includes("\n\n") ? raw.split(/\n\n+/).filter(Boolean) : [raw];
+  while (parts.length < 3) parts.push("");
+  return [parts[0] ?? "", parts[1] ?? "", parts[2] ?? ""];
+}
+
+function joinIntro(p1: string, p2: string, p3: string) {
+  return [p1, p2, p3].map((p) => p.trim()).filter(Boolean).join("\n\n");
+}
+
+function mergeServices(row: SiteAboutRow | null): SiteService[] {
+  const defaultByName = Object.fromEntries(defaultAbout.services.map((s) => [s.name, s.info ?? ""]));
+  const fromDb = row?.services?.filter((s) => s?.name?.trim()) ?? [];
+  const list = fromDb.length ? fromDb : [...defaultAbout.services];
+  return list.map((s) => ({
+    name: s.name,
+    info: s.info?.trim() || defaultByName[s.name] || "",
+  }));
+}
 
 export function AdminAboutSection() {
   const { adminFetch } = useAdminApi();
   const { reload } = useSiteContent();
-  const [form, setForm] = useState(emptyForm());
+  const [displayName, setDisplayName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const [intro1, setIntro1] = useState("");
+  const [intro2, setIntro2] = useState("");
+  const [intro3, setIntro3] = useState("");
+  const [vision, setVision] = useState("");
+  const [services, setServices] = useState<SiteService[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   const applyRow = (row: SiteAboutRow | null) => {
-    setForm({
-      display_name: row?.display_name ?? "",
-      job_title: row?.job_title ?? "",
-      about_intro: row?.about_intro ?? "",
-      about_tagline: row?.about_tagline ?? "",
-      location: row?.location ?? "",
-      servicesText: (row?.services ?? []).map((s) => s.name).join("\n"),
-    });
+    const [a, b, c] = splitIntro(row?.about_intro ?? defaultAbout.about_intro);
+    setDisplayName(row?.display_name ?? "");
+    setJobTitle(row?.job_title ?? defaultAbout.job_title);
+    setLocation(row?.location ?? defaultAbout.location);
+    setIntro1(a);
+    setIntro2(b);
+    setIntro3(c);
+    setVision(row?.about_tagline ?? defaultAbout.about_tagline);
+    setServices(mergeServices(row));
   };
 
   const load = async () => {
@@ -44,26 +66,31 @@ export function AdminAboutSection() {
     void load();
   }, []);
 
+  const resetToDefaults = () => {
+    if (!confirm("Reset all about fields to site defaults? Unsaved edits will be lost.")) return;
+    applyRow(null);
+    setError(null);
+    setSaved(false);
+  };
+
   const save = async () => {
     setSaving(true);
     setError(null);
     setSaved(false);
     try {
-      const services = form.servicesText
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((name) => ({ name }));
+      const servicesPayload = services
+        .map((s) => ({ name: s.name.trim(), info: s.info?.trim() || "" }))
+        .filter((s) => s.name);
 
       const res = await adminFetch("/api/admin/about", {
         method: "PATCH",
         body: JSON.stringify({
-          display_name: form.display_name,
-          job_title: form.job_title,
-          about_intro: form.about_intro,
-          about_tagline: form.about_tagline,
-          location: form.location,
-          services,
+          display_name: displayName.trim() || null,
+          job_title: jobTitle.trim(),
+          location: location.trim(),
+          about_intro: joinIntro(intro1, intro2, intro3),
+          about_tagline: vision.trim(),
+          services: servicesPayload,
         }),
       });
 
@@ -82,38 +109,75 @@ export function AdminAboutSection() {
     }
   };
 
-  const set = (key: keyof ReturnType<typeof emptyForm>, value: string) =>
-    setForm((f) => ({ ...f, [key]: value }));
-
   return (
-    <section className="space-y-4">
-      <p className="text-xs text-[var(--text-muted)]">Updates hero, about section, and services on the live site.</p>
+    <section className="space-y-5">
+      <div>
+        <h2 className="text-lg font-black">About & vision</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Edit hero details, the three Background scroll paragraphs, your long-term vision, and service cards.
+        </p>
+      </div>
 
-      <AdminField label="Display name">
-        <AdminInput value={form.display_name} onChange={(e) => set("display_name", e.target.value)} />
-      </AdminField>
-      <AdminField label="Job title (hero banner)">
-        <AdminInput value={form.job_title} onChange={(e) => set("job_title", e.target.value)} />
-      </AdminField>
-      <AdminField label="Location">
-        <AdminInput value={form.location} onChange={(e) => set("location", e.target.value)} />
-      </AdminField>
-      <AdminField label="About intro">
-        <AdminTextarea rows={3} value={form.about_intro} onChange={(e) => set("about_intro", e.target.value)} />
-      </AdminField>
-      <AdminField label="About tagline">
-        <AdminTextarea rows={2} value={form.about_tagline} onChange={(e) => set("about_tagline", e.target.value)} />
-      </AdminField>
-      <AdminField label="Services (one per line)">
-        <AdminTextarea rows={5} value={form.servicesText} onChange={(e) => set("servicesText", e.target.value)} />
-      </AdminField>
+      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Hero</p>
+        <AdminField label="Display name">
+          <AdminInput value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+        </AdminField>
+        <AdminField label="Job title">
+          <AdminInput value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
+        </AdminField>
+        <AdminField label="Location">
+          <AdminInput value={location} onChange={(e) => setLocation(e.target.value)} />
+        </AdminField>
+      </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      {saved && <p className="text-sm font-semibold text-green-600">Saved — refresh home to see changes.</p>}
+      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Background (3 paragraphs)</p>
+        <p className="text-xs text-[var(--text-muted)]">
+          These cycle on scroll in the About section. Leave a field empty to skip it.
+        </p>
+        <AdminField label="Paragraph 1">
+          <AdminTextarea rows={4} value={intro1} onChange={(e) => setIntro1(e.target.value)} />
+        </AdminField>
+        <AdminField label="Paragraph 2">
+          <AdminTextarea rows={4} value={intro2} onChange={(e) => setIntro2(e.target.value)} />
+        </AdminField>
+        <AdminField label="Paragraph 3">
+          <AdminTextarea rows={4} value={intro3} onChange={(e) => setIntro3(e.target.value)} />
+        </AdminField>
+      </div>
 
-      <Button onClick={() => void save()} disabled={saving}>
-        {saving ? "Saving…" : "Save about"}
-      </Button>
+      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Vision</p>
+        <AdminField label="Long-term vision (tagline under Background)">
+          <AdminTextarea rows={3} value={vision} onChange={(e) => setVision(e.target.value)} />
+        </AdminField>
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Services</p>
+        <AdminServicesEditor services={services} onChange={setServices} />
+      </div>
+
+      {error ? <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p> : null}
+      {saved ? (
+        <p className="rounded-lg bg-green-500/10 px-3 py-2 text-sm font-semibold text-green-700">
+          Saved — changes are live on the home page.
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={() => void save()} disabled={saving}>
+          {saving ? "Saving…" : "Save about page"}
+        </Button>
+        <button
+          type="button"
+          onClick={resetToDefaults}
+          className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--color-accent)]"
+        >
+          Reset to defaults
+        </button>
+      </div>
     </section>
   );
 }

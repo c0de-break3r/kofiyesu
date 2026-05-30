@@ -128,7 +128,7 @@ export function HomePage() {
               : "sticky top-[calc(var(--height-header,4.5rem)+0.25rem)] z-10 bg-[var(--bg)] pb-2"
           }
         >
-          <About scrollRootRef={aboutSpacerRef} />
+          <About />
         </div>
       </div>
       <div id="projects" className="relative -mt-1 md:mt-0">

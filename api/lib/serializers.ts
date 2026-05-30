@@ -8,6 +8,7 @@ export const projectToApi = (row: SiteProject) => ({
   tags: row.tags,
   description: row.description,
   thumbnail_url: row.thumbnailUrl,
+  preview_video_url: row.previewVideoUrl,
   live_url: row.liveUrl,
   source_url: row.sourceUrl,
   video_border: row.videoBorder,

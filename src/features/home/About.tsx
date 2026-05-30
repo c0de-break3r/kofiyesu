@@ -1,7 +1,6 @@
-import { type RefObject } from "react";
 import { t } from "@/i18n/en";
 import { social } from "@/content/social";
-import { defaultAbout, defaultAboutIntroParagraphs } from "@/content/about";
+import { defaultAbout, defaultAboutIntroParagraphs, splitAboutIntro } from "@/content/about";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useAboutScrollStory } from "@/hooks/useAboutScrollStory";
@@ -10,24 +9,20 @@ import { ServiceCard } from "@/features/home/ServiceCard";
 
 const github = social.find((s) => s.name === "github");
 
-type AboutProps = {
-  scrollRootRef?: RefObject<HTMLElement | null>;
-};
-
-export function About({ scrollRootRef }: AboutProps) {
+export function About() {
   const reducedMotion = useReducedMotion();
   const { aboutText, services } = useSiteContent();
 
   const introRaw = aboutText("about_intro", defaultAbout.about_intro);
-  const paragraphs =
-    introRaw.includes("\n\n") ? introRaw.split(/\n\n+/).filter(Boolean) : [introRaw];
-  const displayParagraphs = paragraphs.length ? paragraphs : defaultAboutIntroParagraphs;
+  const paragraphSource = (() => {
+    const parts = splitAboutIntro(introRaw);
+    return parts.length > 0 ? parts : defaultAboutIntroParagraphs;
+  })();
 
   const tagline = aboutText("about_tagline", defaultAbout.about_tagline);
 
   const { activeParagraph, opacities, barScale, animated } = useAboutScrollStory(
-    scrollRootRef,
-    displayParagraphs.length,
+    paragraphSource.length,
     reducedMotion,
   );
 
@@ -45,7 +40,7 @@ export function About({ scrollRootRef }: AboutProps) {
 
           {!animated ? (
             <div className="mt-4 space-y-4 text-base leading-relaxed text-[var(--text-muted)]">
-              {displayParagraphs.map((paragraph, i) => (
+              {paragraphSource.map((paragraph, i) => (
                 <p key={i}>{paragraph}</p>
               ))}
             </div>
@@ -59,7 +54,7 @@ export function About({ scrollRootRef }: AboutProps) {
                 />
               </div>
               <div className="relative grid min-h-[12rem] sm:min-h-[11rem]">
-                {displayParagraphs.map((paragraph, i) => (
+                {paragraphSource.map((paragraph, i) => (
                   <p
                     key={i}
                     aria-hidden={i !== activeParagraph}

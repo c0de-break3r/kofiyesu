@@ -6,7 +6,7 @@
 |--------|--------|
 | Vue 3 | React 19 + React Router |
 | SCSS | Tailwind CSS v4 |
-| Supabase JS client | Prisma → Neon Postgres |
+| Supabase (removed) | Prisma → Neon Postgres only |
 | `@clerk/vue` | `@clerk/clerk-react` |
 | Custom history routing | `react-router-dom` |
 
@@ -21,7 +21,7 @@
 
 ## Setup
 
-1. **Neon**: Create project, copy pooled `DATABASE_URL` into `.env.local`
+1. **Neon**: Copy pooled Postgres URI into `.env` as `DATABASE_URL`. Run `npm run db:push` then `npm run db:seed`. See [DATABASE.md](./DATABASE.md).
 2. **Prisma**: `npm run db:push`
 3. **Clerk / Gemini / Resend**: see `.env.example`
 4. **Install & dev**: `npm install && npm run dev:api`

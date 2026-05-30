@@ -10,10 +10,13 @@ import { resetHomeScene } from "@/animations/resetHomeScene";
 import { SkipToContent } from "@/components/layout/SkipToContent";
 import { Header } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
+import { AdminFab, AdminSignInOpenPanel } from "@/components/auth/AdminAccess";
+import { AdminPanel } from "@/components/admin/AdminPanel";
+import { SeoManager } from "@/components/seo/SeoManager";
 import { HomePage } from "@/pages/HomePage";
 import { ChatPage } from "@/pages/ChatPage";
 import { ProjectPage } from "@/pages/ProjectPage";
-import { AdminPage } from "@/pages/AdminPage";
 
 function AppRoutes() {
   const location = useLocation();
@@ -27,10 +30,9 @@ function AppRoutes() {
   useEffect(() => {
     const onChat = location.pathname.startsWith("/chat");
     const onProject = location.pathname.startsWith("/project/");
-    const onAdmin = location.pathname.startsWith("/admin");
     void import("@/three/core/renderer").then(({ renderer }) => {
-      renderer.setIsActive(!onChat && !onProject && !onAdmin && !reducedMotion);
-      if (!onChat && !onProject && !onAdmin) {
+      renderer.setIsActive(!onChat && !onProject && !reducedMotion);
+      if (!onChat && !onProject) {
         resetHomeScene();
         getLenis()?.scrollTo(0, { immediate: true });
         requestAnimationFrame(() => ScrollTrigger.refresh());
@@ -43,7 +45,6 @@ function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/chat/*" element={<ChatPage />} />
       <Route path="/project/:slug" element={<ProjectPage />} />
-      <Route path="/admin" element={<AdminPage />} />
     </Routes>
   );
 }
@@ -54,9 +55,14 @@ export default function App() {
 
   return (
     <>
+      <AdminSignInOpenPanel />
+      <SeoManager />
       <SkipToContent />
       <Header />
       <AppRoutes />
+      <PwaInstallPrompt />
+      <AdminPanel />
+      <AdminFab />
       <MobileNav />
     </>
   );

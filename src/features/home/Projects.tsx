@@ -153,7 +153,9 @@ export function Projects() {
                         <img
                           src={preview.thumbnail}
                           alt={preview.title}
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                          className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.03] ${
+                            preview.previewVideo ? "group-hover:opacity-0" : ""
+                          }`}
                           loading="lazy"
                         />
                       ) : (
@@ -161,6 +163,16 @@ export function Projects() {
                           {preview.title}
                         </div>
                       )}
+                      {preview.previewVideo ? (
+                        <video
+                          src={preview.previewVideo}
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                          className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100"
+                        />
+                      ) : null}
                       <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,color-mix(in_srgb,var(--text)_8%,transparent))] opacity-0 transition-opacity duration-300 group-hover:opacity-100"

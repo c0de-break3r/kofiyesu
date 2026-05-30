@@ -1,4 +1,6 @@
 User-agent: *
+Allow: /
 
-Disallow: /legal
-Disallow: /privacy
+Disallow: /api/
+
+Sitemap: https://www.kofiyesu.com/sitemap.xml

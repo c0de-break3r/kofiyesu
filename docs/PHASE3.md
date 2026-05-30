@@ -43,7 +43,7 @@ npm run dev:api
 
 1. Sign in → open `/chat`
 2. Complete intake → chat unlocks (session remembers intake until tab closes)
-3. Mark urgent → check Supabase row `needs_admin = true`
+3. Mark urgent → check Neon row `needs_admin = true` (Prisma / Admin → Inquiries)
 4. With Resend configured → email arrives at `ADMIN_NOTIFY_EMAIL`
 5. Admin panel → Inquiries shows intake line + message
 

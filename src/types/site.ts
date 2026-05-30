@@ -10,6 +10,7 @@ export interface SiteProjectRow {
   tags: TagVariant[];
   description: string | null;
   thumbnail_url: string | null;
+  preview_video_url: string | null;
   live_url: string | null;
   source_url: string | null;
   video_border: boolean;
@@ -40,6 +41,7 @@ export const rowToPreview = (row: SiteProjectRow): ProjectPreview => ({
   title: row.title,
   slug: row.slug,
   thumbnail: row.thumbnail_url ?? "",
+  previewVideo: row.preview_video_url ?? undefined,
   description: row.description?.replace(/<[^>]+>/g, " ").slice(0, 120) ?? "",
   tags: (row.tags ?? []).slice(0, 4),
 });

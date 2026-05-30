@@ -30,6 +30,7 @@ model SiteProject {
   tags         Json     @default("[]")
   description  String?
   thumbnailUrl String?  @map("thumbnail_url")
+  previewVideoUrl String? @map("preview_video_url")
   liveUrl      String?  @map("live_url")
   sourceUrl    String?  @map("source_url")
   videoBorder  Boolean  @default(false) @map("video_border")

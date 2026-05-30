@@ -18,6 +18,7 @@ export interface ProjectPreview {
   title: string;
   slug: string;
   thumbnail: string;
+  previewVideo?: string;
   description: string;
   tags?: TagVariant[];
 }

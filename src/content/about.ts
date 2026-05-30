@@ -27,7 +27,7 @@ export const defaultAbout = {
     },
     {
       name: "PostgreSQL & Cloud Data",
-      info: "PostgreSQL on Neon and Supabase, MongoDB, Firebase Firestore, migrations, branching, and data layers that scale with the product.",
+      info: "PostgreSQL on Neon, MongoDB, Firebase Firestore, migrations, branching, and data layers that scale with the product.",
     },
     {
       name: "Production Observability",
@@ -37,6 +37,23 @@ export const defaultAbout = {
 } as const;
 
 export const defaultAboutIntroParagraphs = defaultAbout.about_intro.split(/\n\n+/);
+
+/** Split CMS intro into scroll-story paragraphs (needs 2+ for cross-fade). */
+export function splitAboutIntro(introRaw: string): string[] {
+  const trimmed = introRaw.trim();
+  if (!trimmed) return [...defaultAboutIntroParagraphs];
+
+  const byDouble = trimmed.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+  if (byDouble.length > 1) return byDouble;
+
+  const bySingle = trimmed
+    .split(/\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 40);
+  if (bySingle.length > 1) return bySingle;
+
+  return [trimmed];
+}
 
 export const siteMetaDescription =
   "Software Engineer and Cybersecurity Practitioner in Ghana. Full-stack web and mobile apps with React, Next.js, React Native, Node.js, Clerk, PostgreSQL, and secure, production-ready architecture.";

@@ -1,7 +1,34 @@
 {
-  "name": "Obed Prince Kofi Yesu",
+  "name": "Obed Prince Kofi Yesu — Portfolio",
   "short_name": "Kofi Yesu",
+  "description": "Portfolio of Obed Prince Kofi Yesu — full-stack web & mobile, application security, selected projects, and chat.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#f6672a",
+  "background_color": "#ffffff",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["portfolio", "business", "productivity"],
   "icons": [
+    {
+      "src": "/meta/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/meta/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/meta/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/meta/icon-192.png",
       "sizes": "192x192",
@@ -13,9 +40,21 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/meta/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "theme_color": "#f6672a",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "screenshots": [
+    {
+      "src": "/meta/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Kofi Yesu portfolio"
+    }
+  ]
 }

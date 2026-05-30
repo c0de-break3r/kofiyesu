@@ -3,7 +3,9 @@ export const isCloudinaryConfigured = (): boolean =>
     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
   );
 
-export async function uploadImageToCloudinary(file: File): Promise<string> {
+type CloudinaryResource = "image" | "video";
+
+async function uploadToCloudinary(file: File, resourceType: CloudinaryResource): Promise<string> {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
 
@@ -20,7 +22,7 @@ export async function uploadImageToCloudinary(file: File): Promise<string> {
     form.append("folder", folder.trim());
   }
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
     method: "POST",
     body: form,
   });
@@ -31,6 +33,20 @@ export async function uploadImageToCloudinary(file: File): Promise<string> {
   }
 
   const data = (await res.json()) as { secure_url?: string };
-  if (!data.secure_url) throw new Error("No image URL returned from Cloudinary");
+  if (!data.secure_url) throw new Error("No URL returned from Cloudinary");
   return data.secure_url;
+}
+
+export function uploadImageToCloudinary(file: File): Promise<string> {
+  return uploadToCloudinary(file, "image");
+}
+
+export function uploadVideoToCloudinary(file: File): Promise<string> {
+  return uploadToCloudinary(file, "video");
+}
+
+/** Picks image vs video upload from the file MIME type. */
+export function uploadMediaToCloudinary(file: File): Promise<string> {
+  const isVideo = file.type.startsWith("video/");
+  return uploadToCloudinary(file, isVideo ? "video" : "image");
 }
