@@ -15,13 +15,13 @@ const projectPageClass =
 
 export function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { getProjectContent, previews } = useSiteContent();
+  const { getProjectContent, previews, loaded } = useSiteContent();
   const [content, setContent] = useState<ProjectContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || !loaded) return;
     setLoading(true);
     setNotFound(false);
     void getProjectContent(slug).then((data) => {
@@ -29,7 +29,7 @@ export function ProjectPage() {
       setNotFound(!data);
       setLoading(false);
     });
-  }, [slug, getProjectContent]);
+  }, [slug, getProjectContent, loaded]);
 
   const projectPreview = useMemo(
     () => (slug ? previews.find((p) => p.slug === slug) : undefined),

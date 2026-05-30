@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import staticPreviews from "@/content/projects/previews/en";
 import { projectModules } from "@/content/projects";
 import { fetchJson } from "@/lib/fetchJson";
@@ -6,10 +15,29 @@ import type { ProjectContent, ProjectPreview } from "@/types/content";
 import { rowToContent, rowToPreview, type SiteAboutRow, type SiteProjectRow } from "@/types/site";
 import { defaultAbout } from "@/content/about";
 
-export function useSiteContent() {
+type SiteDataSource = "loading" | "api" | "static";
+
+type SiteContentContextValue = {
+  previews: ProjectPreview[];
+  about: SiteAboutRow | null;
+  loaded: boolean;
+  load: () => Promise<void>;
+  reload: () => Promise<void>;
+  getProjectContent: (slug: string) => Promise<ProjectContent | null>;
+  aboutText: (
+    key: keyof Pick<SiteAboutRow, "job_title" | "about_intro" | "about_tagline" | "location" | "display_name">,
+    fallback: string,
+  ) => string;
+  services: { name: string; info: string }[];
+};
+
+const SiteContentContext = createContext<SiteContentContextValue | null>(null);
+
+function SiteContentProviderInner({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<SiteProjectRow[]>([]);
   const [about, setAbout] = useState<SiteAboutRow | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [source, setSource] = useState<SiteDataSource>("loading");
 
   const load = useCallback(async () => {
     const [projectsData, aboutData] = await Promise.all([
@@ -17,8 +45,19 @@ export function useSiteContent() {
       fetchJson<{ about?: SiteAboutRow | null }>("/api/site/about"),
     ]);
 
-    if (projectsData?.projects?.length) setProjects(projectsData.projects);
-    if (aboutData?.about) setAbout(aboutData.about);
+    if (projectsData !== null) {
+      setProjects(projectsData.projects ?? []);
+      setSource("api");
+    } else if (import.meta.env.DEV) {
+      setSource("static");
+    } else {
+      setProjects([]);
+      setSource("api");
+    }
+
+    if (aboutData !== null) {
+      setAbout(aboutData.about ?? null);
+    }
 
     setLoaded(true);
   }, []);
@@ -28,25 +67,33 @@ export function useSiteContent() {
   }, [load]);
 
   const previews = useMemo<ProjectPreview[]>(() => {
-    if (projects.length > 0) return projects.map(rowToPreview);
+    if (source === "loading") return [];
+    if (source === "api") return projects.map(rowToPreview);
     return [...staticPreviews];
-  }, [projects]);
+  }, [source, projects]);
 
   const getProjectContent = useCallback(
     async (slug: string): Promise<ProjectContent | null> => {
-      const row = projects.find((p) => p.slug === slug);
-      if (row) return rowToContent(row);
+      if (source === "api") {
+        const row = projects.find((p) => p.slug === slug);
+        return row ? rowToContent(row) : null;
+      }
 
-      const mod = projectModules[slug as keyof typeof projectModules];
-      if (!mod?.default) return null;
-      return mod.default as ProjectContent;
+      if (source === "static") {
+        const mod = projectModules[slug as keyof typeof projectModules];
+        if (mod?.default) return mod.default as ProjectContent;
+      }
+
+      return null;
     },
-    [projects],
+    [source, projects],
   );
 
   const aboutText = useCallback(
-    (key: keyof Pick<SiteAboutRow, "job_title" | "about_intro" | "about_tagline" | "location" | "display_name">, fallback: string) =>
-      about?.[key] && String(about[key]).trim() ? String(about[key]) : fallback,
+    (
+      key: keyof Pick<SiteAboutRow, "job_title" | "about_intro" | "about_tagline" | "location" | "display_name">,
+      fallback: string,
+    ) => (about?.[key] && String(about[key]).trim() ? String(about[key]) : fallback),
     [about],
   );
 
@@ -62,5 +109,31 @@ export function useSiteContent() {
     }));
   }, [about]);
 
-  return { previews, about, loaded, load, reload: load, getProjectContent, aboutText, services };
+  const value = useMemo<SiteContentContextValue>(
+    () => ({
+      previews,
+      about,
+      loaded,
+      load,
+      reload: load,
+      getProjectContent,
+      aboutText,
+      services,
+    }),
+    [previews, about, loaded, load, getProjectContent, aboutText, services],
+  );
+
+  return createElement(SiteContentContext.Provider, { value }, children);
+}
+
+export function SiteContentProvider({ children }: { children: ReactNode }) {
+  return createElement(SiteContentProviderInner, null, children);
+}
+
+export function useSiteContent() {
+  const ctx = useContext(SiteContentContext);
+  if (!ctx) {
+    throw new Error("useSiteContent must be used within SiteContentProvider");
+  }
+  return ctx;
 }

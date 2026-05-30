@@ -14,6 +14,7 @@ import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 import { AdminFab, AdminSignInOpenPanel } from "@/components/auth/AdminAccess";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import { SeoManager } from "@/components/seo/SeoManager";
+import { SiteContentProvider } from "@/hooks/useSiteContent";
 import { HomePage } from "@/pages/HomePage";
 import { ChatPage } from "@/pages/ChatPage";
 import { ProjectPage } from "@/pages/ProjectPage";
@@ -54,7 +55,7 @@ export default function App() {
   useScroll();
 
   return (
-    <>
+    <SiteContentProvider>
       <AdminSignInOpenPanel />
       <SeoManager />
       <SkipToContent />
@@ -64,6 +65,6 @@ export default function App() {
       <AdminPanel />
       <AdminFab />
       <MobileNav />
-    </>
+    </SiteContentProvider>
   );
 }

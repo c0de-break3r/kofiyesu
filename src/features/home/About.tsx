@@ -1,5 +1,5 @@
 import { t } from "@/i18n/en";
-import { social } from "@/content/social";
+import { contactEmail, social } from "@/content/social";
 import { defaultAbout, defaultAboutIntroParagraphs, splitAboutIntro } from "@/content/about";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -77,7 +77,7 @@ export function About() {
                 <Button variant="border">{t("view-github")}</Button>
               </a>
             ) : null}
-            <a href="mailto:hello@kofiyesu.dev?subject=Resume%20request">
+            <a href={`mailto:${contactEmail}?subject=Resume%20request`}>
               <Button variant="border">{t("download-cv")}</Button>
             </a>
           </div>

@@ -2,12 +2,12 @@ import { social } from "@/content/social";
 import { getCurrentYear } from "@/lib/currentYear";
 
 const labels: Record<string, string> = {
-  mail: "Email",
-  github: "GitHub",
   linkedin: "LinkedIn",
   instagram: "Instagram",
   x: "X",
 };
+
+const footerSocial = social.filter((item) => item.name !== "mail" && item.name !== "github");
 
 export function Footer({
   withSocial = true,
@@ -23,9 +23,9 @@ export function Footer({
       className={`relative w-full border-t border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-12 ${className}`}
     >
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6">
-        {withSocial ? (
+        {withSocial && footerSocial.length > 0 ? (
           <nav className="flex flex-wrap justify-center gap-3" aria-label="Social links">
-            {social.map((item) => (
+            {footerSocial.map((item) => (
               <a
                 key={item.name}
                 href={item.url}

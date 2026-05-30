@@ -9,7 +9,7 @@ import { scrollToSectionHash } from "@/hooks/useHashScroll";
 import { Logo } from "@/components/layout/Logo";
 import { t } from "@/i18n/en";
 
-const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev";
+const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.com";
 
 function DesktopAuthActions() {
   const signInClass =
@@ -33,16 +33,14 @@ function DesktopAuthActions() {
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <div className="glass-surface rounded-full p-1">
           <UserButton
             appearance={{
               elements: {
-                avatarBox: "h-9 w-9",
-                userButtonTrigger: "focus:shadow-none",
+                avatarBox: "h-9 w-9 ring-0",
+                userButtonTrigger: "focus:shadow-none shadow-none ring-0",
               },
             }}
           />
-        </div>
       </SignedIn>
     </>
   );

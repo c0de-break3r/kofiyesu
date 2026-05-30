@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
-import { social } from "@/content/social";
+import { contactEmail, social } from "@/content/social";
 import { t } from "@/i18n/en";
 
 const labels: Record<string, string> = {
@@ -31,7 +31,7 @@ export function ContactSection() {
                 rel={item.name === "mail" ? undefined : "noreferrer"}
                 className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
               >
-                {labels[item.name]}
+                {item.name === "mail" ? contactEmail : labels[item.name]}
               </a>
             ))}
           </nav>

@@ -9,6 +9,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     }
 
     if (!isDatabaseConfigured()) {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
       return res.status(200).json({ projects: [] });
     }
 
@@ -17,9 +18,11 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     return res.status(200).json({ projects: rows.map(projectToApi) });
   } catch (err) {
     console.error("[site/projects] unhandled", err);
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     return res.status(200).json({ projects: [] });
   }
 }

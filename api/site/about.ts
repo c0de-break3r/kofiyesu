@@ -13,6 +13,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     }
 
     const row = await prisma.siteAbout.findUnique({ where: { id: "default" } });
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     return res.status(200).json({ about: row ? aboutToApi(row) : null });
   } catch (err) {
     console.error("[site/about] unhandled", err);

@@ -148,7 +148,7 @@ export function ContactChatPanel({ fixed }: Props) {
             <Button>{t("chat-sign-in")}</Button>
           </SignInButton>
           <p className="text-xs text-[var(--text-muted)]">{t("chat-guest-fallback")}</p>
-          <a href={social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev"}>
+          <a href={social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.com"}>
             <Button variant="border">{t("chat-email-cta")}</Button>
           </a>
         </div>

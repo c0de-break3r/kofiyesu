@@ -1,3 +1,5 @@
+import { contactEmail } from "./social";
+
 export type InquiryType = "collaboration" | "security" | "job" | "general";
 
 export interface InquiryRoute {
@@ -14,7 +16,7 @@ export const inquiryRoutes: InquiryRoute[] = [
     id: "collaboration",
     label: "Project collaboration",
     description: "Building software, products, or long-term partnerships",
-    email: "hello@kofiyesu.dev",
+    email: contactEmail,
     subject: "Collaboration inquiry",
     keywords: ["collaborate", "project", "build", "partner", "startup", "product", "app", "website"],
   },
@@ -22,7 +24,7 @@ export const inquiryRoutes: InquiryRoute[] = [
     id: "security",
     label: "Security & pentesting",
     description: "Bug bounty, pentesting, recon tooling, or security consulting",
-    email: "security@kofiyesu.dev",
+    email: contactEmail,
     subject: "Security inquiry",
     keywords: ["security", "pentest", "bug bounty", "hacking", "audit", "vulnerability", "recon", "cyber"],
   },
@@ -30,7 +32,7 @@ export const inquiryRoutes: InquiryRoute[] = [
     id: "job",
     label: "Job opportunity",
     description: "Full-time, contract, or freelance roles",
-    email: "hello@kofiyesu.dev",
+    email: contactEmail,
     subject: "Job opportunity",
     keywords: ["job", "hire", "position", "role", "employment", "freelance", "contract", "recruit"],
   },
@@ -38,7 +40,7 @@ export const inquiryRoutes: InquiryRoute[] = [
     id: "general",
     label: "General message",
     description: "Anything else — I'll get back to you",
-    email: "hello@kofiyesu.dev",
+    email: contactEmail,
     subject: "Portfolio contact",
     keywords: [],
   },

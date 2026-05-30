@@ -5,7 +5,7 @@ import { social } from "@/content/social";
 import { t } from "@/i18n/en";
 import { Button } from "@/components/ui/Button";
 
-const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.dev";
+const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.com";
 
 export function ChatPage() {
   return (
