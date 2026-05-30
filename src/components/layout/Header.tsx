@@ -14,7 +14,7 @@ const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kof
 function DesktopAuthActions() {
   const { isLoaded } = useAuth();
   const signInClass =
-    "rounded-full px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-white/50 hover:text-[var(--color-accent)]";
+    "glass-surface rounded-full px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-white/50 hover:border-white/70 hover:text-[var(--color-accent)]";
 
   if (!isClerkConfigured) {
     return (
