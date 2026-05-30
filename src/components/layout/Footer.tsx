@@ -1,4 +1,4 @@
-import { social } from "@/content/social";
+import { footerSocial } from "@/content/social";
 import { getCurrentYear } from "@/lib/currentYear";
 
 const labels: Record<string, string> = {
@@ -6,8 +6,6 @@ const labels: Record<string, string> = {
   instagram: "Instagram",
   x: "X",
 };
-
-const footerSocial = social.filter((item) => item.name !== "mail" && item.name !== "github");
 
 export function Footer({
   withSocial = true,
@@ -29,8 +27,8 @@ export function Footer({
               <a
                 key={item.name}
                 href={item.url}
-                target={item.name === "mail" ? undefined : "_blank"}
-                rel={item.name === "mail" ? undefined : "noreferrer"}
+                target="_blank"
+                rel="noreferrer"
                 className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
               >
                 {labels[item.name]}
