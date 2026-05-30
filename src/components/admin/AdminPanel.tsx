@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
+import { getLenis } from "@/hooks/useScroll";
 import { AdminInquiriesSection } from "./AdminInquiriesSection";
 import { AdminProjectsSection } from "./AdminProjectsSection";
 import { AdminAboutSection } from "./AdminAboutSection";
@@ -18,10 +19,19 @@ export function AdminPanel() {
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
+
+    const lenis = getLenis();
+    lenis?.stop();
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = prev;
+      lenis?.start();
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [open]);
 
@@ -31,12 +41,13 @@ export function AdminPanel() {
     <>
       <button
         type="button"
-        className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm touch-none"
         aria-label="Close admin panel"
         onClick={close}
       />
       <aside
         className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-lg flex-col border-l border-[var(--border)] bg-[var(--bg-elevated)] shadow-2xl md:max-w-xl lg:max-w-2xl"
+        data-lenis-prevent
         role="dialog"
         aria-modal="true"
         aria-label="Admin CMS"
@@ -71,7 +82,10 @@ export function AdminPanel() {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {tab === "inquiries" && (
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-5">
+            <div
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-5"
+              data-lenis-prevent
+            >
               <AdminInquiriesSection />
             </div>
           )}

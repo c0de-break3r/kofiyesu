@@ -111,7 +111,10 @@ export function AdminAboutSection() {
 
   return (
     <section className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-5">
+      <div
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-5"
+        data-lenis-prevent
+      >
         <div className="space-y-5">
         <div>
           <h2 className="text-lg font-black">About & vision</h2>

@@ -37,7 +37,7 @@ export function AdminFab() {
     <button
       type="button"
       onClick={toggle}
-      className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-lg font-black shadow-lg transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] md:bottom-6"
+      className="glass-surface fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full text-lg font-black shadow-lg transition hover:bg-white/50 hover:border-white/70 hover:text-[var(--color-accent)] md:bottom-6"
       aria-label={open ? "Close admin panel" : "Open admin CMS"}
       title="Admin CMS"
     >
