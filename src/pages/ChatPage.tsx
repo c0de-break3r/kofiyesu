@@ -12,7 +12,7 @@ export function ChatPage() {
     <main
       id="main-content"
       data-chat-page
-      className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-[var(--bg)] md:pt-[var(--height-header,5rem)]"
+      className="relative z-10 flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-[var(--bg)] md:pt-[var(--height-header,5rem)]"
     >
       {!isClerkConfigured && (
         <div className="shrink-0 px-4 pt-3 pb-2 sm:px-6">

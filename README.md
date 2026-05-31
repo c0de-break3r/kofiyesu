@@ -15,6 +15,7 @@ Built with **React 19**, **TypeScript**, **Vite 7**, and **Tailwind CSS v4**. Mo
 | `npm run typecheck` | Typecheck (`tsc -b`) |
 | `npm run db:push` | Apply schema locally (dev) |
 | `npm run db:migrate` | Apply migrations (`prisma migrate deploy`) |
+| `npm run db:baseline` | One-time: mark existing migrations applied (after `db push` history) |
 | `npm run db:seed` | Seed CMS defaults (features, projects, pricing, about) |
 | `npm run db:studio` | Prisma Studio |
 
@@ -45,6 +46,13 @@ See `.env.example` for the full list.
 ## Deploy
 
 Production deploys via **Vercel Git integration** — push to `main`. The build runs `prisma migrate deploy` then `npm run build`. Set all env vars in the Vercel project dashboard to match `.env.example`.
+
+If migrate deploy fails with **P3005** (database not empty), the DB was previously synced with `db push`. Run once locally against production:
+
+```bash
+npm run db:baseline
+npm run db:migrate
+```
 
 ## Content
 

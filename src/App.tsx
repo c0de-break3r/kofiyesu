@@ -45,6 +45,8 @@ function AppRoutes() {
     });
 
     if (onChat || onPay) {
+      void import("@/three").then(({ three }) => three.destroy());
+      void import("@/three/core/renderer").then(({ renderer }) => renderer.setIsActive(false));
       lenis?.start();
       lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);

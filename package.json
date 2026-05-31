@@ -9,6 +9,7 @@
     "dev:full": "vercel dev --listen 3000",
     "build": "prisma generate && tsc -b && vite build",
     "db:migrate": "prisma migrate deploy",
+    "db:baseline": "dotenv -e .env -e .env.local -- tsx scripts/baseline-migrations.ts",
     "db:sync": "prisma db push --accept-data-loss",
     "preview": "vite preview",
     "typecheck": "tsc -b",

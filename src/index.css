@@ -230,6 +230,12 @@ html.route-doc-scroll body {
   height: 100%;
 }
 
+html.route-doc-scroll canvas {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 html.route-doc-scroll #main-content[data-chat-page] {
   height: 100dvh;
   max-height: 100dvh;
