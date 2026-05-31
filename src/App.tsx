@@ -41,11 +41,16 @@ function AppRoutes() {
       renderer.setIsActive(canvasActive);
     });
 
-    if (onChat || onProject) {
+    if (onChat) {
       lenis?.start();
       lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);
       document.documentElement.classList.add("route-doc-scroll");
+    } else if (onProject) {
+      document.documentElement.classList.remove("route-doc-scroll");
+      lenis?.start();
+      lenis?.scrollTo(0, { immediate: true });
+      window.scrollTo(0, 0);
     } else {
       lenis?.start();
       document.documentElement.classList.remove("route-doc-scroll");

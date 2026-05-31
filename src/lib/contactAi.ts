@@ -1,6 +1,13 @@
 import { type InquiryType, inquiryRoutes, getInquiryRoute } from "@/content/contact";
+import { chatAssistantBio } from "@/content/about";
 import type { ChatAttachment } from "@/lib/chatAttachments";
 import { attachmentsToApiPayload } from "@/lib/chatAttachments";
+import {
+  ESCALATION_PATTERN,
+  hasBusinessIntent,
+  isInformationalQuestion,
+  wantsToTalkToObed,
+} from "@/lib/inquiryClassifier";
 
 export interface ChatMessageAttachmentView {
   id: string;
@@ -23,11 +30,12 @@ export interface RoutingResult {
   confidence: "high" | "medium" | "low";
   escalateToAdmin?: boolean;
   showEmailCta?: boolean;
+  queueInquiry?: boolean;
   source?: "gemini" | "openai" | "fallback";
 }
 
-const ESCALATION_PATTERN =
-  /speak to (a )?human|talk to kofi|contact kofi|real person|urgent|escalat|admin|pass (this )?on|human support/i;
+const PORTFOLIO_ANSWER =
+  "Obed builds full-stack web and mobile apps (React, Next.js, React Native, TypeScript), secure REST APIs (Node.js, Express, PostgreSQL/Neon), ecommerce and SaaS products, auth with Clerk, and security-focused work — pentesting workflows, API hardening, and recon automation. Recent work includes KhelianCart (grocery ecommerce in Ghana) and security tooling for bug bounty recon.";
 
 const shouldEscalate = (text: string): boolean => ESCALATION_PATTERN.test(text);
 
@@ -49,24 +57,67 @@ const classifyLocally = (text: string): InquiryType => {
 };
 
 const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): RoutingResult => {
-  if (escalate) {
-    return {
-      inquiryType: type,
-      reply: `I've passed this to **Kofi** in the admin queue — he'll follow up with you personally.`,
-      confidence: "high",
-      escalateToAdmin: true,
-      showEmailCta: true,
-    };
-  }
-
   const lower = userMessage.toLowerCase();
+  const business = hasBusinessIntent(userMessage);
+  const informational = isInformationalQuestion(userMessage);
 
-  if (/skill|stack|tech|python|backend|security|cyber|tool|automation|what do you|who (is|are) kofi|about/.test(lower)) {
+  if (wantsToTalkToObed(userMessage) && !business) {
     return {
       inquiryType: type,
       reply:
-        "Kofi is a **Software Engineer & Cybersecurity Practitioner** from Ghana — backend APIs, automation, and offensive-security tooling. What would you like to know more about?",
+        "You can ask me anything here first — skills, services, project ideas, or security work. If it's something **Obed** should handle personally (a hire, quote, or urgent request), describe it and I'll pass it to his inbox.",
       confidence: "medium",
+      queueInquiry: false,
+    };
+  }
+
+  if (escalate && business) {
+    return {
+      inquiryType: type,
+      reply: `I've passed this to **Obed** in the admin queue — he'll follow up with you personally.`,
+      confidence: "high",
+      escalateToAdmin: true,
+      showEmailCta: true,
+      queueInquiry: true,
+    };
+  }
+
+  if (escalate && !business) {
+    return {
+      inquiryType: type,
+      reply:
+        "Happy to connect you with Obed. Share what you need — project scope, timeline, or the question you want him to answer — and I'll make sure it reaches him.",
+      confidence: "medium",
+      queueInquiry: false,
+    };
+  }
+
+  if (informational || /what (websites?|apps?|can|kind)|build for me|services|portfolio|projects/.test(lower)) {
+    return {
+      inquiryType: type,
+      reply: PORTFOLIO_ANSWER,
+      confidence: "medium",
+      queueInquiry: false,
+    };
+  }
+
+  if (/skill|stack|tech|python|backend|security|cyber|tool|automation|what do you|who (is|are) (kofi|obed)|about (kofi|obed)/.test(lower)) {
+    return {
+      inquiryType: type,
+      reply: `${chatAssistantBio} What would you like to know more about?`,
+      confidence: "medium",
+      queueInquiry: false,
+    };
+  }
+
+  if (/hire|job|quote|collaborat|project|pentest|audit|work together|get in touch/.test(lower) && business) {
+    const route = getInquiryRoute(type);
+    return {
+      inquiryType: type,
+      reply: `Got it — ${route.description} I've added this to Obed's inbox. Share any extra details (timeline, scope, budget) here and he'll follow up.`,
+      confidence: "high",
+      showEmailCta: true,
+      queueInquiry: true,
     };
   }
 
@@ -76,14 +127,15 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
       inquiryType: type,
       reply: `${route.description} Share a few details (scope, timeline, goals) and we can take it from there.`,
       confidence: "medium",
-      showEmailCta: true,
+      queueInquiry: false,
     };
   }
 
   return {
     inquiryType: type,
-    reply: "Ask me anything about Kofi's skills, projects, or experience — I'm happy to help.",
+    reply: "Ask me anything about Obed's skills, projects, or experience — I'm happy to help.",
     confidence: "low",
+    queueInquiry: false,
   };
 };
 
@@ -96,6 +148,7 @@ export const routeInquiryLocally = (userMessage: string, hasFiles = false): Rout
       reply:
         "I received your file(s). For image and PDF analysis, ensure **GEMINI_API_KEY** is configured on the server — then I can summarize and answer questions about what you shared.",
       confidence: "low",
+      queueInquiry: false,
     };
   }
   return buildReply(inquiryType, escalate, userMessage);
@@ -164,5 +217,5 @@ export const routeInquiryWithAi = async ({
 
 export const getWelcomeMessage = (name?: string | null): string => {
   const greeting = name ? `Hi ${name.split(" ")[0]}!` : "Hi!";
-  return `${greeting} I'm Kofi's assistant. Ask me about his work, skills, or projects — or attach images, PDFs, and text files for analysis.`;
+  return `${greeting} I'm Obed's assistant. Ask about his work, skills, services, or projects — or attach images, PDFs, and text files for analysis. Want Obed personally? Describe your request and I'll route it to his inbox.`;
 };

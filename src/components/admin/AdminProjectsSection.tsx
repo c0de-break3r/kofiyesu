@@ -5,7 +5,7 @@ import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
 import { AdminMediaUpload } from "./AdminMediaUpload";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { buildProjectComponents, extractProjectFormFromComponents } from "@/lib/projectComponents";
+import { buildProjectComponents, extractProjectFormFromComponents, mergeProjectComponents } from "@/lib/projectComponents";
 import { parseCommaList } from "@/lib/parseCommaList";
 import type { SiteFeatureRow, SiteProjectRow } from "@/types/site";
 
@@ -26,6 +26,9 @@ const emptyForm = () => ({
   video_border: false,
   published: true,
 });
+
+const adminScrollClass =
+  "min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:color-mix(in_srgb,var(--color-accent)_40%,transparent)_transparent]";
 
 export function AdminProjectsSection() {
   const { adminFetch } = useAdminApi();
@@ -119,6 +122,9 @@ export function AdminProjectsSection() {
     setError(null);
     setSuccess(null);
     try {
+      const existingComponents =
+        editingId !== "new" ? projects.find((p) => p.id === editingId)?.components : undefined;
+
       const payload = {
         slug: form.slug,
         title: form.title,
@@ -132,11 +138,18 @@ export function AdminProjectsSection() {
         video_border: form.video_border,
         sort_order: form.sort_order,
         published: form.published,
-        components: buildProjectComponents({
-          showcase_video_url: form.showcase_video_url,
-          showcase_video_caption: form.showcase_video_caption,
-          body_text: form.body_text,
-        }),
+        components:
+          editingId === "new"
+            ? buildProjectComponents({
+                showcase_video_url: form.showcase_video_url,
+                showcase_video_caption: form.showcase_video_caption,
+                body_text: form.body_text,
+              })
+            : mergeProjectComponents(existingComponents ?? [], {
+                showcase_video_url: form.showcase_video_url,
+                showcase_video_caption: form.showcase_video_caption,
+                body_text: form.body_text,
+              }),
       };
 
       const isNew = editingId === "new";
@@ -205,8 +218,9 @@ export function AdminProjectsSection() {
   return (
     <section className="flex h-full min-h-0 flex-col">
       <div
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-5"
+        className={`${adminScrollClass} p-4 md:p-5 ${editingId ? "pb-28" : ""}`}
         data-lenis-prevent
+        data-lenis-prevent-wheel
       >
         <div className="space-y-5">
         <div>
@@ -279,8 +293,9 @@ export function AdminProjectsSection() {
 
             <AdminMediaUpload
               label="Preview video (short clip for project grid)"
-              hint="Optional. Shown on hover in Selected Work. Keep under ~15s for best UX."
-              accept="video/*,image/*"
+              hint="Optional. Shown on hover in Selected Work. MP4 or WebM, keep under ~15s for best UX."
+              accept="video/mp4,video/webm,video/quicktime,video/*"
+              uploadAs="video"
               value={form.preview_video_url}
               onChange={(url) => set("preview_video_url", url)}
               onError={setError}
@@ -290,8 +305,9 @@ export function AdminProjectsSection() {
 
             <AdminMediaUpload
               label="Showcase video (project page)"
-              hint="Main video on the project detail page."
-              accept="video/*"
+              hint="Main video on the project detail page (below the hero). MP4 or WebM recommended."
+              accept="video/mp4,video/webm,video/quicktime,video/*"
+              uploadAs="video"
               value={form.showcase_video_url}
               onChange={(url) => set("showcase_video_url", url)}
               onError={setError}

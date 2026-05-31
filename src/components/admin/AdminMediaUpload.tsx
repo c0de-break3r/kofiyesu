@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { isCloudinaryConfigured, uploadMediaToCloudinary } from "@/lib/cloudinary";
+import {
+  isCloudinaryConfigured,
+  uploadImageToCloudinary,
+  uploadMediaToCloudinary,
+  uploadVideoToCloudinary,
+} from "@/lib/cloudinary";
 import { AdminStatusMessage } from "./AdminStatusMessage";
 
 type AdminMediaUploadProps = {
@@ -11,6 +16,8 @@ type AdminMediaUploadProps = {
   onError: (message: string) => void;
   onSuccess?: (message: string) => void;
   previewType?: "image" | "video";
+  /** Force Cloudinary image vs video upload endpoint. */
+  uploadAs?: "image" | "video" | "auto";
 };
 
 export function AdminMediaUpload({
@@ -22,6 +29,7 @@ export function AdminMediaUpload({
   onError,
   onSuccess,
   previewType = "image",
+  uploadAs = "auto",
 }: AdminMediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -52,10 +60,25 @@ export function AdminMediaUpload({
       return;
     }
 
+    if (uploadAs === "video" && !file.type.startsWith("video/")) {
+      onError("Choose a video file (MP4, WebM, or MOV).");
+      return;
+    }
+
+    if (uploadAs === "image" && !file.type.startsWith("image/")) {
+      onError("Choose an image file.");
+      return;
+    }
+
     try {
       setUploading(true);
       setUploadStatus(null);
-      const url = await uploadMediaToCloudinary(file);
+      const url =
+        uploadAs === "video"
+          ? await uploadVideoToCloudinary(file)
+          : uploadAs === "image"
+            ? await uploadImageToCloudinary(file)
+            : await uploadMediaToCloudinary(file);
       onChange(url);
       showUploadStatus("Upload successful");
     } catch (err) {
@@ -111,7 +134,7 @@ export function AdminMediaUpload({
       {value ? (
         <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)]">
           {isVideo ? (
-            <video src={value} controls playsInline className="max-h-40 w-full object-cover" />
+            <video src={value} controls playsInline preload="metadata" className="max-h-52 w-full object-contain bg-black/5" />
           ) : (
             <img src={value} alt="" className="max-h-40 w-full object-cover" />
           )}

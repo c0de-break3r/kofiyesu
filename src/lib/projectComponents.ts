@@ -1,10 +1,14 @@
 import type { ProjectComponent } from "@/types/projects";
 
+const MANAGED_BODY_TITLE = "What I built";
+
 export function extractProjectFormFromComponents(components: ProjectComponent[] = []) {
   const videoBlock = components.find(
     (c) => c.type === "media" && c.props.type === "video",
   );
-  const textBlock = components.find((c) => c.type === "text");
+  const textBlock = components.find(
+    (c) => c.type === "text" && c.props.title === MANAGED_BODY_TITLE,
+  );
 
   return {
     showcase_video_url: videoBlock?.type === "media" ? videoBlock.props.src : "",
@@ -36,11 +40,29 @@ export function buildProjectComponents(input: {
     components.push({
       type: "text",
       props: {
-        title: "What I built",
+        title: MANAGED_BODY_TITLE,
         text: input.body_text.trim(),
       },
     });
   }
 
   return components;
+}
+
+/** Update CMS-managed showcase + body blocks without dropping other project content. */
+export function mergeProjectComponents(
+  existing: ProjectComponent[] = [],
+  input: {
+    showcase_video_url?: string;
+    showcase_video_caption?: string;
+    body_text?: string;
+  },
+): ProjectComponent[] {
+  const managed = buildProjectComponents(input);
+  const rest = existing.filter((c) => {
+    if (c.type === "media" && c.props.type === "video") return false;
+    if (c.type === "text" && c.props.title === MANAGED_BODY_TITLE) return false;
+    return true;
+  });
+  return [...managed, ...rest];
 }

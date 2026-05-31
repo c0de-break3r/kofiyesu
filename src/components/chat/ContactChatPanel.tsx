@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth, useUser, SignInButton } from "@clerk/clerk-react";
 import { BackIconLink } from "@/components/layout/BackIconLink";
 import { Button } from "@/components/ui/Button";
@@ -13,7 +13,6 @@ import {
   getWelcomeMessage,
   routeInquiryWithAi,
 } from "@/lib/contactAi";
-import { buildMailtoUrl, getInquiryRoute } from "@/content/contact";
 import {
   type ChatAttachment,
   CHAT_MAX_FILES,
@@ -204,7 +203,7 @@ export function ContactChatPanel() {
       setMessages(finalMessages);
       persistConversation(finalMessages);
 
-      if (shouldQueueInquiry(result.inquiryType, result)) {
+      if (shouldQueueInquiry(result.inquiryType, result, userTextForInquiry)) {
         await submitInquiry({
           inquiryType: result.inquiryType,
           message: userTextForInquiry,
@@ -319,7 +318,7 @@ export function ContactChatPanel() {
     persistConversation(finalMessages);
 
     const inquiryBody = [text, files.length ? attachmentSummary(files) : ""].filter(Boolean).join("\n\n");
-    if (shouldQueueInquiry(result.inquiryType, result)) {
+    if (shouldQueueInquiry(result.inquiryType, result, inquiryBody || displayContent)) {
       await submitInquiry({
         inquiryType: result.inquiryType,
         message: inquiryBody || displayContent,
@@ -361,13 +360,6 @@ export function ContactChatPanel() {
     await runAssistantTurn(truncated, text);
     setIsLoading(false);
   };
-
-  const mailtoUrl = useMemo(() => {
-    if (!routing?.showEmailCta && !routing?.escalateToAdmin) return null;
-    const route = getInquiryRoute(routing.inquiryType);
-    const userMsgs = messages.filter((m) => m.role === "user").map((m) => m.content);
-    return buildMailtoUrl(route, userMsgs.join("\n\n"));
-  }, [routing, messages]);
 
   const hasUserMessages = messages.some((m) => m.role === "user");
   const showReadyState = historyReady && !historyLoading && !hasUserMessages && !isLoading;
@@ -510,13 +502,6 @@ export function ContactChatPanel() {
                   <p className="glass-surface rounded-xl px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
                     {t("chat-escalated")}
                   </p>
-                ) : undefined
-              }
-              mailtoBanner={
-                mailtoUrl ? (
-                  <a href={mailtoUrl} className="flex justify-center">
-                    <Button variant="border">{t("chat-send-email")}</Button>
-                  </a>
                 ) : undefined
               }
             />

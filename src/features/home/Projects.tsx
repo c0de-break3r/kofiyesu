@@ -5,6 +5,7 @@ import { ProjectCardSkeleton } from "@/components/ui/ProjectCardSkeleton";
 import { t } from "@/i18n/en";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { ProjectCardPreviewMedia } from "@/features/projects/ProjectCardPreviewMedia";
 
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -160,36 +161,11 @@ export function Projects() {
                     to={`/project/${preview.slug}`}
                     className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--color-accent)_45%,var(--border))] hover:shadow-[0_12px_40px_color-mix(in_srgb,var(--color-accent)_12%,transparent)]"
                   >
-                    <div className="relative aspect-video overflow-hidden bg-[color-mix(in_srgb,var(--color-accent)_6%,var(--surface-projects))]">
-                      {preview.thumbnail ? (
-                        <img
-                          src={preview.thumbnail}
-                          alt={preview.title}
-                          className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.03] ${
-                            preview.previewVideo ? "group-hover:opacity-0" : ""
-                          }`}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                          {preview.title}
-                        </div>
-                      )}
-                      {preview.previewVideo ? (
-                        <video
-                          src={preview.previewVideo}
-                          muted
-                          loop
-                          playsInline
-                          preload="metadata"
-                          className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100"
-                        />
-                      ) : null}
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,color-mix(in_srgb,var(--text)_8%,transparent))] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                      />
-                    </div>
+                    <ProjectCardPreviewMedia
+                      title={preview.title}
+                      thumbnail={preview.thumbnail || undefined}
+                      previewVideo={preview.previewVideo}
+                    />
                     <div className="flex flex-1 flex-col gap-2 p-4">
                       <h3 className="text-lg font-bold transition-colors group-hover:text-[var(--color-accent)]">
                         {preview.title}

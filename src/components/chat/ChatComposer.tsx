@@ -19,7 +19,6 @@ interface Props {
   isLoading: boolean;
   composerRef?: Ref<HTMLDivElement>;
   escalateBanner?: ReactNode;
-  mailtoBanner?: ReactNode;
 }
 
 export function ChatComposer({
@@ -32,7 +31,6 @@ export function ChatComposer({
   isLoading,
   composerRef,
   escalateBanner,
-  mailtoBanner,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canSend = (input.trim().length > 0 || pendingFiles.length > 0) && !isLoading;
@@ -44,10 +42,9 @@ export function ChatComposer({
       data-lenis-prevent
       data-lenis-prevent-wheel
     >
-      {(escalateBanner || mailtoBanner) && (
+      {escalateBanner && (
         <div className="pointer-events-auto mx-auto w-full max-w-3xl space-y-2">
           {escalateBanner}
-          {mailtoBanner}
         </div>
       )}
 

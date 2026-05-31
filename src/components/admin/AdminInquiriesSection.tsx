@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getInquiryRoute, buildMailtoUrl, type InquiryType } from "@/content/contact";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { Button } from "@/components/ui/Button";
@@ -22,6 +22,8 @@ export type Inquiry = {
   updated_at: string;
 };
 
+type FilterTab = "all" | "new" | "urgent" | InquiryType;
+
 const statusLabel: Record<InquiryStatus, string> = {
   new: "New",
   reviewed: "Reviewed",
@@ -31,17 +33,59 @@ const statusLabel: Record<InquiryStatus, string> = {
 
 const statusClass: Record<InquiryStatus, string> = {
   new: "bg-[color-mix(in_srgb,var(--color-accent)_15%,transparent)] text-[var(--color-accent)]",
-  reviewed: "bg-blue-500/10 text-blue-700",
-  replied: "bg-emerald-500/10 text-emerald-700",
+  reviewed: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
+  replied: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   archived: "bg-[var(--border)] text-[var(--text-muted)]",
 };
+
+const typeMeta: Record<InquiryType, { label: string; icon: string; accent: string }> = {
+  collaboration: {
+    label: "Collaboration",
+    icon: "◆",
+    accent: "text-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]",
+  },
+  security: {
+    label: "Security",
+    icon: "⬡",
+    accent: "text-violet-600 bg-violet-500/10 dark:text-violet-400",
+  },
+  job: {
+    label: "Job",
+    icon: "◎",
+    accent: "text-sky-600 bg-sky-500/10 dark:text-sky-400",
+  },
+  general: {
+    label: "General",
+    icon: "○",
+    accent: "text-[var(--text-muted)] bg-[var(--border)]",
+  },
+};
+
+const filterTabs: { id: FilterTab; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "new", label: "New" },
+  { id: "urgent", label: "Urgent" },
+  { id: "collaboration", label: "Projects" },
+  { id: "security", label: "Security" },
+  { id: "job", label: "Jobs" },
+];
 
 const scrollClass =
   "overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:color-mix(in_srgb,var(--color-accent)_40%,transparent)_transparent]";
 
 function formatWhen(iso: string) {
   try {
-    return new Date(iso).toLocaleString(undefined, {
+    const d = new Date(iso);
+    const now = Date.now();
+    const diff = now - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    return d.toLocaleString(undefined, {
       month: "short",
       day: "numeric",
       hour: "numeric",
@@ -66,6 +110,25 @@ function ListSkeleton() {
   );
 }
 
+function StatCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+  return (
+    <div
+      className={`rounded-xl border px-3 py-2.5 ${
+        highlight
+          ? "border-[color-mix(in_srgb,var(--color-accent)_35%,var(--border))] bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]"
+          : "border-[var(--border)] bg-[var(--bg)]"
+      }`}
+    >
+      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
+      <p
+        className={`mt-0.5 text-xl font-black tabular-nums ${highlight ? "text-[var(--color-accent)]" : ""}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
 export function AdminInquiriesSection() {
   const { adminFetch } = useAdminApi();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -77,9 +140,35 @@ export function AdminInquiriesSection() {
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterTab>("all");
+  const [search, setSearch] = useState("");
 
   const selected = inquiries.find((i) => i.id === selectedId) ?? null;
-  const newCount = inquiries.filter((i) => i.status === "new").length;
+
+  const stats = useMemo(() => {
+    const newCount = inquiries.filter((i) => i.status === "new").length;
+    const urgentCount = inquiries.filter((i) => i.needs_admin && i.status !== "archived").length;
+    const pendingCount = inquiries.filter((i) => i.status === "new" || i.status === "reviewed").length;
+    return { newCount, urgentCount, pendingCount, total: inquiries.length };
+  }, [inquiries]);
+
+  const filtered = useMemo(() => {
+    let rows = inquiries;
+    if (filter === "new") rows = rows.filter((i) => i.status === "new");
+    else if (filter === "urgent") rows = rows.filter((i) => i.needs_admin);
+    else if (filter !== "all") rows = rows.filter((i) => i.inquiry_type === filter);
+
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+
+    return rows.filter(
+      (i) =>
+        i.message.toLowerCase().includes(q) ||
+        i.user_name?.toLowerCase().includes(q) ||
+        i.user_email?.toLowerCase().includes(q) ||
+        i.inquiry_type.includes(q),
+    );
+  }, [inquiries, filter, search]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -180,6 +269,17 @@ export function AdminInquiriesSection() {
     }
   };
 
+  const copyEmail = async () => {
+    if (!selected?.user_email) return;
+    try {
+      await navigator.clipboard.writeText(selected.user_email);
+      setSuccess("Email copied");
+      window.setTimeout(() => setSuccess(null), 2000);
+    } catch {
+      setError("Could not copy email");
+    }
+  };
+
   const openReplyMail = () => {
     if (!selected) return;
     const route = getInquiryRoute(selected.inquiry_type);
@@ -210,12 +310,19 @@ export function AdminInquiriesSection() {
     return (
       <section className="flex h-full min-h-0 flex-col p-4 md:p-5">
         <h2 className="text-lg font-black">Inquiries</h2>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          No business inquiries yet. Only collaboration, security, job, or urgent chat messages appear here.
-        </p>
-        <Button variant="border" className="mt-4 w-fit" onClick={() => void load()}>
-          Refresh
-        </Button>
+        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg)] px-6 py-12 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] text-xl">
+            ✦
+          </div>
+          <p className="text-sm font-bold">Inbox is clear</p>
+          <p className="mt-1 max-w-xs text-xs leading-relaxed text-[var(--text-muted)]">
+            Real project requests, hires, and urgent messages from chat appear here — casual Q&A stays in
+            chat only.
+          </p>
+          <Button variant="border" className="mt-4" onClick={() => void load()}>
+            Refresh
+          </Button>
+        </div>
       </section>
     );
   }
@@ -227,8 +334,7 @@ export function AdminInquiriesSection() {
           <div>
             <h2 className="text-lg font-black">Inquiries</h2>
             <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-              {inquiries.length} total
-              {newCount > 0 ? ` · ${newCount} new` : ""}
+              Business requests routed from chat
             </p>
           </div>
           <button
@@ -239,72 +345,162 @@ export function AdminInquiriesSection() {
             Refresh
           </button>
         </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <StatCard label="New" value={stats.newCount} highlight={stats.newCount > 0} />
+          <StatCard label="Urgent" value={stats.urgentCount} highlight={stats.urgentCount > 0} />
+          <StatCard label="Pending" value={stats.pendingCount} />
+        </div>
+
+        <div className="mt-3">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search messages, names, emails…"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+          />
+        </div>
+
+        <div className="mt-2 flex gap-1 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch]">
+          {filterTabs.map(({ id, label }) => {
+            const count =
+              id === "all"
+                ? inquiries.length
+                : id === "new"
+                  ? stats.newCount
+                  : id === "urgent"
+                    ? stats.urgentCount
+                    : inquiries.filter((i) => i.inquiry_type === id).length;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setFilter(id)}
+                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
+                  filter === id
+                    ? "bg-[var(--color-accent)] text-white"
+                    : "bg-[var(--bg)] text-[var(--text-muted)] hover:bg-[var(--border)]"
+                }`}
+              >
+                {label}
+                {count > 0 ? ` (${count})` : ""}
+              </button>
+            );
+          })}
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <aside className="flex max-h-[42vh] min-h-0 shrink-0 flex-col border-b border-[var(--border)] md:max-h-none md:w-[38%] md:shrink-0 md:border-b-0 md:border-r lg:w-[36%]">
           <p className="shrink-0 px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            Inbox
+            Inbox · {filtered.length}
           </p>
-          <ul className={`min-h-0 flex-1 space-y-2 px-2 pb-3 ${scrollClass}`} data-lenis-prevent>
-            {inquiries.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(item.id)}
-                  className={`w-full rounded-xl border p-3 text-left text-sm transition duration-200 ${
-                    item.id === selectedId
-                      ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)] shadow-sm"
-                      : "border-[var(--border)] bg-[var(--bg)] hover:border-[color-mix(in_srgb,var(--color-accent)_40%,var(--border))] hover:shadow-sm"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[10px] font-bold uppercase text-[var(--color-accent)]">
-                      {item.inquiry_type}
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${statusClass[item.status]}`}
+          {filtered.length === 0 ? (
+            <p className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">No matches for this filter.</p>
+          ) : (
+            <ul className={`min-h-0 flex-1 space-y-2 px-2 pb-3 ${scrollClass}`} data-lenis-prevent>
+              {filtered.map((item) => {
+                const meta = typeMeta[item.inquiry_type];
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(item.id)}
+                      className={`w-full rounded-xl border p-3 text-left text-sm transition duration-200 ${
+                        item.id === selectedId
+                          ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)] shadow-sm"
+                          : "border-[var(--border)] bg-[var(--bg)] hover:border-[color-mix(in_srgb,var(--color-accent)_40%,var(--border))] hover:shadow-sm"
+                      }`}
                     >
-                      {statusLabel[item.status]}
-                    </span>
-                    {item.needs_admin && (
-                      <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-red-600">
-                        Urgent
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--text-muted)]">
-                    {item.message}
-                  </p>
-                  <time className="mt-1.5 block text-[10px] font-semibold text-[var(--text-muted)]">
-                    {formatWhen(item.created_at)}
-                  </time>
-                </button>
-              </li>
-            ))}
-          </ul>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${meta.accent}`}
+                        >
+                          <span aria-hidden>{meta.icon}</span>
+                          {meta.label}
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${statusClass[item.status]}`}
+                        >
+                          {statusLabel[item.status]}
+                        </span>
+                        {item.needs_admin && (
+                          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-red-600">
+                            Urgent
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--text-muted)]">
+                        {item.message}
+                      </p>
+                      <div className="mt-1.5 flex items-center justify-between gap-2">
+                        <span className="truncate text-[10px] font-semibold text-[var(--text-muted)]">
+                          {item.user_name ?? item.user_email ?? "Guest"}
+                        </span>
+                        <time className="shrink-0 text-[10px] font-semibold text-[var(--text-muted)]">
+                          {formatWhen(item.created_at)}
+                        </time>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </aside>
 
         {selected ? (
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <div className={`min-h-0 flex-1 px-4 py-4 md:px-5 ${scrollClass}`} data-lenis-prevent>
               <div className="space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${typeMeta[selected.inquiry_type].accent}`}
+                    >
+                      {typeMeta[selected.inquiry_type].icon} {typeMeta[selected.inquiry_type].label}
+                    </span>
+                    {selected.needs_admin && (
+                      <span className="rounded-full bg-red-500/15 px-2.5 py-1 text-[10px] font-bold uppercase text-red-600">
+                        Needs Obed
+                      </span>
+                    )}
+                  </div>
+                  <time className="text-[11px] font-semibold text-[var(--text-muted)]">
+                    {formatWhen(selected.created_at)}
+                  </time>
+                </div>
+
+                <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+                  {getInquiryRoute(selected.inquiry_type).description}
+                </p>
+
                 {(selected.user_name || selected.user_email) && (
                   <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3">
                     <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
                       Client
                     </p>
-                    <p className="mt-1 text-sm font-bold">
-                      {selected.user_name ?? "Guest"}
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold">{selected.user_name ?? "Guest"}</p>
                       {selected.user_email ? (
-                        <a
-                          href={`mailto:${selected.user_email}`}
-                          className="ml-2 font-semibold text-[var(--color-accent)]"
-                        >
-                          {selected.user_email}
-                        </a>
+                        <>
+                          <a
+                            href={`mailto:${selected.user_email}`}
+                            className="text-sm font-semibold text-[var(--color-accent)]"
+                          >
+                            {selected.user_email}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => void copyEmail()}
+                            className="rounded-lg border border-[var(--border)] px-2 py-0.5 text-[10px] font-bold text-[var(--text-muted)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                          >
+                            Copy
+                          </button>
+                        </>
                       ) : null}
-                    </p>
+                    </div>
                   </div>
                 )}
 
@@ -353,7 +549,7 @@ export function AdminInquiriesSection() {
                     value={adminNotes}
                     onChange={(e) => setAdminNotes(e.target.value)}
                     rows={3}
-                    placeholder="Internal notes…"
+                    placeholder="Internal notes — not sent to client…"
                     className="mt-1 w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-accent)]"
                   />
                 </label>
@@ -402,7 +598,7 @@ export function AdminInquiriesSection() {
                   disabled={saving}
                   onClick={openReplyMail}
                 >
-                  Reply
+                  Reply via email
                 </Button>
                 <Button
                   variant="border"

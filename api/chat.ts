@@ -1,4 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import {
+  ESCALATION_PATTERN,
+  hasBusinessIntent,
+  isInformationalQuestion,
+  PORTFOLIO_SERVICES_BLURB,
+  wantsToTalkToObed,
+} from "./lib/inquiryClassifier.js";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
 
@@ -20,13 +27,11 @@ interface ChatResponse {
   confidence: "high" | "medium" | "low";
   escalateToAdmin?: boolean;
   showEmailCta?: boolean;
+  queueInquiry?: boolean;
   source?: "gemini" | "openai" | "fallback";
 }
 
 type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
-
-const ESCALATION_PATTERN =
-  /speak to (a )?human|talk to kofi|contact kofi|real person|urgent|escalat|admin|pass (this )?on|human support|email (me|kofi)|send (an )?email/i;
 
 const EMAIL_INTENT_PATTERN =
   /hire|job|quote|proposal|collaborat|project|pentest|audit|security work|work together|get in touch|reach out|contact you/i;
@@ -57,31 +62,92 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
       confidence: "low",
       escalateToAdmin: false,
       showEmailCta: false,
-      source: "fallback",
-    };
-  }
-
-  if (escalate) {
-    return {
-      inquiryType,
-      reply: `I've passed this to **Kofi** in the admin queue — he'll follow up with you personally.`,
-      confidence: "high",
-      escalateToAdmin: true,
-      showEmailCta: true,
+      queueInquiry: false,
       source: "fallback",
     };
   }
 
   const lower = text.toLowerCase();
+  const business = hasBusinessIntent(text);
+  const informational = isInformationalQuestion(text);
 
-  if (/skill|stack|tech|python|backend|security|cyber|tool|automation|what do you|who (is|are) kofi|about kofi/.test(lower)) {
+  if (wantsToTalkToObed(text) && !business) {
     return {
       inquiryType,
       reply:
-        "Kofi is a **Software Engineer & Cybersecurity Practitioner** from Ghana. He builds backend APIs, automation scripts, and offensive-security tooling (recon, pentesting workflows). Ask me anything specific — projects, stack, or how he works.",
+        "You can ask me anything here first — skills, services, project ideas, or security work. If it's something **Obed** should handle personally (a hire, quote, or urgent request), describe it and I'll pass it to his inbox.",
       confidence: "medium",
       escalateToAdmin: false,
       showEmailCta: false,
+      queueInquiry: false,
+      source: "fallback",
+    };
+  }
+
+  if (escalate && business) {
+    return {
+      inquiryType,
+      reply: `I've passed this to **Obed** in the admin queue — he'll follow up with you personally.`,
+      confidence: "high",
+      escalateToAdmin: true,
+      showEmailCta: true,
+      queueInquiry: true,
+      source: "fallback",
+    };
+  }
+
+  if (escalate && !business) {
+    return {
+      inquiryType,
+      reply:
+        "Happy to connect you with Obed. Share what you need — project scope, timeline, or the question you want him to answer — and I'll make sure it reaches him.",
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: false,
+      queueInquiry: false,
+      source: "fallback",
+    };
+  }
+
+  if (informational || /what (websites?|apps?|can|kind)|build for me|services|portfolio|projects/.test(lower)) {
+    return {
+      inquiryType,
+      reply: PORTFOLIO_SERVICES_BLURB,
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: false,
+      queueInquiry: false,
+      source: "fallback",
+    };
+  }
+
+  if (/skill|stack|tech|python|backend|security|cyber|tool|automation|what do you|who (is|are) (kofi|obed)|about (kofi|obed)/.test(lower)) {
+    return {
+      inquiryType,
+      reply:
+        "Obed is a **Software Engineer & Cybersecurity Practitioner** from Ghana. He builds backend APIs, automation scripts, and offensive-security tooling (recon, pentesting workflows). Ask me anything specific — projects, stack, or how he works.",
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: false,
+      queueInquiry: false,
+      source: "fallback",
+    };
+  }
+
+  if (EMAIL_INTENT_PATTERN.test(lower) && business) {
+    const labels: Record<InquiryType, string> = {
+      collaboration: "a collaboration",
+      security: "security / pentesting work",
+      job: "a role or hire",
+      general: "getting in touch",
+    };
+    return {
+      inquiryType,
+      reply: `Got it — ${labels[inquiryType]}. I've added this to Obed's inbox. Share any extra details (timeline, scope, budget) here and he'll follow up.`,
+      confidence: "high",
+      escalateToAdmin: false,
+      showEmailCta: true,
+      queueInquiry: true,
       source: "fallback",
     };
   }
@@ -98,7 +164,8 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
       reply: `Happy to help with ${labels[inquiryType]}. Tell me a bit more about what you need — timeline, scope, or goals — and I can point you to the right next step.`,
       confidence: "medium",
       escalateToAdmin: false,
-      showEmailCta: EMAIL_INTENT_PATTERN.test(lower),
+      showEmailCta: false,
+      queueInquiry: false,
       source: "fallback",
     };
   }
@@ -106,29 +173,35 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
   return {
     inquiryType,
     reply:
-      "I'm here to answer questions about Kofi's work, skills, and experience. What would you like to know?",
+      "I'm here to answer questions about Obed's work, skills, and experience. What would you like to know?",
     confidence: "low",
     escalateToAdmin: false,
     showEmailCta: false,
+    queueInquiry: false,
     source: "fallback",
   };
 };
 
 const buildSystemPrompt = (userName?: string, userEmail?: string) =>
-  `You are the AI assistant on Obed Prince Kofi Yesu's portfolio site. Kofi is a Software Engineer & Cybersecurity Practitioner from Ghana — full-stack (React, Next.js, React Native, Node.js, TypeScript), Clerk auth, PostgreSQL/Neon/Supabase, application security, and production observability with Sentry and PostHog.
+  `You are the AI assistant on Obed Prince Kofi Yesu's portfolio site. Obed (also called Kofi) is a Software Engineer & Cybersecurity Practitioner from Ghana.
+
+${PORTFOLIO_SERVICES_BLURB}
 
 Rules:
 1. **Answer the visitor's question directly** in 2–5 sentences. Be helpful and conversational.
-2. When the user shares **images, PDFs, or text files**, analyze them carefully: summarize key content, note security or engineering relevance, and answer their question about the file.
-3. **Never** say "general inquiry", "this looks like a … inquiry", or "tap below to email" unless the user explicitly wants to contact Kofi or speak to a human.
-4. Classify intent internally only (collaboration | security | job | general) — do not announce the category in the reply.
-5. Set escalateToAdmin true only if they ask for Kofi, a human, admin, or say it's urgent.
-6. Set showEmailCta true only if they clearly want to hire, collaborate, get a quote, or explicitly ask to email — not for casual questions.
+2. **Informational questions** (what can you build, what websites/apps, skills, stack, who is Obed, portfolio examples) — answer fully. Set queueInquiry false, showEmailCta false, escalateToAdmin false.
+3. When the user asks to **talk to Obed/Kofi** without a concrete project — invite them to ask any question here first. Do NOT escalate yet. Set queueInquiry false.
+4. **Queue for Obed** (queueInquiry true) only when the user has clear business intent: wants to hire, needs a quote, describes their project/startup, pentest request, job offer, urgent human follow-up WITH substantive details.
+5. When the user shares **images, PDFs, or text files**, analyze them carefully and answer their question. queueInquiry true only if they want Obed to act on the file (e.g. review a brief), not for casual analysis.
+6. **Never** say "general inquiry", "this looks like a … inquiry", or "tap below to email" unless they explicitly want to contact Obed or speak to a human with business intent.
+7. Classify intent internally only (collaboration | security | job | general) — do not announce the category in the reply.
+8. Set escalateToAdmin true only when they need Obed personally AND provided a substantive message (not just "talk to Obed").
+9. Set showEmailCta true only when queueInquiry is true or they explicitly ask to email.
 
 Visitor: ${userName ?? "Guest"} (${userEmail ?? "not provided"})
 
 JSON only:
-{"inquiryType":"collaboration|security|job|general","reply":"your answer","escalateToAdmin":false,"showEmailCta":false,"confidence":"high"}`;
+{"inquiryType":"collaboration|security|job|general","reply":"your answer","escalateToAdmin":false,"showEmailCta":false,"queueInquiry":false,"confidence":"high"}`;
 
 const parseAiJson = (content: string): ChatResponse | null => {
   try {
@@ -298,15 +371,38 @@ const callOpenAi = async (
   return parsed ? { ...parsed, source: "openai" } : null;
 };
 
-const normalizeResponse = (parsed: ChatResponse, escalate: boolean): ChatResponse => {
-  const escalated = parsed.escalateToAdmin ?? escalate;
+const normalizeResponse = (parsed: ChatResponse, userText: string, keywordEscalate: boolean): ChatResponse => {
+  const informational = isInformationalQuestion(userText);
+  const business = hasBusinessIntent(userText);
+  const talkToObed = wantsToTalkToObed(userText);
+
+  let escalated = parsed.escalateToAdmin ?? keywordEscalate;
+  let queueInquiry = parsed.queueInquiry;
+  let showEmailCta = parsed.showEmailCta;
+
+  if (informational) {
+    queueInquiry = false;
+    showEmailCta = false;
+    escalated = false;
+  } else if (talkToObed && !business) {
+    queueInquiry = false;
+    showEmailCta = false;
+    escalated = false;
+  } else if (queueInquiry === undefined) {
+    queueInquiry = Boolean(business && (escalated || parsed.showEmailCta || parsed.confidence === "high"));
+  }
+
+  if (escalated && !business && !queueInquiry) {
+    escalated = false;
+  }
 
   return {
     inquiryType: parsed.inquiryType,
     reply: parsed.reply,
     confidence: parsed.confidence ?? "high",
     escalateToAdmin: escalated,
-    showEmailCta: escalated || parsed.showEmailCta === true,
+    showEmailCta: Boolean(showEmailCta && (queueInquiry || escalated)),
+    queueInquiry: Boolean(queueInquiry),
     source: parsed.source,
   };
 };
@@ -352,7 +448,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (parsed) {
       res.setHeader("X-Chat-Source", parsed.source ?? "ai");
-      return res.status(200).json(normalizeResponse(parsed, escalate));
+      return res.status(200).json(normalizeResponse(parsed, text, escalate));
     }
   } catch (err) {
     console.error("[chat] AI handler error", err);

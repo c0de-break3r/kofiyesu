@@ -63,15 +63,19 @@ export function ProjectBlocks({ components, videoBorder }: Props) {
         if (block.type === "media") {
           if (block.props.type === "video") {
             return (
-              <figure key={i} className="overflow-hidden">
+              <figure
+                key={i}
+                className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--color-accent)_4%,#fafafa)]"
+              >
                 <video
                   src={block.props.src}
                   controls
                   playsInline
-                  className={`w-full rounded-2xl ${videoBorder ? "border border-[var(--border)]" : ""}`}
+                  preload="metadata"
+                  className={`aspect-video w-full object-cover ${videoBorder ? "border-b border-[var(--border)]" : ""}`}
                 />
                 {block.props.caption ? (
-                  <figcaption className="mt-3 text-sm text-[var(--text-muted)]">{block.props.caption}</figcaption>
+                  <figcaption className="px-1 py-3 text-sm text-[var(--text-muted)]">{block.props.caption}</figcaption>
                 ) : null}
               </figure>
             );
