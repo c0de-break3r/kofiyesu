@@ -33,24 +33,30 @@ function AppRoutes() {
   useEffect(() => {
     const onChat = location.pathname.startsWith("/chat");
     const onProject = location.pathname.startsWith("/project/");
+    const onHome = !onChat && !onProject;
     const lenis = getLenis();
+    const canvasActive = onHome && !reducedMotion;
+
+    void import("@/three/core/renderer").then(({ renderer }) => {
+      renderer.setIsActive(canvasActive);
+    });
 
     if (onChat || onProject) {
       lenis?.start();
       lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);
+      document.documentElement.classList.add("route-doc-scroll");
     } else {
       lenis?.start();
+      document.documentElement.classList.remove("route-doc-scroll");
+      resetHomeScene();
+      lenis?.scrollTo(0, { immediate: true });
+      requestAnimationFrame(() => ScrollTrigger.refresh());
     }
 
-    void import("@/three/core/renderer").then(({ renderer }) => {
-      renderer.setIsActive(!onChat && !onProject && !reducedMotion);
-      if (!onChat && !onProject) {
-        resetHomeScene();
-        lenis?.scrollTo(0, { immediate: true });
-        requestAnimationFrame(() => ScrollTrigger.refresh());
-      }
-    });
+    return () => {
+      document.documentElement.classList.remove("route-doc-scroll");
+    };
   }, [location.pathname, reducedMotion]);
 
   return (

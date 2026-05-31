@@ -223,3 +223,9 @@ html.lenis body {
 .lenis:not(.lenis-autoToggle).lenis-stopped {
   overflow: clip;
 }
+
+html.route-doc-scroll,
+html.route-doc-scroll body {
+  overflow: hidden;
+  height: 100%;
+}

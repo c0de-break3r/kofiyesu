@@ -210,6 +210,7 @@ export function MobileNav() {
 
   const isHome = location.pathname === "/";
   const isProjectRoute = location.pathname.startsWith("/project/");
+  const isChatRoute = location.pathname.startsWith("/chat");
 
   const scrollToSection = (section: NavSection) => {
     setActiveSection(section);
