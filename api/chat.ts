@@ -2,9 +2,16 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
 
+interface ChatAttachmentPayload {
+  name: string;
+  mimeType: string;
+  base64: string;
+}
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  attachments?: ChatAttachmentPayload[];
 }
 
 interface ChatResponse {
@@ -16,13 +23,15 @@ interface ChatResponse {
   source?: "gemini" | "openai" | "fallback";
 }
 
+type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
+
 const ESCALATION_PATTERN =
   /speak to (a )?human|talk to kofi|contact kofi|real person|urgent|escalat|admin|pass (this )?on|human support|email (me|kofi)|send (an )?email/i;
 
 const EMAIL_INTENT_PATTERN =
   /hire|job|quote|proposal|collaborat|project|pentest|audit|security work|work together|get in touch|reach out|contact you/i;
 
-const DEFAULT_GEMINI_MODELS = ["gemini-3-flash-preview"];
+const DEFAULT_GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-3-flash-preview"];
 
 const classifyWithKeywords = (text: string): InquiryType => {
   const lower = text.toLowerCase();
@@ -32,7 +41,26 @@ const classifyWithKeywords = (text: string): InquiryType => {
   return "general";
 };
 
-const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryType): ChatResponse => {
+const messageHasAttachments = (m: ChatMessage) => (m.attachments?.length ?? 0) > 0;
+
+const lastUserText = (messages: ChatMessage[]) => {
+  const last = [...messages].reverse().find((m) => m.role === "user");
+  return last?.content?.trim() ?? "";
+};
+
+const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryType, hasFiles: boolean): ChatResponse => {
+  if (hasFiles && !text) {
+    return {
+      inquiryType,
+      reply:
+        "I received your file(s). Configure **GEMINI_API_KEY** on the server to enable image and PDF analysis — then I can summarize documents and answer follow-up questions.",
+      confidence: "low",
+      escalateToAdmin: false,
+      showEmailCta: false,
+      source: "fallback",
+    };
+  }
+
   if (escalate) {
     return {
       inquiryType,
@@ -86,16 +114,16 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
   };
 };
 
-const buildSystemPrompt = (userName?: string, userEmail?: string, intakeContext?: string) =>
+const buildSystemPrompt = (userName?: string, userEmail?: string) =>
   `You are the AI assistant on Obed Prince Kofi Yesu's portfolio site. Kofi is a Software Engineer & Cybersecurity Practitioner from Ghana — full-stack (React, Next.js, React Native, Node.js, TypeScript), Clerk auth, PostgreSQL/Neon/Supabase, application security, and production observability with Sentry and PostHog.
-${intakeContext ? `\nProject intake (already submitted): ${intakeContext}\nReference this when answering; do not ask them to repeat type/timeline unless clarifying.` : ""}
 
 Rules:
-1. **Answer the visitor's question directly** in 2–4 sentences. Be helpful and conversational.
-2. **Never** say "general inquiry", "this looks like a … inquiry", or "tap below to email" unless the user explicitly wants to contact Kofi or speak to a human.
-3. Classify intent internally only (collaboration | security | job | general) — do not announce the category in the reply.
-4. Set escalateToAdmin true only if they ask for Kofi, a human, admin, or say it's urgent.
-5. Set showEmailCta true only if they clearly want to hire, collaborate, get a quote, or explicitly ask to email — not for casual questions.
+1. **Answer the visitor's question directly** in 2–5 sentences. Be helpful and conversational.
+2. When the user shares **images, PDFs, or text files**, analyze them carefully: summarize key content, note security or engineering relevance, and answer their question about the file.
+3. **Never** say "general inquiry", "this looks like a … inquiry", or "tap below to email" unless the user explicitly wants to contact Kofi or speak to a human.
+4. Classify intent internally only (collaboration | security | job | general) — do not announce the category in the reply.
+5. Set escalateToAdmin true only if they ask for Kofi, a human, admin, or say it's urgent.
+6. Set showEmailCta true only if they clearly want to hire, collaborate, get a quote, or explicitly ask to email — not for casual questions.
 
 Visitor: ${userName ?? "Guest"} (${userEmail ?? "not provided"})
 
@@ -112,6 +140,38 @@ const parseAiJson = (content: string): ChatResponse | null => {
   return null;
 };
 
+const toGeminiParts = (message: ChatMessage): GeminiPart[] => {
+  const parts: GeminiPart[] = [];
+  const text = message.content?.trim();
+
+  if (text) {
+    parts.push({ text });
+  }
+
+  for (const att of message.attachments ?? []) {
+    if (!att.base64 || !att.mimeType) continue;
+    parts.push({
+      inlineData: {
+        mimeType: att.mimeType,
+        data: att.base64,
+      },
+    });
+  }
+
+  if (!text && (message.attachments?.length ?? 0) > 0) {
+    const names = message.attachments!.map((a) => a.name).join(", ");
+    parts.push({
+      text: `The user shared: ${names}. Analyze the attachment(s) and respond helpfully.`,
+    });
+  }
+
+  if (parts.length === 0) {
+    parts.push({ text: "(empty message)" });
+  }
+
+  return parts;
+};
+
 const toGeminiContents = (messages: ChatMessage[]) => {
   const trimmed = [...messages];
   while (trimmed.length > 0 && trimmed[0].role === "assistant") {
@@ -120,7 +180,7 @@ const toGeminiContents = (messages: ChatMessage[]) => {
 
   return trimmed.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
+    parts: toGeminiParts(m),
   }));
 };
 
@@ -136,11 +196,11 @@ const callGeminiModel = async (
   messages: ChatMessage[],
   userName?: string,
   userEmail?: string,
-  intakeContext?: string,
 ): Promise<ChatResponse | null> => {
   const contents = toGeminiContents(messages ?? []);
   if (contents.length === 0) return null;
 
+  const hasFiles = messages.some(messageHasAttachments);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
   const res = await fetch(url, {
@@ -148,12 +208,12 @@ const callGeminiModel = async (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       systemInstruction: {
-        parts: [{ text: buildSystemPrompt(userName, userEmail, intakeContext) }],
+        parts: [{ text: buildSystemPrompt(userName, userEmail) }],
       },
       contents,
       generationConfig: {
         temperature: 0.55,
-        maxOutputTokens: 400,
+        maxOutputTokens: hasFiles ? 800 : 400,
         responseMimeType: "application/json",
       },
     }),
@@ -188,10 +248,9 @@ const callGemini = async (
   messages: ChatMessage[],
   userName?: string,
   userEmail?: string,
-  intakeContext?: string,
 ): Promise<ChatResponse | null> => {
   for (const model of geminiModels()) {
-    const result = await callGeminiModel(apiKey, model, messages, userName, userEmail, intakeContext);
+    const result = await callGeminiModel(apiKey, model, messages, userName, userEmail);
     if (result) return result;
   }
   return null;
@@ -202,8 +261,12 @@ const callOpenAi = async (
   messages: ChatMessage[],
   userName?: string,
   userEmail?: string,
-  intakeContext?: string,
 ): Promise<ChatResponse | null> => {
+  const hasFiles = messages.some(messageHasAttachments);
+  if (hasFiles) {
+    return null;
+  }
+
   const conversation = (messages ?? []).map((m) => `${m.role}: ${m.content}`).join("\n");
 
   const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -215,7 +278,7 @@ const callOpenAi = async (
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       messages: [
-        { role: "system", content: buildSystemPrompt(userName, userEmail, intakeContext) },
+        { role: "system", content: buildSystemPrompt(userName, userEmail) },
         { role: "user", content: conversation },
       ],
       temperature: 0.55,
@@ -253,21 +316,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { messages, userEmail, userName, intakeContext } = req.body as {
+  const { messages, userEmail, userName } = req.body as {
     messages?: ChatMessage[];
     userEmail?: string;
     userName?: string;
-    intakeContext?: string;
   };
 
-  const lastUser = [...(messages ?? [])].reverse().find((m) => m.role === "user");
+  const list = messages ?? [];
+  const lastUser = [...list].reverse().find((m) => m.role === "user");
+  const text = lastUserText(list);
+  const hasFiles = lastUser ? messageHasAttachments(lastUser) : false;
 
-  if (!lastUser?.content?.trim()) {
-    return res.status(400).json({ error: "No message provided" });
+  if (!text && !hasFiles) {
+    return res.status(400).json({ error: "No message or attachments provided" });
   }
 
-  const escalate = ESCALATION_PATTERN.test(lastUser.content);
-  const inquiryType = classifyWithKeywords(lastUser.content);
+  const escalate = ESCALATION_PATTERN.test(text);
+  const inquiryType = classifyWithKeywords(text);
 
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   const openAiKey = process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY;
@@ -276,9 +341,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let parsed: ChatResponse | null = null;
 
     if (geminiKey) {
-      parsed = await callGemini(geminiKey, messages ?? [], userName, userEmail, intakeContext);
-    } else if (openAiKey) {
-      parsed = await callOpenAi(openAiKey, messages ?? [], userName, userEmail, intakeContext);
+      parsed = await callGemini(geminiKey, list, userName, userEmail);
+    } else if (openAiKey && !hasFiles) {
+      parsed = await callOpenAi(openAiKey, list, userName, userEmail);
+    } else if (!geminiKey && hasFiles) {
+      console.warn("[chat] Files attached but no GEMINI_API_KEY");
     } else {
       console.warn("[chat] No GEMINI_API_KEY or OPENAI_API_KEY — using keyword fallback");
     }
@@ -292,5 +359,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   res.setHeader("X-Chat-Source", "fallback");
-  return res.status(200).json(buildLocalReply(lastUser.content, escalate, inquiryType));
+  return res.status(200).json(buildLocalReply(text, escalate, inquiryType, hasFiles));
 }

@@ -1,8 +1,19 @@
 import { type InquiryType, inquiryRoutes, getInquiryRoute } from "@/content/contact";
+import type { ChatAttachment } from "@/lib/chatAttachments";
+import { attachmentsToApiPayload } from "@/lib/chatAttachments";
+
+export interface ChatMessageAttachmentView {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: number;
+  previewUrl?: string;
+}
 
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  attachments?: ChatMessageAttachmentView[];
 }
 
 export interface RoutingResult {
@@ -75,9 +86,17 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
   };
 };
 
-export const routeInquiryLocally = (userMessage: string): RoutingResult => {
+export const routeInquiryLocally = (userMessage: string, hasFiles = false): RoutingResult => {
   const escalate = shouldEscalate(userMessage);
   const inquiryType = classifyLocally(userMessage);
+  if (hasFiles && !userMessage.trim()) {
+    return {
+      inquiryType,
+      reply:
+        "I received your file(s). For image and PDF analysis, ensure **GEMINI_API_KEY** is configured on the server — then I can summarize and answer questions about what you shared.",
+      confidence: "low",
+    };
+  }
   return buildReply(inquiryType, escalate, userMessage);
 };
 
@@ -86,7 +105,20 @@ export interface RouteInquiryOptions {
   userEmail?: string | null;
   userId?: string | null;
   userName?: string | null;
-  intakeContext?: string;
+  /** Attachments for the latest user turn only. */
+  pendingAttachments?: ChatAttachment[];
+}
+
+function messagesForApi(messages: ChatMessage[], pendingAttachments?: ChatAttachment[]) {
+  const lastUserIdx = [...messages].map((m, i) => (m.role === "user" ? i : -1)).filter((i) => i >= 0).pop();
+
+  return messages.map((m, i) => {
+    const base = { role: m.role, content: m.content };
+    if (i === lastUserIdx && pendingAttachments?.length) {
+      return { ...base, attachments: attachmentsToApiPayload(pendingAttachments) };
+    }
+    return base;
+  });
 }
 
 export const routeInquiryWithAi = async ({
@@ -94,22 +126,28 @@ export const routeInquiryWithAi = async ({
   userEmail,
   userId,
   userName,
-  intakeContext,
+  pendingAttachments,
 }: RouteInquiryOptions): Promise<RoutingResult> => {
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  if (!lastUser?.content.trim()) {
-    return routeInquiryLocally("");
+  const hasFiles = (pendingAttachments?.length ?? 0) > 0;
+  if (!lastUser?.content?.trim() && !hasFiles) {
+    return routeInquiryLocally("", hasFiles);
   }
 
   try {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, userEmail, userId, userName, intakeContext }),
+      body: JSON.stringify({
+        messages: messagesForApi(messages, pendingAttachments),
+        userEmail,
+        userId,
+        userName,
+      }),
     });
 
     if (!res.ok) {
-      return routeInquiryLocally(lastUser.content);
+      return routeInquiryLocally(lastUser?.content ?? "", hasFiles);
     }
 
     const data = (await res.json()) as RoutingResult;
@@ -120,10 +158,10 @@ export const routeInquiryWithAi = async ({
     /* fallback */
   }
 
-  return routeInquiryLocally(lastUser.content);
+  return routeInquiryLocally(lastUser?.content ?? "", hasFiles);
 };
 
 export const getWelcomeMessage = (name?: string | null): string => {
   const greeting = name ? `Hi ${name.split(" ")[0]}!` : "Hi!";
-  return `${greeting} I'm Kofi's assistant. Ask me about his work, skills, projects, or security engineering — I'll answer your questions here.`;
+  return `${greeting} I'm Kofi's assistant. Ask me about his work, skills, or projects — or attach images, PDFs, and text files for analysis.`;
 };

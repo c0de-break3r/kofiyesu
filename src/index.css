@@ -240,3 +240,8 @@ html.route-doc-scroll [data-chat-scroll] {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
+
+.chat-messages-scroll {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
