@@ -1,11 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { isDatabaseConfigured, prisma } from "../lib/prisma.js";
-import { paystackConfigured, verifyTransaction, verifyWebhookSignature } from "../lib/paystack.js";
-import { finalizePayment } from "../lib/finalizePayment.js";
-
-export const config = {
-  api: { bodyParser: false },
-};
+import { isDatabaseConfigured, prisma } from "../../prisma.js";
+import { paystackConfigured, verifyTransaction, verifyWebhookSignature } from "../../paystack.js";
+import { finalizePayment } from "../../finalizePayment.js";
 
 async function readRawBody(req: VercelRequest): Promise<string> {
   const chunks: Buffer[] = [];

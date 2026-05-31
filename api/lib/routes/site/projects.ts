@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { isDatabaseConfigured, prisma } from "../lib/prisma.js";
-import { featureToApi } from "../lib/serializers.js";
+import { isDatabaseConfigured, prisma } from "../../prisma.js";
+import { projectToApi } from "../../serializers.js";
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
@@ -10,19 +10,20 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
 
     if (!isDatabaseConfigured()) {
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-      return res.status(200).json({ features: [] });
+      return res.status(200).json({ projects: [] });
     }
 
-    const rows = await prisma.siteFeature.findMany({
+    const rows = await prisma.siteProject.findMany({
       where: { published: true },
+      include: { category: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-    return res.status(200).json({ features: rows.map(featureToApi) });
+    return res.status(200).json({ projects: rows.map(projectToApi) });
   } catch (err) {
-    console.error("[site/features] unhandled", err);
+    console.error("[site/projects] unhandled", err);
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-    return res.status(200).json({ features: [] });
+    return res.status(200).json({ projects: [] });
   }
 }

@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireAdminUserId } from "../lib/adminAuth.js";
-import { appendAdminReplyToChat } from "../lib/publishAdminReply.js";
-import { isDatabaseConfigured, prisma } from "../lib/prisma.js";
-import { inquiryToApi } from "../lib/serializers.js";
+import { requireAdminUserId } from "../../adminAuth.js";
+import { appendAdminReplyToChat } from "../../publishAdminReply.js";
+import { isDatabaseConfigured, prisma } from "../../prisma.js";
+import { inquiryToApi } from "../../serializers.js";
 
 const BUSINESS_TYPES = ["collaboration", "security", "job"] as const;
 const VALID_STATUS = new Set(["new", "reviewed", "replied", "archived"]);

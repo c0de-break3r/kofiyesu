@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireAdminUserId } from "../lib/adminAuth.js";
-import { isDatabaseConfigured, prisma } from "../lib/prisma.js";
-import { paymentToApi } from "../lib/paymentSerializer.js";
+import { requireAdminUserId } from "../../adminAuth.js";
+import { isDatabaseConfigured, prisma } from "../../prisma.js";
+import { paymentToApi } from "../../paymentSerializer.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adminId = await requireAdminUserId(req);
@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const payLink = `${siteUrl}/pay/${payment.id}`;
 
   if (inquiry.userId) {
-    const { appendAdminReplyToChat } = await import("../lib/publishAdminReply.js");
+    const { appendAdminReplyToChat } = await import("../../publishAdminReply.js");
     const formatted = amountGhs.toLocaleString("en-GH", { minimumFractionDigits: 0 });
     await appendAdminReplyToChat({
       userId: inquiry.userId,
