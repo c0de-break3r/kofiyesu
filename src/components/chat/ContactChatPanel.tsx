@@ -33,6 +33,7 @@ import {
   saveConversation,
 } from "@/lib/chatHistory";
 import { submitInquiry } from "@/lib/submitInquiry";
+import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { social } from "@/content/social";
 
 function toMessageAttachments(files: ChatAttachment[]): ChatMessageAttachmentView[] {
@@ -57,6 +58,7 @@ function newUserMessage(content: string, attachments?: ChatMessageAttachmentView
 export function ContactChatPanel() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
+  const { open: adminOpen } = useAdminPanel();
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ChatConversationSummary[]>([]);
@@ -150,8 +152,15 @@ export function ContactChatPanel() {
 
   useEffect(() => {
     const el = messagesEl.current;
+    if (!el) return;
+
+    if (adminOpen) {
+      el.style.paddingBottom = "1rem";
+      return;
+    }
+
     const composer = composerRef.current;
-    if (!el || !composer) return;
+    if (!composer) return;
 
     const applyPadding = () => {
       el.style.paddingBottom = `${composer.offsetHeight + 12}px`;
@@ -166,7 +175,7 @@ export function ContactChatPanel() {
       ro.disconnect();
       window.removeEventListener("resize", applyPadding);
     };
-  }, [routing, pendingFiles.length, isSignedIn, historyOpen]);
+  }, [routing, pendingFiles.length, isSignedIn, historyOpen, adminOpen]);
 
   const persistConversation = useCallback(
     (next: ChatMsg[]) => {
@@ -481,30 +490,32 @@ export function ContactChatPanel() {
             </div>
           </div>
 
-          <ChatComposer
-            composerRef={composerRef}
-            input={input}
-            onInputChange={setInput}
-            pendingFiles={pendingFiles}
-            onPickFiles={(list) => void handlePickFiles(list)}
-            onRemoveFile={handleRemoveFile}
-            onSend={() => void handleSend()}
-            isLoading={isLoading || (historyLoading && !historyReady)}
-            escalateBanner={
-              routing?.escalateToAdmin ? (
-                <p className="glass-surface rounded-xl px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
-                  {t("chat-escalated")}
-                </p>
-              ) : undefined
-            }
-            mailtoBanner={
-              mailtoUrl ? (
-                <a href={mailtoUrl} className="flex justify-center">
-                  <Button variant="border">{t("chat-send-email")}</Button>
-                </a>
-              ) : undefined
-            }
-          />
+          {!adminOpen && (
+            <ChatComposer
+              composerRef={composerRef}
+              input={input}
+              onInputChange={setInput}
+              pendingFiles={pendingFiles}
+              onPickFiles={(list) => void handlePickFiles(list)}
+              onRemoveFile={handleRemoveFile}
+              onSend={() => void handleSend()}
+              isLoading={isLoading || (historyLoading && !historyReady)}
+              escalateBanner={
+                routing?.escalateToAdmin ? (
+                  <p className="glass-surface rounded-xl px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
+                    {t("chat-escalated")}
+                  </p>
+                ) : undefined
+              }
+              mailtoBanner={
+                mailtoUrl ? (
+                  <a href={mailtoUrl} className="flex justify-center">
+                    <Button variant="border">{t("chat-send-email")}</Button>
+                  </a>
+                ) : undefined
+              }
+            />
+          )}
         </>
       )}
     </div>
