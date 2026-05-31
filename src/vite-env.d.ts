@@ -16,6 +16,8 @@ interface ImportMetaEnv {
   readonly VITE_CLOUDINARY_UPLOAD_PRESET?: string;
   readonly VITE_PAYSTACK_PUBLIC_KEY?: string;
   readonly VITE_WHATSAPP_NUMBER?: string;
+  readonly VITE_SENTRY_DSN?: string;
+  readonly VITE_APP_VERSION?: string;
 }
 
 interface ImportMeta {

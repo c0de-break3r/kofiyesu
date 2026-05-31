@@ -1,5 +1,8 @@
+import "./instrument";
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { reactErrorHandler } from "@sentry/react";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { BrowserRouter } from "react-router-dom";
 import gsap from "gsap";
@@ -7,6 +10,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
+import { isSentryConfigured } from "./instrument";
 import { prefetchSiteContent } from "./lib/prefetchSiteContent";
 import { scheduleResourceLoading } from "./utils/resources";
 import "./index.css";
@@ -22,7 +26,15 @@ gsap.registerPlugin(ScrollTrigger);
 prefetchSiteContent();
 
 const bootstrap = () => {
-  const root = createRoot(document.getElementById("root")!);
+  const sentryRootOptions = isSentryConfigured()
+    ? {
+        onUncaughtError: reactErrorHandler(),
+        onCaughtError: reactErrorHandler(),
+        onRecoverableError: reactErrorHandler(),
+      }
+    : undefined;
+
+  const root = createRoot(document.getElementById("root")!, sentryRootOptions);
 
   const app = (
     <StrictMode>

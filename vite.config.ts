@@ -1,11 +1,16 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import glsl from "vite-plugin-glsl";
 import { VitePWA } from "vite-plugin-pwa";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const sentryAuthToken = env.SENTRY_AUTH_TOKEN?.trim();
+
+  return {
   plugins: [
     react(),
     tailwindcss(),
@@ -58,6 +63,15 @@ export default defineConfig({
       },
       devOptions: { enabled: false },
     }),
+    ...(sentryAuthToken
+      ? [
+          sentryVitePlugin({
+            org: env.SENTRY_ORG,
+            project: env.SENTRY_PROJECT,
+            authToken: sentryAuthToken,
+          }),
+        ]
+      : []),
   ],
   resolve: {
     alias: {
@@ -73,7 +87,7 @@ export default defineConfig({
   assetsInclude: ["**/*.svg", "**/*.gltf", "**/*.glb", "**/*.png", "**/*.jpg", "**/*.ktx2"],
   build: {
     outDir: "./dist",
-    sourcemap: false,
+    sourcemap: sentryAuthToken ? "hidden" : false,
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
@@ -86,4 +100,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });
