@@ -14,9 +14,11 @@ export function ChatPage() {
       data-chat-page
       className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-[var(--bg)] md:pt-[var(--height-header,5rem)]"
     >
-      <div className="shrink-0 px-4 pt-3 pb-2 sm:px-6">
-        <BackIconLink to="/" ariaLabel={t("back-to-home")} />
-      </div>
+      {!isClerkConfigured && (
+        <div className="shrink-0 px-4 pt-3 pb-2 sm:px-6">
+          <BackIconLink to="/" ariaLabel={t("back-to-home")} />
+        </div>
+      )}
 
       {!isClerkConfigured ? (
         <div className="mx-auto flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto px-4 py-8 text-center text-sm text-[var(--text-muted)] sm:px-6">

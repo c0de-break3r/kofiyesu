@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser, SignInButton } from "@clerk/clerk-react";
+import { BackIconLink } from "@/components/layout/BackIconLink";
 import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
 import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
@@ -364,6 +365,10 @@ export function ContactChatPanel() {
       )}
 
       {isLoaded && !isSignedIn && (
+        <>
+        <div className="shrink-0 px-4 pt-3 pb-2 sm:px-6">
+          <BackIconLink to="/" ariaLabel={t("back-to-home")} />
+        </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-8 text-center">
           <h1 className="text-xl font-black md:text-2xl">{t("chat-title")}</h1>
           <p className="max-w-sm text-sm text-[var(--text-muted)]">{t("chat-sign-in-required")}</p>
@@ -375,11 +380,13 @@ export function ContactChatPanel() {
             <Button variant="border">{t("chat-email-cta")}</Button>
           </a>
         </div>
+        </>
       )}
 
       {isSignedIn && (
         <>
-          <div className="flex shrink-0 items-center justify-end px-4 pb-1 sm:px-6">
+          <div className="flex shrink-0 items-center justify-between px-4 pt-3 pb-2 sm:px-6">
+            <BackIconLink to="/" ariaLabel={t("back-to-home")} />
             <button
               type="button"
               onClick={() => {
