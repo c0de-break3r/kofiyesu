@@ -9,11 +9,13 @@ datasource db {
 
 model ChatConversation {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @unique @map("user_id")
+  userId    String   @map("user_id")
+  title     String   @default("New chat")
   messages  Json     @default("[]")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  @@index([userId, updatedAt(sort: Desc)])
   @@map("chat_conversations")
 }
 

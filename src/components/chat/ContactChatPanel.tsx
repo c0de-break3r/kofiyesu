@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser, SignInButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
+import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
 import { ChatMessage, ChatTyping } from "./ChatMessage";
 import { t } from "@/i18n/en";
 import {
@@ -19,7 +20,17 @@ import {
   readFileAsAttachment,
   revokeAttachmentPreview,
 } from "@/lib/chatAttachments";
-import { clearChatHistory, loadChatHistory, saveChatHistory } from "@/lib/chatHistory";
+import {
+  type ChatConversationSummary,
+  clearConversationMessages,
+  createConversation,
+  deleteConversation,
+  ensureActiveConversation,
+  ensureMessageIds,
+  listConversations,
+  loadConversation,
+  saveConversation,
+} from "@/lib/chatHistory";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { social } from "@/content/social";
 
@@ -33,11 +44,23 @@ function toMessageAttachments(files: ChatAttachment[]): ChatMessageAttachmentVie
   }));
 }
 
+function newUserMessage(content: string, attachments?: ChatMessageAttachmentView[]): ChatMsg {
+  return {
+    id: crypto.randomUUID(),
+    role: "user",
+    content,
+    attachments,
+  };
+}
+
 export function ContactChatPanel() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
 
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<ChatConversationSummary[]>([]);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyReady, setHistoryReady] = useState(false);
   const [input, setInput] = useState("");
@@ -45,6 +68,8 @@ export function ContactChatPanel() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [routing, setRouting] = useState<RoutingResult | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const messagesEl = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
 
@@ -56,8 +81,41 @@ export function ContactChatPanel() {
 
   const welcomeMessages = useCallback((): ChatMsg[] => {
     const name = user?.firstName ?? user?.fullName ?? null;
-    return [{ role: "assistant", content: getWelcomeMessage(name) }];
+    return ensureMessageIds([{ role: "assistant", content: getWelcomeMessage(name) }]);
   }, [user]);
+
+  const refreshConversationList = useCallback(async () => {
+    if (!user?.id) return;
+    const list = await listConversations(getToken, user.id);
+    setConversations(list);
+  }, [getToken, user?.id]);
+
+  const applyConversation = useCallback(
+    (id: string, loadedMessages: ChatMsg[], isEmpty: boolean) => {
+      setConversationId(id);
+      setEditingId(null);
+      setEditDraft("");
+      setRouting(null);
+      if (isEmpty || loadedMessages.length === 0) {
+        setMessages(welcomeMessages());
+      } else {
+        setMessages(ensureMessageIds(loadedMessages));
+      }
+    },
+    [welcomeMessages],
+  );
+
+  const loadConversationById = useCallback(
+    async (id: string) => {
+      if (!user?.id) return;
+      setHistoryLoading(true);
+      const loaded = await loadConversation(getToken, user.id, id);
+      setHistoryLoading(false);
+      if (!loaded) return;
+      applyConversation(loaded.id, loaded.messages, loaded.messages.length === 0);
+    },
+    [applyConversation, getToken, user?.id],
+  );
 
   useEffect(() => {
     if (!isSignedIn || !isLoaded || !user?.id) {
@@ -70,21 +128,19 @@ export function ContactChatPanel() {
     setHistoryLoading(true);
     setHistoryReady(false);
 
-    void loadChatHistory(getToken, user.id).then((stored) => {
+    void (async () => {
+      await refreshConversationList();
+      const active = await ensureActiveConversation(getToken, user.id);
       if (cancelled) return;
-      if (stored.length > 0) {
-        setMessages(stored);
-      } else {
-        setMessages(welcomeMessages());
-      }
+      applyConversation(active.id, active.messages, active.messages.length === 0);
       setHistoryLoading(false);
       setHistoryReady(true);
-    });
+    })();
 
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn, isLoaded, user?.id, getToken, welcomeMessages]);
+  }, [isSignedIn, isLoaded, user?.id, getToken, applyConversation, refreshConversationList]);
 
   useEffect(() => {
     if (!historyReady) return;
@@ -109,22 +165,77 @@ export function ContactChatPanel() {
       ro.disconnect();
       window.removeEventListener("resize", applyPadding);
     };
-  }, [routing, pendingFiles.length, isSignedIn]);
+  }, [routing, pendingFiles.length, isSignedIn, historyOpen]);
 
-  const persistHistory = useCallback(
+  const persistConversation = useCallback(
     (next: ChatMsg[]) => {
-      if (!user?.id) return;
-      void saveChatHistory(getToken, user.id, next);
+      if (!user?.id || !conversationId) return;
+      void saveConversation(getToken, user.id, conversationId, next);
+      void refreshConversationList();
     },
-    [getToken, user?.id],
+    [conversationId, getToken, refreshConversationList, user?.id],
   );
 
-  const handleClearHistory = async () => {
+  const runAssistantTurn = useCallback(
+    async (contextMessages: ChatMsg[], userTextForInquiry: string) => {
+      const result = await routeInquiryWithAi({
+        messages: contextMessages,
+        userEmail: user?.primaryEmailAddress?.emailAddress,
+        userId: user?.id,
+        userName: user?.fullName,
+      });
+
+      const finalMessages: ChatMsg[] = [
+        ...contextMessages,
+        { id: crypto.randomUUID(), role: "assistant", content: result.reply },
+      ];
+      setRouting(result);
+      setMessages(finalMessages);
+      persistConversation(finalMessages);
+
+      await submitInquiry({
+        inquiryType: result.inquiryType,
+        message: userTextForInquiry,
+        needsAdmin: result.escalateToAdmin ?? false,
+        userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
+        userName: user?.fullName ?? null,
+        getToken,
+      });
+
+      return result;
+    },
+    [getToken, persistConversation, user],
+  );
+
+  const handleNewChat = async () => {
     if (!user?.id) return;
-    await clearChatHistory(getToken, user.id);
-    setRouting(null);
-    setMessages(welcomeMessages());
-    setFileError(null);
+    const created = await createConversation(getToken, user.id);
+    await refreshConversationList();
+    applyConversation(created.id, [], true);
+    setHistoryOpen(false);
+  };
+
+  const handleClearChat = async () => {
+    if (!user?.id || !conversationId) return;
+    await clearConversationMessages(getToken, user.id, conversationId);
+    await refreshConversationList();
+    applyConversation(conversationId, [], true);
+    setHistoryOpen(false);
+  };
+
+  const handleDeleteChat = async () => {
+    if (!user?.id || !conversationId) return;
+    await deleteConversation(getToken, user.id, conversationId);
+    const list = await listConversations(getToken, user.id);
+    setConversations(list);
+    if (list.length > 0) {
+      await loadConversationById(list[0].id);
+    } else {
+      const created = await createConversation(getToken, user.id);
+      await refreshConversationList();
+      applyConversation(created.id, [], true);
+    }
+    setHistoryOpen(false);
   };
 
   const handlePickFiles = async (files: FileList | null) => {
@@ -155,18 +266,17 @@ export function ContactChatPanel() {
   };
 
   const handleSend = async () => {
-    if (!isSignedIn) return;
+    if (!isSignedIn || !conversationId) return;
     const text = input.trim();
     const files = pendingFiles;
     if ((!text && files.length === 0) || isLoading) return;
 
     const attachmentViews = toMessageAttachments(files);
     const displayContent = text || attachmentSummary(files);
-    const userMessage: ChatMsg = {
-      role: "user",
-      content: displayContent,
-      attachments: attachmentViews.length ? attachmentViews : undefined,
-    };
+    const userMessage = newUserMessage(
+      displayContent,
+      attachmentViews.length ? attachmentViews : undefined,
+    );
 
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
@@ -175,6 +285,7 @@ export function ContactChatPanel() {
     setFileError(null);
     setIsLoading(true);
     setRouting(null);
+    setEditingId(null);
 
     const result = await routeInquiryWithAi({
       messages: nextMessages,
@@ -186,13 +297,15 @@ export function ContactChatPanel() {
 
     files.forEach(revokeAttachmentPreview);
 
-    const finalMessages: ChatMsg[] = [...nextMessages, { role: "assistant", content: result.reply }];
+    const finalMessages: ChatMsg[] = [
+      ...nextMessages,
+      { id: crypto.randomUUID(), role: "assistant", content: result.reply },
+    ];
     setRouting(result);
     setMessages(finalMessages);
-    persistHistory(finalMessages);
+    persistConversation(finalMessages);
 
     const inquiryBody = [text, files.length ? attachmentSummary(files) : ""].filter(Boolean).join("\n\n");
-
     await submitInquiry({
       inquiryType: result.inquiryType,
       message: inquiryBody || displayContent,
@@ -202,6 +315,35 @@ export function ContactChatPanel() {
       getToken,
     });
 
+    setIsLoading(false);
+  };
+
+  const handleStartEdit = (msg: ChatMsg) => {
+    if (msg.role !== "user" || !msg.id) return;
+    setEditingId(msg.id);
+    setEditDraft(msg.content.startsWith("[Attached:") ? "" : msg.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !conversationId) return;
+    const text = editDraft.trim();
+    if (!text) return;
+
+    const idx = messages.findIndex((m) => m.id === editingId);
+    if (idx < 0 || messages[idx].role !== "user") return;
+
+    const updatedUser: ChatMsg = {
+      ...messages[idx],
+      content: text,
+    };
+    const truncated = [...messages.slice(0, idx), updatedUser];
+    setMessages(truncated);
+    setEditingId(null);
+    setEditDraft("");
+    setIsLoading(true);
+    setRouting(null);
+
+    await runAssistantTurn(truncated, text);
     setIsLoading(false);
   };
 
@@ -238,16 +380,42 @@ export function ContactChatPanel() {
       {isSignedIn && (
         <>
           <div className="flex shrink-0 items-center justify-end px-4 pb-1 sm:px-6">
-            {hasUserMessages && historyReady && (
-              <button
-                type="button"
-                onClick={() => void handleClearHistory()}
-                className="text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--color-accent)]"
-              >
-                {t("chat-clear-history")}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                void refreshConversationList();
+                setHistoryOpen(true);
+              }}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-muted)] shadow-sm transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              aria-label={t("chat-history")}
+              title={t("chat-history")}
+            >
+              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
+                <path
+                  d="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
+
+          <ChatHistoryDrawer
+            open={historyOpen}
+            onClose={() => setHistoryOpen(false)}
+            conversations={conversations}
+            activeId={conversationId}
+            loading={historyLoading}
+            onSelect={(id) => {
+              void loadConversationById(id);
+              setHistoryOpen(false);
+            }}
+            onNewChat={() => void handleNewChat()}
+            onClearChat={() => void handleClearChat()}
+            onDeleteChat={() => void handleDeleteChat()}
+          />
 
           <div
             ref={messagesEl}
@@ -257,7 +425,7 @@ export function ContactChatPanel() {
             data-lenis-prevent-wheel
           >
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6">
-              {historyLoading && (
+              {historyLoading && !historyReady && (
                 <p className="py-8 text-center text-sm text-[var(--text-muted)]">
                   {t("chat-history-loading")}
                 </p>
@@ -283,12 +451,22 @@ export function ContactChatPanel() {
 
               {historyReady &&
                 !showReadyState &&
-                messages.map((msg, i) => (
+                messages.map((msg) => (
                   <ChatMessage
-                    key={`${i}-${msg.role}-${msg.content.slice(0, 24)}`}
+                    key={msg.id ?? `${msg.role}-${msg.content.slice(0, 16)}`}
                     role={msg.role}
                     content={msg.content}
                     attachments={msg.attachments}
+                    canEdit={msg.role === "user" && Boolean(msg.id) && !isLoading}
+                    isEditing={editingId === msg.id}
+                    editDraft={editDraft}
+                    onStartEdit={() => handleStartEdit(msg)}
+                    onEditDraftChange={setEditDraft}
+                    onSaveEdit={() => void handleSaveEdit()}
+                    onCancelEdit={() => {
+                      setEditingId(null);
+                      setEditDraft("");
+                    }}
                   />
                 ))}
 
@@ -304,7 +482,7 @@ export function ContactChatPanel() {
             onPickFiles={(list) => void handlePickFiles(list)}
             onRemoveFile={handleRemoveFile}
             onSend={() => void handleSend()}
-            isLoading={isLoading || historyLoading}
+            isLoading={isLoading || (historyLoading && !historyReady)}
             escalateBanner={
               routing?.escalateToAdmin ? (
                 <p className="glass-surface rounded-xl px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">

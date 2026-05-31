@@ -6,6 +6,13 @@ interface Props {
   role: "user" | "assistant";
   content: string;
   attachments?: ChatMessageAttachmentView[];
+  canEdit?: boolean;
+  isEditing?: boolean;
+  editDraft?: string;
+  onStartEdit?: () => void;
+  onEditDraftChange?: (value: string) => void;
+  onSaveEdit?: () => void;
+  onCancelEdit?: () => void;
 }
 
 function formatContent(content: string) {
@@ -54,12 +61,23 @@ function AttachmentList({
   );
 }
 
-export function ChatMessage({ role, content, attachments = [] }: Props) {
+export function ChatMessage({
+  role,
+  content,
+  attachments = [],
+  canEdit,
+  isEditing,
+  editDraft = "",
+  onStartEdit,
+  onEditDraftChange,
+  onSaveEdit,
+  onCancelEdit,
+}: Props) {
   const isUser = role === "user";
   const hasText = content.trim().length > 0;
 
   return (
-    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`group flex w-full flex-col ${isUser ? "items-end" : "items-start"}`}>
       <div
         className={`max-w-[min(100%,42rem)] rounded-2xl px-4 py-3 text-[0.9375rem] leading-relaxed ${
           isUser
@@ -67,13 +85,57 @@ export function ChatMessage({ role, content, attachments = [] }: Props) {
             : "rounded-bl-md bg-transparent text-[var(--text)]"
         }`}
       >
-        <AttachmentList attachments={attachments} variant={isUser ? "user" : "assistant"} />
-        {hasText ? (
-          <div dangerouslySetInnerHTML={{ __html: formatContent(content) }} />
-        ) : attachments.length > 0 && isUser ? (
-          <p className="text-sm text-white/90">{t("chat-sent-attachments")}</p>
-        ) : null}
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editDraft}
+              onChange={(e) => onEditDraftChange?.(e.target.value)}
+              rows={3}
+              className="w-full resize-none rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/60 focus:border-white"
+              placeholder={t("chat-edit-placeholder")}
+            />
+            {attachments.length > 0 && (
+              <p className="text-xs text-white/75">{t("chat-edit-attachments-hint")}</p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onSaveEdit}
+                disabled={!editDraft.trim()}
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-accent)] disabled:opacity-50"
+              >
+                {t("chat-save-edit")}
+              </button>
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="rounded-full px-3 py-1.5 text-xs font-semibold text-white/90 hover:bg-white/10"
+              >
+                {t("chat-cancel-edit")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <AttachmentList attachments={attachments} variant={isUser ? "user" : "assistant"} />
+            {hasText ? (
+              <div dangerouslySetInnerHTML={{ __html: formatContent(content) }} />
+            ) : attachments.length > 0 && isUser ? (
+              <p className="text-sm text-white/90">{t("chat-sent-attachments")}</p>
+            ) : null}
+          </>
+        )}
       </div>
+
+      {canEdit && !isEditing && onStartEdit && (
+        <button
+          type="button"
+          onClick={onStartEdit}
+          className="mt-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--color-accent)] sm:opacity-0 sm:group-hover:opacity-100"
+        >
+          {t("chat-edit-message")}
+        </button>
+      )}
     </div>
   );
 }
