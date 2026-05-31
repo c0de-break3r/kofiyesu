@@ -1,4 +1,3 @@
-import { BackIconLink } from "@/components/layout/BackIconLink";
 import { ContactChatPanel } from "@/components/chat/ContactChatPanel";
 import { isClerkConfigured } from "@/lib/clerk";
 import { social } from "@/content/social";
@@ -14,8 +13,7 @@ export function ChatPage() {
       className="mx-auto min-h-screen max-w-3xl px-4 pb-24 pt-6 sm:px-6 md:pb-12 md:pt-20"
     >
       <div className="mb-4 hidden shrink-0 md:block">
-        <BackIconLink to="/" ariaLabel={t("back-to-home")} />
-        <h1 className="mt-3 text-xl font-black md:text-2xl">{t("chat-title")}</h1>
+        <h1 className="text-xl font-black md:text-2xl">{t("chat-title")}</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">{t("chat-subtitle")}</p>
       </div>
 
@@ -30,7 +28,6 @@ export function ChatPage() {
           <a href={mailLink}>
             <Button>{t("chat-email-cta")}</Button>
           </a>
-          <BackIconLink to="/" ariaLabel={t("back-to-home")} className="mt-2" />
         </div>
       ) : (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg">
