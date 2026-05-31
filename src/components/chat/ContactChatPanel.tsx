@@ -155,7 +155,10 @@ export function ContactChatPanel({ fixed }: Props) {
       )}
 
       {isSignedIn && phase === "intake" && (
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5 sm:p-6">
+        <div
+          className="flex flex-col p-5 sm:p-6"
+          data-lenis-prevent
+        >
           {intakeSubmitting && (
             <p className="text-center text-sm text-[var(--text-muted)]">{t("intake-submitting")}</p>
           )}
@@ -172,7 +175,10 @@ export function ContactChatPanel({ fixed }: Props) {
         <>
           <div
             ref={messagesEl}
-            className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 sm:px-5"
+            className={`flex flex-col gap-3 px-4 py-4 sm:px-5 ${
+              fixed ? "min-h-0 flex-1 overflow-y-auto" : ""
+            }`}
+            data-lenis-prevent={fixed ? true : undefined}
           >
             <p className="text-center text-xs text-[var(--text-muted)]">{t("intake-done-hint")}</p>
             {messages.map((msg, i) => (

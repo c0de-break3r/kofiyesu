@@ -1,15 +1,19 @@
 import { fetchJson } from "@/lib/fetchJson";
-import type { SiteAboutRow, SiteProjectRow } from "@/types/site";
+import type { SiteAboutRow, SiteFeatureRow, SiteProjectRow } from "@/types/site";
 
 type ProjectsResponse = { projects?: SiteProjectRow[] } | null;
+type FeaturesResponse = { features?: SiteFeatureRow[] } | null;
 type AboutResponse = { about?: SiteAboutRow | null } | null;
 
 const PROJECTS_CACHE_KEY = "kofiyesu-site-projects";
+const FEATURES_CACHE_KEY = "kofiyesu-site-features";
 
 let projectsRequest: Promise<ProjectsResponse> | null = null;
+let featuresRequest: Promise<FeaturesResponse> | null = null;
 let aboutRequest: Promise<AboutResponse> | null = null;
 
 type ProjectsCache = { projects: SiteProjectRow[]; at: number };
+type FeaturesCache = { features: SiteFeatureRow[]; at: number };
 
 export function readCachedProjects(): SiteProjectRow[] | null {
   if (typeof window === "undefined") return null;
@@ -33,6 +37,28 @@ export function writeCachedProjects(projects: SiteProjectRow[]) {
   }
 }
 
+export function readCachedFeatures(): SiteFeatureRow[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(FEATURES_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as FeaturesCache;
+    return Array.isArray(parsed.features) ? parsed.features : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeCachedFeatures(features: SiteFeatureRow[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: FeaturesCache = { features, at: Date.now() };
+    sessionStorage.setItem(FEATURES_CACHE_KEY, JSON.stringify(payload));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 /** Start site API fetches as early as possible (call from main.tsx). */
 export function prefetchSiteContent() {
   if (typeof window === "undefined") return;
@@ -43,12 +69,24 @@ export function prefetchSiteContent() {
       return data;
     },
   );
+  featuresRequest ??= fetchJson<{ features?: SiteFeatureRow[] }>("/api/site/features").then(
+    (data) => {
+      if (data?.features) writeCachedFeatures(data.features);
+      return data;
+    },
+  );
   aboutRequest ??= fetchJson<{ about?: SiteAboutRow | null }>("/api/site/about");
 }
 
 export function takePrefetchedProjects() {
   const request = projectsRequest;
   projectsRequest = null;
+  return request;
+}
+
+export function takePrefetchedFeatures() {
+  const request = featuresRequest;
+  featuresRequest = null;
   return request;
 }
 

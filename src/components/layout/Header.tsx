@@ -76,8 +76,8 @@ export function Header() {
   const isProjectRoute = location.pathname.startsWith("/project/");
   const isChatRoute = location.pathname.startsWith("/chat");
   const isMinimalNav = isProjectRoute || isChatRoute;
-  const scrolled = useHeaderScroll(true, 48);
-  const showGlass = scrolled || isMinimalNav;
+  const scrolled = useHeaderScroll(isHome, 48);
+  const showGlass = scrolled && !isMinimalNav;
 
   const handleHomeClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome) return;

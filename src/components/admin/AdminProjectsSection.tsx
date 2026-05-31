@@ -6,14 +6,13 @@ import { AdminMediaUpload } from "./AdminMediaUpload";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { buildProjectComponents, extractProjectFormFromComponents } from "@/lib/projectComponents";
-import { normalizeProjectTags } from "@/lib/normalizeProjectTags";
 import { parseCommaList } from "@/lib/parseCommaList";
-import type { SiteProjectRow } from "@/types/site";
+import type { SiteFeatureRow, SiteProjectRow } from "@/types/site";
 
 const emptyForm = () => ({
   slug: "",
   title: "",
-  tags: "",
+  category_id: "",
   tech_stack: "",
   description: "",
   thumbnail_url: "",
@@ -32,6 +31,7 @@ export function AdminProjectsSection() {
   const { adminFetch } = useAdminApi();
   const { reload } = useSiteContent();
   const [projects, setProjects] = useState<SiteProjectRow[]>([]);
+  const [features, setFeatures] = useState<SiteFeatureRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,10 +54,17 @@ export function AdminProjectsSection() {
 
   const load = async () => {
     setLoading(true);
-    const res = await adminFetch("/api/admin/projects");
-    if (res.ok) {
-      const data = (await res.json()) as { projects: SiteProjectRow[] };
+    const [projectsRes, featuresRes] = await Promise.all([
+      adminFetch("/api/admin/projects"),
+      adminFetch("/api/admin/features"),
+    ]);
+    if (projectsRes.ok) {
+      const data = (await projectsRes.json()) as { projects: SiteProjectRow[] };
       setProjects(data.projects ?? []);
+    }
+    if (featuresRes.ok) {
+      const data = (await featuresRes.json()) as { features: SiteFeatureRow[] };
+      setFeatures(data.features ?? []);
     }
     setLoading(false);
   };
@@ -78,7 +85,7 @@ export function AdminProjectsSection() {
     setForm({
       slug: row.slug,
       title: row.title,
-      tags: (row.tags ?? []).join(", "),
+      category_id: row.category_id ?? "",
       tech_stack: (row.tech_stack ?? []).join(", "),
       description: row.description ?? "",
       thumbnail_url: row.thumbnail_url ?? "",
@@ -115,7 +122,7 @@ export function AdminProjectsSection() {
       const payload = {
         slug: form.slug,
         title: form.title,
-        tags: normalizeProjectTags(parseCommaList(form.tags)),
+        category_id: form.category_id || null,
         tech_stack: parseCommaList(form.tech_stack),
         description: form.description,
         thumbnail_url: form.thumbnail_url || null,
@@ -316,12 +323,22 @@ export function AdminProjectsSection() {
               </AdminField>
             </div>
 
-            <AdminField label="Features (comma-separated — filters on home page)">
-              <AdminInput
-                value={form.tags}
-                onChange={(e) => set("tags", e.target.value)}
-                placeholder="Web Applications, Mobile Applications, Recon Automation Tools"
-              />
+            <AdminField label="Category">
+              <select
+                value={form.category_id}
+                onChange={(e) => set("category_id", e.target.value)}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm font-semibold"
+              >
+                <option value="">Uncategorized</option>
+                {features.map((feature) => (
+                  <option key={feature.id} value={feature.id}>
+                    {feature.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                One category per project. Manage filter options in the Features tab.
+              </p>
             </AdminField>
 
             <AdminField label="Tech stack (comma-separated, shown on project page)">
@@ -369,6 +386,7 @@ export function AdminProjectsSection() {
                   <p className="truncate font-bold">{p.title}</p>
                   <p className="truncate text-xs text-[var(--text-muted)]">
                     /project/{p.slug}
+                    {p.category?.label ? ` · ${p.category.label}` : ""}
                     {!p.published && " · draft"}
                     {p.preview_video_url && " · preview video"}
                   </p>

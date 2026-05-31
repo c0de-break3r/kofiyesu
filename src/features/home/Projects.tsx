@@ -5,11 +5,6 @@ import { ProjectCardSkeleton } from "@/components/ui/ProjectCardSkeleton";
 import { t } from "@/i18n/en";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import {
-  PROJECT_FEATURES,
-  featureLabel,
-  projectMatchesFeature,
-} from "@/lib/projectFeatures";
 
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -27,34 +22,31 @@ export function Projects() {
   const reducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { once: true, amount: 0.12 });
-  const { previews, loaded } = useSiteContent();
-  const [activeFeature, setActiveFeature] = useState<string | null>(null);
+  const { previews, features, loaded } = useSiteContent();
+  const [activeFeatureId, setActiveFeatureId] = useState<string | null>(null);
 
   const sortedPreviews = useMemo(
     () => [...previews].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     [previews],
   );
 
-  const availableFeatures = useMemo(
-    () =>
-      PROJECT_FEATURES.filter((feature) =>
-        sortedPreviews.some((project) => projectMatchesFeature(project.tags, feature.id)),
-      ),
-    [sortedPreviews],
+  const sortedFeatures = useMemo(
+    () => [...features].sort((a, b) => a.sort_order - b.sort_order),
+    [features],
   );
 
   const filtered = useMemo(() => {
-    if (!activeFeature) return sortedPreviews;
-    return sortedPreviews.filter((project) => projectMatchesFeature(project.tags, activeFeature));
-  }, [sortedPreviews, activeFeature]);
+    if (!activeFeatureId) return sortedPreviews;
+    return sortedPreviews.filter((project) => project.categoryId === activeFeatureId);
+  }, [sortedPreviews, activeFeatureId]);
 
   useEffect(() => {
-    if (!activeFeature) return;
-    const stillValid = sortedPreviews.some((project) =>
-      projectMatchesFeature(project.tags, activeFeature),
-    );
-    if (!stillValid) setActiveFeature(null);
-  }, [sortedPreviews, activeFeature]);
+    if (!activeFeatureId) return;
+    const stillValid = sortedPreviews.some((project) => project.categoryId === activeFeatureId);
+    if (!stillValid) setActiveFeatureId(null);
+  }, [sortedPreviews, activeFeatureId]);
+
+  const activeFeatureLabel = sortedFeatures.find((f) => f.id === activeFeatureId)?.label;
 
   const animate = !reducedMotion && inView;
   const revealTransition = reducedMotion ? { duration: 0 } : { duration: 0.65, ease: REVEAL_EASE };
@@ -106,7 +98,7 @@ export function Projects() {
           <p className="mt-4 text-base leading-relaxed text-[var(--text-muted)]">{t("projects-subtitle")}</p>
         </HeaderBlock>
 
-        {availableFeatures.length > 0 ? (
+        {sortedFeatures.length > 0 ? (
           <FilterRow
             className="mb-8 flex flex-wrap items-center gap-2"
             {...(animate
@@ -123,22 +115,22 @@ export function Projects() {
             </span>
             <button
               type="button"
-              onClick={() => setActiveFeature(null)}
+              onClick={() => setActiveFeatureId(null)}
               className={`rounded-full border px-4 py-1.5 text-xs font-bold transition ${
-                activeFeature === null
+                activeFeatureId === null
                   ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-sm shadow-[color-mix(in_srgb,var(--color-accent-deep)_25%,transparent)]"
                   : "glass-surface border-transparent text-[var(--text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
               }`}
             >
               {t("filter-all")}
             </button>
-            {availableFeatures.map((feature) => (
+            {sortedFeatures.map((feature) => (
               <button
                 key={feature.id}
                 type="button"
-                onClick={() => setActiveFeature(feature.id)}
+                onClick={() => setActiveFeatureId(feature.id)}
                 className={`rounded-full border px-4 py-1.5 text-xs font-bold transition ${
-                  activeFeature === feature.id
+                  activeFeatureId === feature.id
                     ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-sm shadow-[color-mix(in_srgb,var(--color-accent-deep)_25%,transparent)]"
                     : "glass-surface border-transparent text-[var(--text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
                 }`}
@@ -213,14 +205,14 @@ export function Projects() {
           <p className="py-12 text-center text-sm text-[var(--text-muted)]">
             No projects published yet. Add and publish projects in the admin CMS.
           </p>
-        ) : loaded && activeFeature && filtered.length === 0 ? (
+        ) : loaded && activeFeatureId && filtered.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-sm text-[var(--text-muted)]">
-              No projects match {featureLabel(activeFeature)}.
+              No projects in {activeFeatureLabel ?? "this feature"} yet.
             </p>
             <button
               type="button"
-              onClick={() => setActiveFeature(null)}
+              onClick={() => setActiveFeatureId(null)}
               className="mt-3 text-sm font-bold text-[var(--color-accent)] hover:underline"
             >
               {t("filter-all")}

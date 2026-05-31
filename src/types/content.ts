@@ -3,7 +3,7 @@ import type { ProjectComponent } from "./projects";
 export interface ProjectContent {
   title: string;
   theme: "light" | "dark";
-  tags: string[];
+  categoryLabel?: string;
   techStack?: string[];
   description?: string;
   videoBorder?: boolean;
@@ -18,6 +18,7 @@ export interface ProjectPreview {
   thumbnail: string;
   previewVideo?: string;
   description: string;
-  tags?: string[];
+  categoryId?: string | null;
+  categoryLabel?: string;
   sortOrder?: number;
 }

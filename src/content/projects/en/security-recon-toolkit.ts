@@ -3,7 +3,8 @@ import type { ProjectContent } from "../../types";
 export default {
   title: "Recon Automation Toolkit",
   theme: "light",
-  tags: ["node", "javascript", "postgresql"],
+  categoryLabel: "Recon Automation Tool",
+  techStack: ["Node.js", "JavaScript", "PostgreSQL", "Python", "Bash"],
   videoBorder: false,
   description:
     "Python and Bash tooling for bug bounty recon — asset discovery, scope tracking, and repeatable scan pipelines.",

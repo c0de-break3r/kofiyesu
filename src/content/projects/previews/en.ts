@@ -1,6 +1,9 @@
 import thumbnailKheliancart from "../../../assets/thumbnails/kheliancart.webp";
-
+import { staticFeatureBySlug } from "@/content/features";
 import type { ProjectPreview } from "../../types";
+
+const web = staticFeatureBySlug["web-application"];
+const recon = staticFeatureBySlug["recon-automation-tool"];
 
 export default [
   {
@@ -8,20 +11,26 @@ export default [
     slug: "kheliancart",
     thumbnail: thumbnailKheliancart,
     description: "Grocery ecommerce · Ho, Ghana",
-    tags: ["node", "postgresql", "javascript", "html"],
+    categoryId: web.id,
+    categoryLabel: web.label,
+    sortOrder: 0,
   },
   {
     title: "Recon Automation Toolkit",
     slug: "security-recon-toolkit",
     thumbnail: "/meta/portrait.png",
     description: "Recon & automation for bug bounty workflows",
-    tags: ["node", "javascript", "postgresql"],
+    categoryId: recon.id,
+    categoryLabel: recon.label,
+    sortOrder: 1,
   },
   {
     title: "API Pentest Workflows",
     slug: "api-pentest-workflows",
     thumbnail: "/meta/portrait.png",
     description: "REST API security testing methodology",
-    tags: ["node", "postgresql", "react"],
+    categoryId: web.id,
+    categoryLabel: web.label,
+    sortOrder: 2,
   },
 ] as const satisfies ProjectPreview[];

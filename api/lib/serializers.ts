@@ -1,11 +1,15 @@
-import type { ContactInquiry, SiteAbout, SiteProject } from "@prisma/client";
+import type { ContactInquiry, SiteAbout, SiteFeature, SiteProject } from "@prisma/client";
+import { featureToApi } from "./featureSerializer.js";
 
-export const projectToApi = (row: SiteProject) => ({
+type ProjectRow = SiteProject & { category?: SiteFeature | null };
+
+export const projectToApi = (row: ProjectRow) => ({
   id: row.id,
   slug: row.slug,
   title: row.title,
   theme: row.theme,
-  tags: row.tags,
+  category_id: row.categoryId,
+  category: row.category ? featureToApi(row.category) : null,
   tech_stack: row.techStack,
   description: row.description,
   thumbnail_url: row.thumbnailUrl,
@@ -42,3 +46,5 @@ export const inquiryToApi = (row: ContactInquiry) => ({
   intake: row.intake,
   created_at: row.createdAt.toISOString(),
 });
+
+export { featureToApi };

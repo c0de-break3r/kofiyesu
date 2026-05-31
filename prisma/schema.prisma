@@ -22,12 +22,27 @@ model ContactInquiry {
   @@map("contact_inquiries")
 }
 
+model SiteFeature {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug      String        @unique
+  label     String
+  sortOrder Int           @default(0) @map("sort_order")
+  published Boolean       @default(true)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  projects  SiteProject[]
+
+  @@index([sortOrder, createdAt])
+  @@map("site_features")
+}
+
 model SiteProject {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug         String   @unique
   title        String
   theme        String   @default("dark")
-  tags         Json     @default("[]")
+  categoryId   String?  @map("category_id") @db.Uuid
+  category     SiteFeature? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   techStack    Json     @default("[]") @map("tech_stack")
   description  String?
   thumbnailUrl String?  @map("thumbnail_url")
@@ -42,6 +57,7 @@ model SiteProject {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([sortOrder, createdAt])
+  @@index([categoryId])
   @@map("site_projects")
 }
 

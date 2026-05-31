@@ -1,13 +1,23 @@
 import type { ProjectComponent } from "./projects";
-import { normalizeProjectTags } from "@/lib/normalizeProjectTags";
 import type { ProjectContent, ProjectPreview } from "./content";
+
+export interface SiteFeatureRow {
+  id: string;
+  slug: string;
+  label: string;
+  sort_order: number;
+  published: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export interface SiteProjectRow {
   id: string;
   slug: string;
   title: string;
   theme: "light" | "dark";
-  tags: string[];
+  category_id: string | null;
+  category: SiteFeatureRow | null;
   tech_stack: string[];
   description: string | null;
   thumbnail_url: string | null;
@@ -44,14 +54,15 @@ export const rowToPreview = (row: SiteProjectRow): ProjectPreview => ({
   thumbnail: row.thumbnail_url ?? "",
   previewVideo: row.preview_video_url ?? undefined,
   description: row.description?.replace(/<[^>]+>/g, " ").slice(0, 120) ?? "",
-  tags: normalizeProjectTags(row.tags as string[]),
+  categoryId: row.category_id,
+  categoryLabel: row.category?.label ?? undefined,
   sortOrder: row.sort_order ?? 0,
 });
 
 export const rowToContent = (row: SiteProjectRow): ProjectContent => ({
   title: row.title,
   theme: "light",
-  tags: normalizeProjectTags(row.tags as string[]),
+  categoryLabel: row.category?.label ?? undefined,
   techStack: (row.tech_stack ?? []).filter(Boolean),
   description: row.description ?? undefined,
   videoBorder: row.video_border,

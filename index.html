@@ -101,6 +101,19 @@
               }
             })
             .catch(function () {});
+          fetch("/api/site/features", { cache: "no-store" })
+            .then(function (r) {
+              return r.ok ? r.json() : null;
+            })
+            .then(function (d) {
+              if (d && d.features) {
+                sessionStorage.setItem(
+                  "kofiyesu-site-features",
+                  JSON.stringify({ features: d.features, at: Date.now() }),
+                );
+              }
+            })
+            .catch(function () {});
         } catch (e) {}
       })();
     </script>

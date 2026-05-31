@@ -3,12 +3,18 @@ import { defaultAbout } from "../src/content/about";
 
 const prisma = new PrismaClient();
 
+const featureDefs = [
+  { slug: "web-application", label: "Web Application", sortOrder: 0 },
+  { slug: "mobile-application", label: "Mobile Application", sortOrder: 1 },
+  { slug: "recon-automation-tool", label: "Recon Automation Tool", sortOrder: 2 },
+] as const;
+
 const projects = [
   {
     slug: "kheliancart",
     title: "KhelianCart",
     theme: "light",
-    tags: ["node", "postgresql", "javascript", "html", "css"],
+    categorySlug: "web-application",
     techStack: ["Node.js", "PostgreSQL", "Express.js", "JavaScript", "HTML", "CSS"],
     description:
       "Grocery ecommerce platform for Ho, Ghana — catalog, cart, checkout, and delivery partner workflows.",
@@ -51,7 +57,7 @@ const projects = [
     slug: "security-recon-toolkit",
     title: "Recon Automation Toolkit",
     theme: "light",
-    tags: ["node", "javascript", "postgresql"],
+    categorySlug: "recon-automation-tool",
     techStack: ["Node.js", "JavaScript", "PostgreSQL", "Python", "Bash"],
     description:
       "Python and Bash tooling for bug bounty recon — asset discovery, scope tracking, and repeatable scan pipelines.",
@@ -84,7 +90,7 @@ const projects = [
     slug: "api-pentest-workflows",
     title: "API Pentest Workflows",
     theme: "light",
-    tags: ["node", "postgresql", "react"],
+    categorySlug: "web-application",
     techStack: ["Node.js", "PostgreSQL", "React", "REST API"],
     description:
       "Methodology and automation for testing REST APIs — auth flows, IDOR checks, and rate-limit validation.",
@@ -137,6 +143,25 @@ async function main() {
     },
   });
 
+  const featureIds = new Map<string, string>();
+  for (const feature of featureDefs) {
+    const row = await prisma.siteFeature.upsert({
+      where: { slug: feature.slug },
+      create: {
+        slug: feature.slug,
+        label: feature.label,
+        sortOrder: feature.sortOrder,
+        published: true,
+      },
+      update: {
+        label: feature.label,
+        sortOrder: feature.sortOrder,
+        published: true,
+      },
+    });
+    featureIds.set(feature.slug, row.id);
+  }
+
   for (const p of projects) {
     await prisma.siteProject.upsert({
       where: { slug: p.slug },
@@ -144,8 +169,8 @@ async function main() {
         slug: p.slug,
         title: p.title,
         theme: p.theme,
-        tags: p.tags,
-        techStack: "techStack" in p ? p.techStack : [],
+        categoryId: featureIds.get(p.categorySlug) ?? null,
+        techStack: p.techStack,
         description: p.description,
         thumbnailUrl: p.thumbnailUrl,
         liveUrl: "liveUrl" in p ? p.liveUrl : null,
@@ -156,8 +181,8 @@ async function main() {
       update: {
         title: p.title,
         theme: p.theme,
-        tags: p.tags,
-        techStack: "techStack" in p ? p.techStack : [],
+        categoryId: featureIds.get(p.categorySlug) ?? null,
+        techStack: p.techStack,
         description: p.description,
         thumbnailUrl: p.thumbnailUrl,
         liveUrl: "liveUrl" in p ? p.liveUrl : null,
@@ -168,7 +193,7 @@ async function main() {
     });
   }
 
-  console.log("Seed complete: site_about +", projects.length, "projects");
+  console.log("Seed complete: site_about +", featureDefs.length, "features +", projects.length, "projects");
 }
 
 main()

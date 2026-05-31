@@ -36,6 +36,11 @@ export function useScroll() {
     lenisRef.current = new Lenis({
       lerp: reducedMotion ? 1 : 0.08,
       smoothWheel: !reducedMotion,
+      prevent: (node) =>
+        Boolean(
+          node instanceof Element &&
+            node.closest("[data-lenis-prevent], [data-lenis-prevent-wheel]"),
+        ),
     });
     lenisInstance = lenisRef.current;
     lenisRef.current.on("scroll", handleScroll);

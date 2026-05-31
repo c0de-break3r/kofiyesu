@@ -3,12 +3,14 @@ import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { getLenis } from "@/hooks/useScroll";
 import { AdminInquiriesSection } from "./AdminInquiriesSection";
 import { AdminProjectsSection } from "./AdminProjectsSection";
+import { AdminFeaturesSection } from "./AdminFeaturesSection";
 import { AdminAboutSection } from "./AdminAboutSection";
 
-type Tab = "inquiries" | "projects" | "about";
+type Tab = "inquiries" | "features" | "projects" | "about";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "inquiries", label: "Inquiries" },
+  { id: "features", label: "Features" },
   { id: "projects", label: "Projects" },
   { id: "about", label: "About" },
 ];
@@ -90,6 +92,7 @@ export function AdminPanel() {
             </div>
           )}
           {tab === "projects" && <AdminProjectsSection />}
+          {tab === "features" && <AdminFeaturesSection />}
           {tab === "about" && <AdminAboutSection />}
         </div>
       </aside>

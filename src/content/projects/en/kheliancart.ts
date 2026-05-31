@@ -5,7 +5,8 @@ import type { ProjectContent } from "../../types";
 export default {
   title: "KhelianCart",
   theme: "light",
-  tags: ["node", "postgresql", "javascript", "html", "css"],
+  categoryLabel: "Web Application",
+  techStack: ["Node.js", "PostgreSQL", "Express.js", "JavaScript", "HTML", "CSS"],
   videoBorder: false,
   live: "https://kheliancart.com",
   description:

@@ -9,17 +9,27 @@ import {
   type ReactNode,
 } from "react";
 import staticPreviews from "@/content/projects/previews/en";
+import { staticFeatures } from "@/content/features";
 import { projectModules } from "@/content/projects";
 import { fetchJson } from "@/lib/fetchJson";
-import { takePrefetchedAbout, takePrefetchedProjects, readCachedProjects, writeCachedProjects } from "@/lib/prefetchSiteContent";
+import {
+  takePrefetchedAbout,
+  takePrefetchedFeatures,
+  takePrefetchedProjects,
+  readCachedFeatures,
+  readCachedProjects,
+  writeCachedFeatures,
+  writeCachedProjects,
+} from "@/lib/prefetchSiteContent";
 import type { ProjectContent, ProjectPreview } from "@/types/content";
-import { rowToContent, rowToPreview, type SiteAboutRow, type SiteProjectRow } from "@/types/site";
+import { rowToContent, rowToPreview, type SiteAboutRow, type SiteFeatureRow, type SiteProjectRow } from "@/types/site";
 import { defaultAbout } from "@/content/about";
 
 type SiteDataSource = "loading" | "api" | "static";
 
 type SiteContentContextValue = {
   previews: ProjectPreview[];
+  features: SiteFeatureRow[];
   about: SiteAboutRow | null;
   loaded: boolean;
   load: () => Promise<void>;
@@ -36,16 +46,20 @@ const SiteContentContext = createContext<SiteContentContextValue | null>(null);
 
 function SiteContentProviderInner({ children }: { children: ReactNode }) {
   const cachedProjects = readCachedProjects();
+  const cachedFeatures = readCachedFeatures();
   const [projects, setProjects] = useState<SiteProjectRow[]>(() => cachedProjects ?? []);
+  const [features, setFeatures] = useState<SiteFeatureRow[]>(() => cachedFeatures ?? []);
   const [about, setAbout] = useState<SiteAboutRow | null>(null);
-  const [loaded, setLoaded] = useState(() => cachedProjects !== null);
+  const [loaded, setLoaded] = useState(() => cachedProjects !== null && cachedFeatures !== null);
   const [source, setSource] = useState<SiteDataSource>(() =>
-    cachedProjects !== null ? "api" : "loading",
+    cachedProjects !== null && cachedFeatures !== null ? "api" : "loading",
   );
 
   const load = useCallback(async () => {
     const projectsPromise =
       takePrefetchedProjects() ?? fetchJson<{ projects?: SiteProjectRow[] }>("/api/site/projects");
+    const featuresPromise =
+      takePrefetchedFeatures() ?? fetchJson<{ features?: SiteFeatureRow[] }>("/api/site/features");
     const aboutPromise =
       takePrefetchedAbout() ?? fetchJson<{ about?: SiteAboutRow | null }>("/api/site/about");
 
@@ -53,17 +67,21 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
       if (aboutData !== null) setAbout(aboutData.about ?? null);
     });
 
-    const projectsData = await projectsPromise;
+    const [projectsData, featuresData] = await Promise.all([projectsPromise, featuresPromise]);
 
-    if (projectsData !== null) {
+    if (projectsData !== null && featuresData !== null) {
       const rows = projectsData.projects ?? [];
+      const featureRows = featuresData.features ?? [];
       setProjects(rows);
+      setFeatures(featureRows);
       writeCachedProjects(rows);
+      writeCachedFeatures(featureRows);
       setSource("api");
     } else if (import.meta.env.DEV) {
       setSource("static");
     } else {
       setProjects([]);
+      setFeatures([]);
       setSource("api");
     }
 
@@ -83,6 +101,16 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
     }
     return [...staticPreviews];
   }, [source, projects]);
+
+  const publishedFeatures = useMemo<SiteFeatureRow[]>(() => {
+    if (source === "loading") return [];
+    if (source === "api") {
+      return [...features]
+        .filter((f) => f.published)
+        .sort((a, b) => a.sort_order - b.sort_order);
+    }
+    return [...staticFeatures];
+  }, [source, features]);
 
   const getProjectContent = useCallback(
     async (slug: string): Promise<ProjectContent | null> => {
@@ -124,6 +152,7 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
   const value = useMemo<SiteContentContextValue>(
     () => ({
       previews,
+      features: publishedFeatures,
       about,
       loaded,
       load,
@@ -132,7 +161,7 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
       aboutText,
       services,
     }),
-    [previews, about, loaded, load, getProjectContent, aboutText, services],
+    [previews, publishedFeatures, about, loaded, load, getProjectContent, aboutText, services],
   );
 
   return createElement(SiteContentContext.Provider, { value }, children);

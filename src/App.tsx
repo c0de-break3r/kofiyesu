@@ -33,11 +33,20 @@ function AppRoutes() {
   useEffect(() => {
     const onChat = location.pathname.startsWith("/chat");
     const onProject = location.pathname.startsWith("/project/");
+    const lenis = getLenis();
+
+    if (onChat || onProject) {
+      lenis?.stop();
+      window.scrollTo(0, 0);
+    } else {
+      lenis?.start();
+    }
+
     void import("@/three/core/renderer").then(({ renderer }) => {
       renderer.setIsActive(!onChat && !onProject && !reducedMotion);
       if (!onChat && !onProject) {
         resetHomeScene();
-        getLenis()?.scrollTo(0, { immediate: true });
+        lenis?.scrollTo(0, { immediate: true });
         requestAnimationFrame(() => ScrollTrigger.refresh());
       }
     });

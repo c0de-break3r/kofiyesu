@@ -11,7 +11,7 @@ export function ChatPage() {
   return (
     <main
       id="main-content"
-      className="mx-auto flex h-[calc(100dvh-72px-env(safe-area-inset-bottom,0px))] max-w-3xl flex-col px-4 pb-4 pt-6 sm:px-6 md:h-[calc(100dvh-5rem)] md:pb-6 md:pt-20"
+      className="mx-auto min-h-screen max-w-3xl px-4 pb-24 pt-6 sm:px-6 md:pb-12 md:pt-20"
     >
       <div className="mb-4 hidden shrink-0 md:block">
         <BackIconLink to="/" ariaLabel={t("back-to-home")} />
@@ -25,7 +25,7 @@ export function ChatPage() {
       </div>
 
       {!isClerkConfigured ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-6 text-center text-sm text-[var(--text-muted)]">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-6 text-center text-sm text-[var(--text-muted)]">
           <p>{t("chat-guest-fallback")}</p>
           <a href={mailLink}>
             <Button>{t("chat-email-cta")}</Button>
@@ -33,8 +33,8 @@ export function ChatPage() {
           <BackIconLink to="/" ariaLabel={t("back-to-home")} className="mt-2" />
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg">
-          <ContactChatPanel fixed />
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg">
+          <ContactChatPanel />
         </div>
       )}
     </main>

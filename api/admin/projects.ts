@@ -9,6 +9,8 @@ const slugify = (value: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-");
 
+const projectInclude = { category: true } as const;
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const adminId = await requireAdminUserId(req);
@@ -22,6 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === "GET") {
       const rows = await prisma.siteProject.findMany({
+        include: projectInclude,
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       });
       return res.status(200).json({ projects: rows.map(projectToApi) });
@@ -32,12 +35,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const slug = slugify(String(body.slug ?? ""));
       if (!slug) return res.status(400).json({ error: "slug required" });
 
+      const categoryId = body.category_id ? String(body.category_id) : null;
+
       const row = await prisma.siteProject.create({
         data: {
           slug,
           title: String(body.title ?? slug),
           theme: body.theme === "light" ? "light" : "dark",
-          tags: Array.isArray(body.tags) ? body.tags : [],
+          categoryId,
           techStack: Array.isArray(body.tech_stack) ? body.tech_stack : [],
           description: body.description ? String(body.description) : null,
           thumbnailUrl: body.thumbnail_url ? String(body.thumbnail_url) : null,
@@ -49,6 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           sortOrder: Number(body.sort_order) || 0,
           published: body.published !== false,
         },
+        include: projectInclude,
       });
 
       return res.status(201).json({ project: projectToApi(row) });
@@ -63,7 +69,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (body.title !== undefined) data.title = String(body.title);
       if (body.theme !== undefined) data.theme = body.theme === "light" ? "light" : "dark";
-      if (body.tags !== undefined) data.tags = body.tags;
+      if (body.category_id !== undefined) {
+        data.categoryId = body.category_id ? String(body.category_id) : null;
+      }
       if (body.tech_stack !== undefined) data.techStack = body.tech_stack;
       if (body.description !== undefined) data.description = body.description;
       if (body.thumbnail_url !== undefined) data.thumbnailUrl = body.thumbnail_url;
@@ -79,6 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const row = await prisma.siteProject.update({
         where: { id },
         data,
+        include: projectInclude,
       });
 
       return res.status(200).json({ project: projectToApi(row) });
