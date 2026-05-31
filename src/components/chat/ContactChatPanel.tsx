@@ -32,6 +32,7 @@ import {
   loadConversation,
   saveConversation,
 } from "@/lib/chatHistory";
+import { shouldQueueInquiry } from "@/lib/inquiryQueue";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { social } from "@/content/social";
@@ -203,14 +204,16 @@ export function ContactChatPanel() {
       setMessages(finalMessages);
       persistConversation(finalMessages);
 
-      await submitInquiry({
-        inquiryType: result.inquiryType,
-        message: userTextForInquiry,
-        needsAdmin: result.escalateToAdmin ?? false,
-        userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
-        userName: user?.fullName ?? null,
-        getToken,
-      });
+      if (shouldQueueInquiry(result.inquiryType, result)) {
+        await submitInquiry({
+          inquiryType: result.inquiryType,
+          message: userTextForInquiry,
+          needsAdmin: result.escalateToAdmin ?? false,
+          userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
+          userName: user?.fullName ?? null,
+          getToken,
+        });
+      }
 
       return result;
     },
@@ -316,14 +319,16 @@ export function ContactChatPanel() {
     persistConversation(finalMessages);
 
     const inquiryBody = [text, files.length ? attachmentSummary(files) : ""].filter(Boolean).join("\n\n");
-    await submitInquiry({
-      inquiryType: result.inquiryType,
-      message: inquiryBody || displayContent,
-      needsAdmin: result.escalateToAdmin ?? false,
-      userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
-      userName: user?.fullName ?? null,
-      getToken,
-    });
+    if (shouldQueueInquiry(result.inquiryType, result)) {
+      await submitInquiry({
+        inquiryType: result.inquiryType,
+        message: inquiryBody || displayContent,
+        needsAdmin: result.escalateToAdmin ?? false,
+        userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
+        userName: user?.fullName ?? null,
+        getToken,
+      });
+    }
 
     setIsLoading(false);
   };

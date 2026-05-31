@@ -20,17 +20,23 @@ model ChatConversation {
 }
 
 model ContactInquiry {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  inquiryType String   @map("inquiry_type")
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inquiryType String    @map("inquiry_type")
   message     String
-  needsAdmin  Boolean  @default(false) @map("needs_admin")
-  userEmail   String?  @map("user_email")
-  userId      String?  @map("user_id")
-  userName    String?  @map("user_name")
+  needsAdmin  Boolean   @default(false) @map("needs_admin")
+  status      String    @default("new")
+  adminNotes  String?   @map("admin_notes")
+  replyDraft  String?   @map("reply_draft")
+  userEmail   String?   @map("user_email")
+  userId      String?   @map("user_id")
+  userName    String?   @map("user_name")
   intake      Json?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  reviewedAt  DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
   @@map("contact_inquiries")
 }
 

@@ -40,11 +40,16 @@ export const inquiryToApi = (row: ContactInquiry) => ({
   inquiry_type: row.inquiryType,
   message: row.message,
   needs_admin: row.needsAdmin,
+  status: row.status,
+  admin_notes: row.adminNotes,
+  reply_draft: row.replyDraft,
   user_email: row.userEmail,
   user_id: row.userId,
   user_name: row.userName,
   intake: row.intake,
+  reviewed_at: row.reviewedAt?.toISOString() ?? null,
   created_at: row.createdAt.toISOString(),
+  updated_at: row.updatedAt.toISOString(),
 });
 
 export { featureToApi };
