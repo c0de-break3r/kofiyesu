@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { formatGhs, currencyName, currencyCode } from "@/content/payments";
 import { usePaystackPayment } from "@/hooks/usePaystackPayment";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { readResponseJson } from "@/lib/readResponseJson";
 import { t } from "@/i18n/en";
 import { useState } from "react";
 
@@ -35,11 +36,11 @@ export function ServicesPricing() {
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Could not create payment");
+        const data = await readResponseJson<{ error?: string }>(res);
+        throw new Error(data?.error ?? "Could not create payment");
       }
 
-      const data = (await res.json()) as {
+      const data = await readResponseJson<{
         payment: {
           id: string;
           title: string;
@@ -48,7 +49,10 @@ export function ServicesPricing() {
           description: string | null;
           currency: string;
         };
-      };
+      }>(res);
+      if (!data?.payment) {
+        throw new Error("Payment service returned an invalid response.");
+      }
       await pay(data.payment);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");

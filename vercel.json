@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run db:sync && npm run build",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api?path=$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

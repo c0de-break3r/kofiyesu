@@ -1,6 +1,7 @@
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useCallback, useState } from "react";
 import { openPaystackCheckout } from "@/lib/paystackClient";
+import { readResponseJson } from "@/lib/readResponseJson";
 
 export type PaymentRow = {
   id: string;
@@ -44,12 +45,16 @@ export function usePaystackPayment({ onSuccess, onError }: UsePaystackPaymentOpt
           body: JSON.stringify({ payment_id: payment.id, email }),
         });
 
+        const initData = await readResponseJson<{ access_code: string; reference: string; error?: string }>(
+          initRes,
+        );
         if (!initRes.ok) {
-          const data = (await initRes.json()) as { error?: string };
-          throw new Error(data.error ?? "Could not start payment");
+          throw new Error(initData?.error ?? "Could not start payment");
+        }
+        if (!initData?.access_code) {
+          throw new Error("Payment service returned an invalid response.");
         }
 
-        const initData = (await initRes.json()) as { access_code: string; reference: string };
         const { reference } = await openPaystackCheckout(initData.access_code);
 
         const verifyRes = await fetch("/api/paystack/verify", {
@@ -61,12 +66,14 @@ export function usePaystackPayment({ onSuccess, onError }: UsePaystackPaymentOpt
           body: JSON.stringify({ reference, payment_id: payment.id }),
         });
 
+        const verifyData = await readResponseJson<{ payment: PaymentRow; error?: string }>(verifyRes);
         if (!verifyRes.ok) {
-          const data = (await verifyRes.json()) as { error?: string };
-          throw new Error(data.error ?? "Payment verification failed");
+          throw new Error(verifyData?.error ?? "Payment verification failed");
+        }
+        if (!verifyData?.payment) {
+          throw new Error("Payment verification returned an invalid response.");
         }
 
-        const verifyData = (await verifyRes.json()) as { payment: PaymentRow };
         onSuccess?.(verifyData.payment);
       } catch (err) {
         onError?.(err instanceof Error ? err.message : "Payment failed");
