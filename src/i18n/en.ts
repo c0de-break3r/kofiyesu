@@ -20,6 +20,7 @@ export const en = {
   "chat-loading": "Loading…",
   "chat-clerk-missing": "Add VITE_CLERK_PUBLISHABLE_KEY to enable sign-in and chat.",
   "chat-escalated": "Passed to Obed — he'll follow up from the admin queue.",
+  "chat-admin-reply": "Reply from Obed",
   "chat-send-email": "Continue via email",
   "intake-step": "Step {current} of {total}",
   "intake-type-title": "What are you looking for?",
@@ -27,7 +28,7 @@ export const en = {
   "intake-type-general": "General question",
   "intake-timeline-title": "When do you need to start?",
   "intake-budget-title": "Budget range (optional)",
-  "intake-budget-hint": "Helps scope the conversation — you can skip.",
+  "intake-budget-hint": "Typical project budgets run $7k–$50k — pick the closest band or skip.",
   "intake-details-title": "Tell me about the project",
   "intake-details-hint": "Goals, stack, scope, or security targets — a few sentences is enough.",
   "intake-details-placeholder":
@@ -79,6 +80,20 @@ export const en = {
   "chat-guest-fallback": "Email Obed directly while chat sign-in is unavailable.",
   "chat-email-cta": "Send an email",
   "sign-in": "Sign in",
+  services: "Services",
+  "pricing-eyebrow": "Services & pricing",
+  "pricing-title": "Start with a clear package",
+  "pricing-subtitle":
+    "Pay securely with card or Mobile Money via Paystack. Custom scopes — chat first and Obed will quote.",
+  "pricing-sign-in-pay": "Sign in to pay",
+  "pricing-custom": "Need something bespoke?",
+  "pay-now": "Pay with Paystack",
+  "pay-processing": "Processing…",
+  "pay-success": "Payment received — thanks! Obed will follow up on next steps.",
+  "pay-sign-in": "Sign in with the same account you used in chat to complete payment.",
+  "pay-request-title": "Payment requested",
+  "whatsapp-cta": "WhatsApp Obed",
+  "view-pricing": "View packages",
 } as const;
 
 export type MessageKey = keyof typeof en;

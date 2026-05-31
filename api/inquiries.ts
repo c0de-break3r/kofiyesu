@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { requireSignedInUserId } from "./lib/clerkAuth.js";
 import { isDatabaseConfigured, prisma } from "./lib/prisma.js";
-import { notifyAdminUrgentInquiry } from "./lib/notifyAdmin.js";
+import { notifyAdminInquiry } from "./lib/notifyAdmin.js";
 import { toInputJson } from "./lib/prismaJson.js";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
@@ -10,6 +10,7 @@ interface InquiryBody {
   inquiryType?: InquiryType;
   message?: string;
   needsAdmin?: boolean;
+  conversationId?: string | null;
   userEmail?: string | null;
   userName?: string | null;
   intake?: Record<string, unknown> | null;
@@ -44,12 +45,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const needsAdmin = Boolean(body.needsAdmin);
+  const conversationId = body.conversationId?.trim() || null;
 
   const row = await prisma.contactInquiry.create({
     data: {
       inquiryType,
       message,
       needsAdmin,
+      conversationId,
       userEmail: body.userEmail ?? null,
       userId,
       userName: body.userName ?? null,
@@ -57,16 +60,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
   });
 
-  let notified = false;
-  if (needsAdmin) {
-    notified = await notifyAdminUrgentInquiry({
-      inquiryType,
-      message,
-      userEmail: body.userEmail,
-      userName: body.userName,
-      intake: body.intake,
-    });
-  }
+  const notified = await notifyAdminInquiry({
+    inquiryType,
+    message,
+    userEmail: body.userEmail,
+    userName: body.userName,
+    intake: body.intake,
+    urgent: needsAdmin,
+  });
 
   return res.status(200).json({ id: row.id, notified });
 }

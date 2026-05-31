@@ -74,7 +74,8 @@ export function Header() {
   const isHome = location.pathname === "/";
   const isProjectRoute = location.pathname.startsWith("/project/");
   const isChatRoute = location.pathname.startsWith("/chat");
-  const isMinimalNav = isProjectRoute || isChatRoute;
+  const isPayRoute = location.pathname.startsWith("/pay/");
+  const isMinimalNav = isProjectRoute || isChatRoute || isPayRoute;
 
   const handleHomeClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome) return;
@@ -115,6 +116,12 @@ export function Header() {
                 onClick={handleNavSectionClick("projects")}
               >
                 {t("projects")}
+              </NavLink>
+              <NavLink
+                href={isHome ? "#services-pricing" : "/#services-pricing"}
+                onClick={handleNavSectionClick("services-pricing")}
+              >
+                {t("services")}
               </NavLink>
               <button
                 type="button"

@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { requireAdminUserId } from "../lib/adminAuth.js";
+import { appendAdminReplyToChat } from "../lib/publishAdminReply.js";
 import { isDatabaseConfigured, prisma } from "../lib/prisma.js";
 import { inquiryToApi } from "../lib/serializers.js";
 
@@ -38,6 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         admin_notes?: string | null;
         reply_draft?: string | null;
         mark_reviewed?: boolean;
+        publish_reply?: boolean;
       };
 
       if (!body.id) {
@@ -58,13 +60,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ? existing.reviewedAt ?? new Date()
           : existing.reviewedAt;
 
+      const replyDraft =
+        body.reply_draft !== undefined ? body.reply_draft : existing.replyDraft;
+      const publishReply = Boolean(body.publish_reply);
+      const replyText = publishReply ? replyDraft?.trim() : "";
+
+      if (publishReply && !replyText) {
+        return res.status(400).json({ error: "Reply text required" });
+      }
+
+      let adminReply = existing.adminReply;
+      let adminReplyAt = existing.adminReplyAt;
+      let nextStatus = status;
+
+      if (publishReply && replyText) {
+        adminReply = replyText;
+        adminReplyAt = new Date();
+        nextStatus = "replied";
+
+        if (existing.userId) {
+          const published = await appendAdminReplyToChat({
+            userId: existing.userId,
+            conversationId: existing.conversationId,
+            replyText,
+          });
+          if (!published.ok) {
+            console.warn("[admin/inquiries] Could not append reply to chat", existing.id);
+          }
+        }
+      }
+
       const row = await prisma.contactInquiry.update({
         where: { id: body.id },
         data: {
-          status,
+          status: nextStatus,
           adminNotes: body.admin_notes !== undefined ? body.admin_notes : existing.adminNotes,
-          replyDraft: body.reply_draft !== undefined ? body.reply_draft : existing.replyDraft,
-          reviewedAt,
+          replyDraft,
+          adminReply,
+          adminReplyAt,
+          reviewedAt:
+            publishReply || body.mark_reviewed || nextStatus === "reviewed" || nextStatus === "replied"
+              ? existing.reviewedAt ?? new Date()
+              : existing.reviewedAt,
         },
       });
 

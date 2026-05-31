@@ -54,7 +54,7 @@
   "intake-type-general": "General question",
   "intake-timeline-title": "When do you need to start?",
   "intake-budget-title": "Budget range (optional)",
-  "intake-budget-hint": "Helps scope the conversation — you can skip.",
+  "intake-budget-hint": "Typical project budgets run $7k–$50k — pick the closest band or skip.",
   "intake-details-title": "Tell me about the project",
   "intake-details-hint": "Goals, stack, scope, or security targets — a few sentences is enough.",
   "intake-details-placeholder": "e.g. Need a pentest on our REST API before launch, or building grocery delivery APIs in Node…",

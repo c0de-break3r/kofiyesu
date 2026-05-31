@@ -5,6 +5,7 @@ export interface SubmitInquiryOptions {
   inquiryType: InquiryType;
   message: string;
   needsAdmin?: boolean;
+  conversationId?: string | null;
   intake?: ChatIntakeData | null;
   userEmail?: string | null;
   userName?: string | null;
@@ -15,6 +16,7 @@ export const submitInquiry = async ({
   inquiryType,
   message,
   needsAdmin = false,
+  conversationId,
   intake,
   userEmail,
   userName,
@@ -34,6 +36,7 @@ export const submitInquiry = async ({
         inquiryType,
         message,
         needsAdmin,
+        conversationId: conversationId ?? null,
         userEmail,
         userName,
         intake: intake ?? null,

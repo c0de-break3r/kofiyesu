@@ -93,7 +93,10 @@ export function AdminMediaUpload({
     showUploadStatus("Media removed");
   };
 
-  const isVideo = previewType === "video" || /\.(mp4|webm|mov)(\?|$)/i.test(value);
+  const isVideo =
+    previewType === "video" ||
+    /\/video\/upload\//i.test(value) ||
+    /\.(mp4|webm|mov)(\?|$)/i.test(value);
 
   return (
     <div className="space-y-2">

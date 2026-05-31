@@ -1,5 +1,19 @@
 import type { ProjectComponent } from "./projects";
 import type { ProjectContent, ProjectPreview } from "./content";
+import { mergeProjectComponents, extractProjectFormFromComponents } from "@/lib/projectComponents";
+
+function normalizeComponents(raw: unknown): ProjectComponent[] {
+  return Array.isArray(raw) ? (raw as ProjectComponent[]) : [];
+}
+
+function showcaseFromRow(row: SiteProjectRow) {
+  const fromColumns = {
+    showcase_video_url: row.showcase_video_url?.trim() ?? "",
+    showcase_video_caption: row.showcase_video_caption?.trim() ?? "",
+  };
+  if (fromColumns.showcase_video_url) return fromColumns;
+  return extractProjectFormFromComponents(normalizeComponents(row.components));
+}
 
 export interface SiteFeatureRow {
   id: string;
@@ -22,6 +36,8 @@ export interface SiteProjectRow {
   description: string | null;
   thumbnail_url: string | null;
   preview_video_url: string | null;
+  showcase_video_url: string | null;
+  showcase_video_caption: string | null;
   live_url: string | null;
   source_url: string | null;
   video_border: boolean;
@@ -59,14 +75,19 @@ export const rowToPreview = (row: SiteProjectRow): ProjectPreview => ({
   sortOrder: row.sort_order ?? 0,
 });
 
-export const rowToContent = (row: SiteProjectRow): ProjectContent => ({
-  title: row.title,
-  theme: "light",
-  categoryLabel: row.category?.label ?? undefined,
-  techStack: (row.tech_stack ?? []).filter(Boolean),
-  description: row.description ?? undefined,
-  videoBorder: row.video_border,
-  live: row.live_url ?? undefined,
-  source: row.source_url ?? undefined,
-  components: row.components ?? [],
-});
+export const rowToContent = (row: SiteProjectRow): ProjectContent => {
+  const showcase = showcaseFromRow(row);
+  const components = mergeProjectComponents(normalizeComponents(row.components), showcase);
+
+  return {
+    title: row.title,
+    theme: "light",
+    categoryLabel: row.category?.label ?? undefined,
+    techStack: (row.tech_stack ?? []).filter(Boolean),
+    description: row.description ?? undefined,
+    videoBorder: row.video_border,
+    live: row.live_url ?? undefined,
+    source: row.source_url ?? undefined,
+    components,
+  };
+};

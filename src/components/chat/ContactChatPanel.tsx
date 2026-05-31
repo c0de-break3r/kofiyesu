@@ -4,7 +4,9 @@ import { BackIconLink } from "@/components/layout/BackIconLink";
 import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
 import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
+import { ChatIntakeFlow } from "./ChatIntakeFlow";
 import { ChatMessage, ChatTyping } from "./ChatMessage";
+import { ChatPaymentBanner } from "./ChatPaymentBanner";
 import { t } from "@/i18n/en";
 import {
   type ChatMessage as ChatMsg,
@@ -33,7 +35,16 @@ import {
 } from "@/lib/chatHistory";
 import { shouldQueueInquiry } from "@/lib/inquiryQueue";
 import { submitInquiry } from "@/lib/submitInquiry";
+import {
+  type ChatIntakeData,
+  INTAKE_SESSION_KEY,
+  formatIntakeMessage,
+  intakeNeedsAdmin,
+} from "@/lib/chatIntake";
+import { clearIntakeDraft } from "@/lib/intakeDraft";
+import { getInquiryRoute } from "@/content/contact";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
+import { type PaymentRow } from "@/hooks/usePaystackPayment";
 import { social } from "@/content/social";
 
 function toMessageAttachments(files: ChatAttachment[]): ChatMessageAttachmentView[] {
@@ -71,10 +82,80 @@ export function ContactChatPanel() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [routing, setRouting] = useState<RoutingResult | null>(null);
+  const [showEscalateBanner, setShowEscalateBanner] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState<PaymentRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [intakeDone, setIntakeDone] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem(INTAKE_SESSION_KEY) === "1",
+  );
+  const [intakeSubmitting, setIntakeSubmitting] = useState(false);
+  const [intakeError, setIntakeError] = useState<string | null>(null);
   const messagesEl = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showEscalateBanner) return;
+    const timer = window.setTimeout(() => setShowEscalateBanner(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [showEscalateBanner]);
+
+  const syncRemoteMessages = useCallback(async () => {
+    if (!user?.id || !conversationId || isLoading) return;
+    const loaded = await loadConversation(getToken, user.id, conversationId);
+    if (!loaded) return;
+    const remote = ensureMessageIds(loaded.messages);
+    setMessages((prev) => {
+      const hasUser = prev.some((m) => m.role === "user");
+      if (remote.length === 0 && hasUser) return prev;
+      if (
+        remote.length === prev.length &&
+        remote.every((m, i) => m.id === prev[i]?.id && m.content === prev[i]?.content)
+      ) {
+        return prev;
+      }
+      return remote.length > 0 || !hasUser ? remote : prev;
+    });
+  }, [conversationId, getToken, isLoading, user?.id]);
+
+  useEffect(() => {
+    if (!historyReady || !conversationId) return;
+    void syncRemoteMessages();
+    const interval = window.setInterval(() => void syncRemoteMessages(), 12000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void syncRemoteMessages();
+    };
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [historyReady, conversationId, syncRemoteMessages]);
+
+  const loadPendingPayments = useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch("/api/payments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { payments: PaymentRow[] };
+      setPendingPayments(data.payments.filter((p) => p.status === "pending"));
+    } catch {
+      /* ignore */
+    }
+  }, [getToken, isSignedIn]);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    void loadPendingPayments();
+    const interval = window.setInterval(() => void loadPendingPayments(), 15000);
+    return () => window.clearInterval(interval);
+  }, [isSignedIn, loadPendingPayments]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = messagesEl.current;
@@ -200,6 +281,7 @@ export function ContactChatPanel() {
         { id: crypto.randomUUID(), role: "assistant", content: result.reply },
       ];
       setRouting(result);
+      setShowEscalateBanner(Boolean(result.escalateToAdmin));
       setMessages(finalMessages);
       persistConversation(finalMessages);
 
@@ -208,6 +290,7 @@ export function ContactChatPanel() {
           inquiryType: result.inquiryType,
           message: userTextForInquiry,
           needsAdmin: result.escalateToAdmin ?? false,
+          conversationId,
           userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
           userName: user?.fullName ?? null,
           getToken,
@@ -216,7 +299,7 @@ export function ContactChatPanel() {
 
       return result;
     },
-    [getToken, persistConversation, user],
+    [conversationId, getToken, persistConversation, user],
   );
 
   const handleNewChat = async () => {
@@ -297,6 +380,7 @@ export function ContactChatPanel() {
     setFileError(null);
     setIsLoading(true);
     setRouting(null);
+    setShowEscalateBanner(false);
     setEditingId(null);
 
     const result = await routeInquiryWithAi({
@@ -314,6 +398,7 @@ export function ContactChatPanel() {
       { id: crypto.randomUUID(), role: "assistant", content: result.reply },
     ];
     setRouting(result);
+    setShowEscalateBanner(Boolean(result.escalateToAdmin));
     setMessages(finalMessages);
     persistConversation(finalMessages);
 
@@ -323,6 +408,7 @@ export function ContactChatPanel() {
         inquiryType: result.inquiryType,
         message: inquiryBody || displayContent,
         needsAdmin: result.escalateToAdmin ?? false,
+        conversationId,
         userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
         userName: user?.fullName ?? null,
         getToken,
@@ -356,13 +442,60 @@ export function ContactChatPanel() {
     setEditDraft("");
     setIsLoading(true);
     setRouting(null);
+    setShowEscalateBanner(false);
+    setEditingId(null);
 
     await runAssistantTurn(truncated, text);
     setIsLoading(false);
   };
 
   const hasUserMessages = messages.some((m) => m.role === "user");
-  const showReadyState = historyReady && !historyLoading && !hasUserMessages && !isLoading;
+  const showIntake =
+    historyReady && !historyLoading && !hasUserMessages && !isLoading && !intakeDone;
+  const showReadyState = historyReady && !historyLoading && !hasUserMessages && !isLoading && intakeDone;
+
+  const handleIntakeComplete = async (intake: ChatIntakeData) => {
+    if (!conversationId) return;
+    setIntakeSubmitting(true);
+    setIntakeError(null);
+
+    const saved = await submitInquiry({
+      inquiryType: intake.projectType,
+      message: formatIntakeMessage(intake),
+      needsAdmin: intakeNeedsAdmin(intake),
+      conversationId,
+      intake,
+      userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
+      userName: user?.fullName ?? null,
+      getToken,
+    });
+
+    setIntakeSubmitting(false);
+    if (!saved.ok) {
+      setIntakeError("Could not save your intake. Try again.");
+      return;
+    }
+
+    sessionStorage.setItem(INTAKE_SESSION_KEY, "1");
+    clearIntakeDraft();
+    setIntakeDone(true);
+
+    const route = getInquiryRoute(intake.projectType);
+    const welcome: ChatMsg = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: t("chat-welcome-intake", { type: route.label.toLowerCase() }),
+    };
+    setMessages([welcome]);
+    persistConversation([welcome]);
+  };
+
+  useEffect(() => {
+    if (hasUserMessages && !intakeDone) {
+      setIntakeDone(true);
+      sessionStorage.setItem(INTAKE_SESSION_KEY, "1");
+    }
+  }, [hasUserMessages, intakeDone]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -444,6 +577,20 @@ export function ContactChatPanel() {
                 </p>
               )}
 
+              {showIntake && (
+                <div className="py-4">
+                  {intakeSubmitting ? (
+                    <p className="text-center text-sm text-[var(--text-muted)]">{t("intake-submitting")}</p>
+                  ) : null}
+                  {intakeError ? (
+                    <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-center text-sm font-semibold text-red-500">
+                      {intakeError}
+                    </p>
+                  ) : null}
+                  {!intakeSubmitting ? <ChatIntakeFlow onComplete={(data) => void handleIntakeComplete(data)} /> : null}
+                </div>
+              )}
+
               {showReadyState && (
                 <div className="flex flex-col items-center justify-center py-10 text-center sm:py-16">
                   <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] text-2xl">
@@ -462,8 +609,16 @@ export function ContactChatPanel() {
                 </p>
               )}
 
+              {pendingPayments.length > 0 ? (
+                <ChatPaymentBanner
+                  payments={pendingPayments}
+                  onPaid={() => void loadPendingPayments()}
+                />
+              ) : null}
+
               {historyReady &&
                 !showReadyState &&
+                !showIntake &&
                 messages.map((msg) => (
                   <ChatMessage
                     key={msg.id ?? `${msg.role}-${msg.content.slice(0, 16)}`}
@@ -483,11 +638,11 @@ export function ContactChatPanel() {
                   />
                 ))}
 
-              {historyReady && !showReadyState && isLoading && <ChatTyping />}
+              {historyReady && !showReadyState && !showIntake && isLoading && <ChatTyping />}
             </div>
           </div>
 
-          {!adminOpen && (
+          {!adminOpen && intakeDone && (
             <ChatComposer
               composerRef={composerRef}
               input={input}
@@ -498,8 +653,8 @@ export function ContactChatPanel() {
               onSend={() => void handleSend()}
               isLoading={isLoading || (historyLoading && !historyReady)}
               escalateBanner={
-                routing?.escalateToAdmin ? (
-                  <p className="glass-surface rounded-xl px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
+                showEscalateBanner ? (
+                  <p className="glass-surface rounded-xl px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)] transition-opacity duration-500">
                     {t("chat-escalated")}
                   </p>
                 ) : undefined

@@ -20,6 +20,7 @@ import { HomePage } from "@/pages/HomePage";
 
 const ChatPage = lazy(() => import("@/pages/ChatPage").then((m) => ({ default: m.ChatPage })));
 const ProjectPage = lazy(() => import("@/pages/ProjectPage").then((m) => ({ default: m.ProjectPage })));
+const PayPage = lazy(() => import("@/pages/PayPage").then((m) => ({ default: m.PayPage })));
 
 function AppRoutes() {
   const location = useLocation();
@@ -32,8 +33,9 @@ function AppRoutes() {
 
   useEffect(() => {
     const onChat = location.pathname.startsWith("/chat");
+    const onPay = location.pathname.startsWith("/pay/");
     const onProject = location.pathname.startsWith("/project/");
-    const onHome = !onChat && !onProject;
+    const onHome = !onChat && !onProject && !onPay;
     const lenis = getLenis();
     const canvasActive = onHome && !reducedMotion;
 
@@ -41,7 +43,7 @@ function AppRoutes() {
       renderer.setIsActive(canvasActive);
     });
 
-    if (onChat) {
+    if (onChat || onPay) {
       lenis?.start();
       lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);
@@ -70,6 +72,7 @@ function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/chat/*" element={<ChatPage />} />
         <Route path="/project/:slug" element={<ProjectPage />} />
+        <Route path="/pay/:paymentId" element={<PayPage />} />
       </Routes>
     </Suspense>
   );

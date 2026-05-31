@@ -14,6 +14,8 @@ export type Inquiry = {
   status: InquiryStatus;
   admin_notes: string | null;
   reply_draft: string | null;
+  admin_reply: string | null;
+  admin_reply_at: string | null;
   user_email: string | null;
   user_name: string | null;
   intake: Record<string, unknown> | null;
@@ -97,6 +99,10 @@ export function AdminInquiriesSection() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
+  const [payAmount, setPayAmount] = useState("500");
+  const [payTitle, setPayTitle] = useState("Project kickoff deposit");
+  const [payDescription, setPayDescription] = useState("");
+  const [payLink, setPayLink] = useState<string | null>(null);
 
   const selected = inquiries.find((i) => i.id === selectedId) ?? null;
 
@@ -159,6 +165,7 @@ export function AdminInquiriesSection() {
     setReplyDraft(selected.reply_draft ?? "");
     setStatus(selected.status);
     setSuccess(null);
+    setPayLink(null);
   }, [selected]);
 
   const patchInquiry = async (patch: {
@@ -166,6 +173,7 @@ export function AdminInquiriesSection() {
     status?: InquiryStatus;
     admin_notes?: string;
     reply_draft?: string;
+    publish_reply?: boolean;
     successMessage?: string;
   }) => {
     if (!selected) return;
@@ -181,6 +189,7 @@ export function AdminInquiriesSection() {
           reply_draft: patch.reply_draft ?? replyDraft,
           status: patch.status ?? status,
           mark_reviewed: patch.mark_reviewed,
+          publish_reply: patch.publish_reply,
         }),
       });
       if (!res.ok) {
@@ -235,12 +244,66 @@ export function AdminInquiriesSection() {
     }
   };
 
+  const sendReplyToChat = () => {
+    if (!replyDraft.trim()) {
+      setError("Write a reply before sending to chat.");
+      return;
+    }
+    void patchInquiry({ publish_reply: true, successMessage: "Sent to chat" });
+  };
+
   const openReplyMail = () => {
     if (!selected) return;
     const route = getInquiryRoute(selected.inquiry_type);
     const body = replyDraft.trim() || `Hi${selected.user_name ? ` ${selected.user_name.split(" ")[0]}` : ""},\n\n`;
     window.location.href = buildMailtoUrl(route, body);
-    void patchInquiry({ status: "replied", mark_reviewed: true, successMessage: "Marked as replied" });
+  };
+
+  const requestPayment = async () => {
+    if (!selected) return;
+    const amount = Number(payAmount);
+    if (!amount || amount <= 0) {
+      setError("Enter a valid amount in GHS");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await adminFetch("/api/admin/payments", {
+        method: "POST",
+        body: JSON.stringify({
+          inquiry_id: selected.id,
+          amount_ghs: amount,
+          title: payTitle.trim() || "Project payment",
+          description: payDescription.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setError(data.error ?? "Could not create payment");
+        return;
+      }
+      const data = (await res.json()) as { pay_link: string };
+      setPayLink(data.pay_link);
+      setSuccess("Payment link sent to chat");
+      window.setTimeout(() => setSuccess(null), 4000);
+    } catch {
+      setError("Could not create payment");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyPayLink = async () => {
+    if (!payLink) return;
+    try {
+      await navigator.clipboard.writeText(payLink);
+      setSuccess("Pay link copied");
+      window.setTimeout(() => setSuccess(null), 2000);
+    } catch {
+      setError("Could not copy link");
+    }
   };
 
   const selectInquiry = (id: string) => setSelectedId(id);
@@ -492,6 +555,88 @@ export function AdminInquiriesSection() {
                   </details>
                 ) : null}
 
+                <div className="rounded-lg border border-[color-mix(in_srgb,var(--color-accent)_22%,var(--border))] bg-[color-mix(in_srgb,var(--color-accent)_5%,transparent)] p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">
+                    Request payment
+                  </p>
+                  <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                    Creates a Paystack link and posts it in the visitor&apos;s chat.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {[
+                      { amount: "150", title: "Discovery session" },
+                      { amount: "500", title: "Project kickoff deposit" },
+                      { amount: "800", title: "Security review" },
+                    ].map((preset) => (
+                      <button
+                        key={preset.amount}
+                        type="button"
+                        onClick={() => {
+                          setPayAmount(preset.amount);
+                          setPayTitle(preset.title);
+                        }}
+                        className="rounded-full border border-[var(--border)] px-2.5 py-1 text-[10px] font-bold transition hover:border-[var(--color-accent)]"
+                      >
+                        GH₵ {preset.amount}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="text-xs font-bold text-[var(--text-muted)]">Amount (GHS)</span>
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={payAmount}
+                        onChange={(e) => setPayAmount(e.target.value)}
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block sm:col-span-2">
+                      <span className="text-xs font-bold text-[var(--text-muted)]">Title</span>
+                      <input
+                        type="text"
+                        value={payTitle}
+                        onChange={(e) => setPayTitle(e.target.value)}
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block sm:col-span-2">
+                      <span className="text-xs font-bold text-[var(--text-muted)]">Description (optional)</span>
+                      <input
+                        type="text"
+                        value={payDescription}
+                        onChange={(e) => setPayDescription(e.target.value)}
+                        placeholder="What this payment covers…"
+                        className={fieldClass}
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      className="text-sm"
+                      disabled={saving}
+                      onClick={() => void requestPayment()}
+                    >
+                      {saving ? "…" : "Send payment request"}
+                    </Button>
+                    {payLink ? (
+                      <button
+                        type="button"
+                        onClick={() => void copyPayLink()}
+                        className="rounded-full border border-[var(--border)] px-4 py-2 text-xs font-bold transition hover:border-[var(--color-accent)]"
+                      >
+                        Copy pay link
+                      </button>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-[10px] text-[var(--text-muted)]">
+                    Posts to chat when the visitor signed in; you can always copy the pay link.
+                  </p>
+                </div>
+
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block sm:col-span-2">
                     <span className="text-xs font-bold text-[var(--text-muted)]">Status</span>
@@ -520,15 +665,21 @@ export function AdminInquiriesSection() {
                   </label>
 
                   <label className="block sm:col-span-2">
-                    <span className="text-xs font-bold text-[var(--text-muted)]">Reply draft</span>
+                    <span className="text-xs font-bold text-[var(--text-muted)]">Reply to visitor</span>
                     <textarea
                       value={replyDraft}
                       onChange={(e) => setReplyDraft(e.target.value)}
                       rows={3}
-                      placeholder="Email reply…"
+                      placeholder="Sent to the user's chat as Obed…"
                       className={`${fieldClass} resize-y`}
                     />
                   </label>
+
+                  {selected.admin_reply ? (
+                    <p className="text-xs text-emerald-700 dark:text-emerald-400 sm:col-span-2">
+                      Sent to chat {selected.admin_reply_at ? formatWhen(selected.admin_reply_at) : ""}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -538,14 +689,22 @@ export function AdminInquiriesSection() {
               {success ? <AdminStatusMessage type="success" message={success} /> : null}
 
               <div className="mt-2 flex gap-2">
-                <Button className="flex-1" disabled={saving} onClick={() => void patchInquiry({})}>
-                  {saving ? "…" : "Save"}
+                <Button className="flex-1" disabled={saving || !replyDraft.trim()} onClick={sendReplyToChat}>
+                  {saving ? "…" : "Send to chat"}
                 </Button>
-                <Button variant="border" className="flex-1" disabled={saving} onClick={openReplyMail}>
-                  Reply
+                <Button variant="border" className="flex-1" disabled={saving} onClick={() => void patchInquiry({})}>
+                  Save
                 </Button>
               </div>
               <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={openReplyMail}
+                  className="flex-1 rounded-lg py-2 text-xs font-bold text-[var(--text-muted)] transition hover:bg-[var(--border)] disabled:opacity-50"
+                >
+                  Email visitor
+                </button>
                 <button
                   type="button"
                   disabled={saving}

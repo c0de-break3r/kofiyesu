@@ -3,6 +3,7 @@ import { AdminActionBar } from "./AdminActionBar";
 import { AdminStatusMessage } from "./AdminStatusMessage";
 import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
 import { AdminMediaUpload } from "./AdminMediaUpload";
+import { ProjectCardPreviewMedia } from "@/features/projects/ProjectCardPreviewMedia";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { buildProjectComponents, extractProjectFormFromComponents, mergeProjectComponents } from "@/lib/projectComponents";
@@ -93,8 +94,8 @@ export function AdminProjectsSection() {
       description: row.description ?? "",
       thumbnail_url: row.thumbnail_url ?? "",
       preview_video_url: row.preview_video_url ?? "",
-      showcase_video_url: extracted.showcase_video_url,
-      showcase_video_caption: extracted.showcase_video_caption,
+      showcase_video_url: row.showcase_video_url ?? extracted.showcase_video_url,
+      showcase_video_caption: row.showcase_video_caption ?? extracted.showcase_video_caption,
       body_text: extracted.body_text,
       live_url: row.live_url ?? "",
       source_url: row.source_url ?? "",
@@ -133,6 +134,8 @@ export function AdminProjectsSection() {
         description: form.description,
         thumbnail_url: form.thumbnail_url || null,
         preview_video_url: form.preview_video_url || null,
+        showcase_video_url: form.showcase_video_url || null,
+        showcase_video_caption: form.showcase_video_caption || null,
         live_url: form.live_url || null,
         source_url: form.source_url || null,
         video_border: form.video_border,
@@ -314,6 +317,24 @@ export function AdminProjectsSection() {
               onSuccess={flashInfo}
               previewType="video"
             />
+
+            {(form.thumbnail_url || form.preview_video_url) && (
+              <div className="rounded-xl border border-[var(--border)] p-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
+                  Grid preview (how it looks in Selected Work)
+                </p>
+                <div className="group mt-2 max-w-sm overflow-hidden rounded-xl border border-[var(--border)]">
+                  <ProjectCardPreviewMedia
+                    title={form.title || "Project"}
+                    thumbnail={form.thumbnail_url || undefined}
+                    previewVideo={form.preview_video_url || undefined}
+                  />
+                </div>
+                <p className="mt-2 text-[10px] text-[var(--text-muted)]">
+                  Hover (or tap on mobile) to play the short preview clip.
+                </p>
+              </div>
+            )}
 
             <AdminField label="Showcase video caption">
               <AdminInput

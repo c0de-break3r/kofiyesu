@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 interface Props {
   title: string;
@@ -6,18 +6,21 @@ interface Props {
   previewVideo?: string;
 }
 
-/** Grid card media — thumbnail with optional hover preview clip. */
+/** Grid card media — thumbnail with optional hover/tap preview clip. */
 export function ProjectCardPreviewMedia({ title, thumbnail, previewVideo }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [active, setActive] = useState(false);
 
   const play = () => {
     if (!previewVideo) return;
+    setActive(true);
     const video = videoRef.current;
     if (!video) return;
     void video.play().catch(() => {});
   };
 
   const pause = () => {
+    setActive(false);
     const video = videoRef.current;
     if (!video) return;
     video.pause();
@@ -31,13 +34,16 @@ export function ProjectCardPreviewMedia({ title, thumbnail, previewVideo }: Prop
       onMouseLeave={pause}
       onFocus={play}
       onBlur={pause}
+      onTouchStart={play}
+      onTouchEnd={pause}
+      onTouchCancel={pause}
     >
       {thumbnail ? (
         <img
           src={thumbnail}
           alt={title}
-          className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.03] ${
-            previewVideo ? "group-hover:opacity-0" : ""
+          className={`h-full w-full object-cover transition duration-500 ${
+            previewVideo && active ? "scale-[1.03] opacity-0" : "group-hover:scale-[1.03]"
           }`}
           loading="lazy"
         />
@@ -56,12 +62,16 @@ export function ProjectCardPreviewMedia({ title, thumbnail, previewVideo }: Prop
           preload="metadata"
           tabIndex={-1}
           aria-hidden
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100"
+          className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+            active ? "opacity-100" : "opacity-0"
+          }`}
         />
       ) : null}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,color-mix(in_srgb,var(--text)_8%,transparent))] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        className={`pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,color-mix(in_srgb,var(--text)_8%,transparent))] transition-opacity duration-300 ${
+          active ? "opacity-100" : "opacity-0"
+        }`}
       />
     </div>
   );

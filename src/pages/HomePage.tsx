@@ -5,6 +5,7 @@ import { Hero } from "@/features/home/Hero";
 import { About } from "@/features/home/About";
 import { Projects } from "@/features/home/Projects";
 import { ContactSection } from "@/features/home/ContactSection";
+import { ServicesPricing } from "@/features/home/ServicesPricing";
 import { Footer } from "@/components/layout/Footer";
 import { ThreeScene } from "@/components/three/ThreeScene";
 import { getLenis } from "@/hooks/useScroll";
@@ -134,6 +135,7 @@ export function HomePage() {
       <div id="projects" className="relative -mt-1 md:mt-0">
         <Projects />
       </div>
+      <ServicesPricing />
       <div id="contact" ref={contactRef} className="relative">
         <ContactSection />
       </div>

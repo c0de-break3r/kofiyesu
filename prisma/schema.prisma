@@ -27,6 +27,9 @@ model ContactInquiry {
   status      String    @default("new")
   adminNotes  String?   @map("admin_notes")
   replyDraft  String?   @map("reply_draft")
+  adminReply  String?   @map("admin_reply")
+  adminReplyAt DateTime? @map("admin_reply_at") @db.Timestamptz(6)
+  conversationId String? @map("conversation_id") @db.Uuid
   userEmail   String?   @map("user_email")
   userId      String?   @map("user_id")
   userName    String?   @map("user_name")
@@ -35,9 +38,37 @@ model ContactInquiry {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  payments    Payment[]
+
   @@index([createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
   @@map("contact_inquiries")
+}
+
+model Payment {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inquiryId          String?   @map("inquiry_id") @db.Uuid
+  inquiry            ContactInquiry? @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
+  userId             String?   @map("user_id")
+  userEmail          String?   @map("user_email")
+  userName           String?   @map("user_name")
+  title              String
+  description        String?
+  amountGhs          Decimal   @map("amount_ghs") @db.Decimal(12, 2)
+  currency           String    @default("GHS")
+  status             String    @default("pending")
+  packageId          String?   @map("package_id")
+  paystackReference  String?   @unique @map("paystack_reference")
+  paystackAccessCode String?   @map("paystack_access_code")
+  paidAt             DateTime? @map("paid_at") @db.Timestamptz(6)
+  metadata           Json?
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId, status])
+  @@index([inquiryId])
+  @@index([status, createdAt(sort: Desc)])
+  @@map("payments")
 }
 
 model SiteFeature {
@@ -65,6 +96,8 @@ model SiteProject {
   description  String?
   thumbnailUrl String?  @map("thumbnail_url")
   previewVideoUrl String? @map("preview_video_url")
+  showcaseVideoUrl String? @map("showcase_video_url")
+  showcaseVideoCaption String? @map("showcase_video_caption")
   liveUrl      String?  @map("live_url")
   sourceUrl    String?  @map("source_url")
   videoBorder  Boolean  @default(false) @map("video_border")

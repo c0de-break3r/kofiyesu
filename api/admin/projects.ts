@@ -47,6 +47,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           description: body.description ? String(body.description) : null,
           thumbnailUrl: body.thumbnail_url ? String(body.thumbnail_url) : null,
           previewVideoUrl: body.preview_video_url ? String(body.preview_video_url) : null,
+          showcaseVideoUrl: body.showcase_video_url ? String(body.showcase_video_url) : null,
+          showcaseVideoCaption: body.showcase_video_caption
+            ? String(body.showcase_video_caption)
+            : null,
           liveUrl: body.live_url ? String(body.live_url) : null,
           sourceUrl: body.source_url ? String(body.source_url) : null,
           videoBorder: Boolean(body.video_border),
@@ -76,6 +80,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (body.description !== undefined) data.description = body.description;
       if (body.thumbnail_url !== undefined) data.thumbnailUrl = body.thumbnail_url;
       if (body.preview_video_url !== undefined) data.previewVideoUrl = body.preview_video_url;
+      if (body.showcase_video_url !== undefined) data.showcaseVideoUrl = body.showcase_video_url;
+      if (body.showcase_video_caption !== undefined) {
+        data.showcaseVideoCaption = body.showcase_video_caption;
+      }
       if (body.live_url !== undefined) data.liveUrl = body.live_url;
       if (body.source_url !== undefined) data.sourceUrl = body.source_url;
       if (body.video_border !== undefined) data.videoBorder = Boolean(body.video_border);
