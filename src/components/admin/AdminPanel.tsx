@@ -83,14 +83,7 @@ export function AdminPanel() {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {tab === "inquiries" && (
-            <div
-              className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-5"
-              data-lenis-prevent
-            >
-              <AdminInquiriesSection />
-            </div>
-          )}
+          {tab === "inquiries" && <AdminInquiriesSection />}
           {tab === "projects" && <AdminProjectsSection />}
           {tab === "features" && <AdminFeaturesSection />}
           {tab === "about" && <AdminAboutSection />}
