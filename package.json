@@ -8,7 +8,7 @@
     "dev:api": "vercel dev --listen 3000",
     "dev:full": "vercel dev --listen 3000",
     "build": "prisma generate && tsc -b && vite build",
-    "db:sync": "prisma db push --skip-generate",
+    "db:sync": "prisma db push --skip-generate --accept-data-loss",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "postinstall": "prisma generate",
