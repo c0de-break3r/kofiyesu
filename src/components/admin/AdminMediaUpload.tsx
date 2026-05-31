@@ -36,6 +36,11 @@ export function AdminMediaUpload({
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const dismissUploadStatus = () => {
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+    setUploadStatus(null);
+  };
+
   const showUploadStatus = (message: string) => {
     setUploadStatus(message);
     onSuccess?.(message);
@@ -132,7 +137,9 @@ export function AdminMediaUpload({
 
       <input ref={inputRef} type="file" accept={accept} className="sr-only" onChange={(e) => void onPick(e)} />
 
-      {uploadStatus ? <AdminStatusMessage type="success" message={uploadStatus} /> : null}
+      {uploadStatus ? (
+        <AdminStatusMessage type="success" message={uploadStatus} onDismiss={dismissUploadStatus} />
+      ) : null}
 
       {value ? (
         <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)]">

@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { isChunkLoadError } from "@/lib/lazyWithRetry";
 
 interface Props {
   children: ReactNode;
@@ -17,6 +18,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    if (isChunkLoadError(error) && !sessionStorage.getItem("kofiyesu-chunk-reload")) {
+      sessionStorage.setItem("kofiyesu-chunk-reload", "1");
+      window.location.reload();
+      return;
+    }
+
     console.error("[App] Uncaught render error:", error, info.componentStack);
     Sentry.captureException(error, {
       contexts: { react: { componentStack: info.componentStack } },
@@ -25,11 +32,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
+      const staleDeploy = isChunkLoadError(this.state.error);
+
       return (
         <main className="mx-auto flex min-h-[100dvh] max-w-lg flex-col items-center justify-center gap-4 px-6 py-24 text-center">
-          <p className="text-lg font-bold">Something went wrong</p>
+          <p className="text-lg font-bold">
+            {staleDeploy ? "A new version is available" : "Something went wrong"}
+          </p>
           <p className="text-sm text-[var(--text-muted)]">
-            Try refreshing the page. If this keeps happening, check the browser console for details.
+            {staleDeploy
+              ? "The site was updated while you had it open. Reload to load the latest version."
+              : "Try refreshing the page. If this keeps happening, check the browser console for details."}
           </p>
           <button
             type="button"

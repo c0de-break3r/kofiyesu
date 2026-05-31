@@ -246,8 +246,12 @@ export function AdminProjectsSection() {
           </div>
         ) : null}
 
-        {!editingId && error ? <AdminStatusMessage type="error" message={error} /> : null}
-        {!editingId && success ? <AdminStatusMessage type="success" message={success} /> : null}
+        {!editingId && error ? (
+          <AdminStatusMessage type="error" message={error} onDismiss={() => setError(null)} />
+        ) : null}
+        {!editingId && success ? (
+          <AdminStatusMessage type="success" message={success} onDismiss={() => setSuccess(null)} />
+        ) : null}
 
         {editingId ? (
           <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
@@ -467,6 +471,9 @@ export function AdminProjectsSection() {
           saveLabel={editingId === "new" ? "Create" : "Save"}
           onDelete={editingId !== "new" ? deleteEditing : undefined}
           onCancel={cancelEdit}
+          onDismissError={() => setError(null)}
+          onDismissSuccess={() => setSuccess(null)}
+          onDismissInfo={() => setInfo(null)}
         />
       ) : null}
     </section>

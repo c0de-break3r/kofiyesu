@@ -685,8 +685,12 @@ export function AdminInquiriesSection() {
             </div>
 
             <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4">
-              {error ? <AdminStatusMessage type="error" message={error} /> : null}
-              {success ? <AdminStatusMessage type="success" message={success} /> : null}
+              {error ? (
+                <AdminStatusMessage type="error" message={error} onDismiss={() => setError(null)} />
+              ) : null}
+              {success ? (
+                <AdminStatusMessage type="success" message={success} onDismiss={() => setSuccess(null)} />
+              ) : null}
 
               <div className="mt-2 flex gap-2">
                 <Button className="flex-1" disabled={saving || !replyDraft.trim()} onClick={sendReplyToChat}>

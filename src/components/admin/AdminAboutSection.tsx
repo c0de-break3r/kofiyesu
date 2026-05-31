@@ -180,6 +180,8 @@ export function AdminAboutSection() {
         saving={saving}
         onSave={() => void save()}
         saveLabel="Save"
+        onDismissError={() => setError(null)}
+        onDismissSuccess={() => setSaved(false)}
         extra={
           <button
             type="button"

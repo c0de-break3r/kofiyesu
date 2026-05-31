@@ -14,6 +14,9 @@ type AdminActionBarProps = {
   deleteDisabled?: boolean;
   onCancel?: () => void;
   cancelLabel?: string;
+  onDismissError?: () => void;
+  onDismissSuccess?: () => void;
+  onDismissInfo?: () => void;
   extra?: ReactNode;
 };
 
@@ -29,14 +32,21 @@ export function AdminActionBar({
   deleteDisabled = false,
   onCancel,
   cancelLabel = "Cancel",
+  onDismissError,
+  onDismissSuccess,
+  onDismissInfo,
   extra,
 }: AdminActionBarProps) {
   return (
     <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 md:px-5">
       <div className="space-y-2">
-        {error ? <AdminStatusMessage type="error" message={error} /> : null}
-        {success ? <AdminStatusMessage type="success" message={success} /> : null}
-        {info ? <AdminStatusMessage type="info" message={info} /> : null}
+        {error ? (
+          <AdminStatusMessage type="error" message={error} onDismiss={onDismissError} />
+        ) : null}
+        {success ? (
+          <AdminStatusMessage type="success" message={success} onDismiss={onDismissSuccess} />
+        ) : null}
+        {info ? <AdminStatusMessage type="info" message={info} onDismiss={onDismissInfo} /> : null}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button className="min-w-[5.5rem]" onClick={onSave} disabled={saving}>

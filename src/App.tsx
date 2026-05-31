@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
+import { lazyPage } from "@/lib/lazyWithRetry";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "@/hooks/useTheme";
 import { getLenis, useScroll } from "@/hooks/useScroll";
@@ -18,9 +19,9 @@ import { SiteContentProvider } from "@/hooks/useSiteContent";
 import { attachAudioUnlockOnGesture } from "@/features/sounds/unlockAudio";
 import { HomePage } from "@/pages/HomePage";
 
-const ChatPage = lazy(() => import("@/pages/ChatPage").then((m) => ({ default: m.ChatPage })));
-const ProjectPage = lazy(() => import("@/pages/ProjectPage").then((m) => ({ default: m.ProjectPage })));
-const PayPage = lazy(() => import("@/pages/PayPage").then((m) => ({ default: m.PayPage })));
+const ChatPage = lazy(() => lazyPage(() => import("@/pages/ChatPage"), "ChatPage"));
+const ProjectPage = lazy(() => lazyPage(() => import("@/pages/ProjectPage"), "ProjectPage"));
+const PayPage = lazy(() => lazyPage(() => import("@/pages/PayPage"), "PayPage"));
 
 function AppRoutes() {
   const location = useLocation();

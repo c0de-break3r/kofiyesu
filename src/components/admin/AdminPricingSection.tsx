@@ -244,8 +244,12 @@ export function AdminPricingSection() {
           ) : null}
         </div>
 
-        {error ? <AdminStatusMessage type="error" message={error} /> : null}
-        {success ? <AdminStatusMessage type="success" message={success} /> : null}
+        {error ? (
+          <AdminStatusMessage type="error" message={error} onDismiss={() => setError(null)} />
+        ) : null}
+        {success ? (
+          <AdminStatusMessage type="success" message={success} onDismiss={() => setSuccess(null)} />
+        ) : null}
 
         <ul className="mb-6 space-y-2">
           {packages.map((pkg) => (

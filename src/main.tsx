@@ -13,13 +13,21 @@ import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
 import { isSentryConfigured } from "./instrument";
 import { prefetchSiteContent } from "./lib/prefetchSiteContent";
 import { scheduleResourceLoading } from "./utils/resources";
+import { clearChunkReloadGuard } from "./lib/lazyWithRetry";
 import "./index.css";
 
 if (import.meta.env.PROD) {
   void import("virtual:pwa-register").then(({ registerSW }) => {
-    registerSW({ immediate: true });
+    registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        window.location.reload();
+      },
+    });
   });
 }
+
+clearChunkReloadGuard();
 
 gsap.registerPlugin(ScrollTrigger);
 
