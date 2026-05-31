@@ -4,6 +4,7 @@ import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
 import { AdminServicesEditor } from "./AdminServicesEditor";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { readResponseJson } from "@/lib/readResponseJson";
 import { defaultAbout } from "@/content/about";
 import type { SiteAboutRow, SiteService } from "@/types/site";
 
@@ -57,8 +58,15 @@ export function AdminAboutSection() {
 
   const load = async () => {
     const res = await adminFetch("/api/admin/about");
-    if (!res.ok) return;
-    const data = (await res.json()) as { about: SiteAboutRow | null };
+    if (!res.ok) {
+      setError(`Could not load about data (${res.status}).`);
+      return;
+    }
+    const data = await readResponseJson<{ about: SiteAboutRow | null }>(res);
+    if (!data) {
+      setError("Could not read about data from the server.");
+      return;
+    }
     applyRow(data.about);
   };
 
@@ -95,8 +103,8 @@ export function AdminAboutSection() {
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Save failed");
+        const data = await readResponseJson<{ error?: string }>(res);
+        throw new Error(data?.error ?? "Save failed");
       }
 
       await load();

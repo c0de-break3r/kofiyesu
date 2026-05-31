@@ -4,6 +4,7 @@ import { AdminStatusMessage } from "./AdminStatusMessage";
 import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { readResponseJson } from "@/lib/readResponseJson";
 import { servicePackages } from "@/content/payments";
 import type { SitePricingPackageRow } from "@/types/site";
 
@@ -36,10 +37,15 @@ export function AdminPricingSection() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     const res = await adminFetch("/api/admin/pricing");
     if (res.ok) {
-      const data = (await res.json()) as { packages: SitePricingPackageRow[] };
-      setPackages(data.packages ?? []);
+      const data = await readResponseJson<{ packages: SitePricingPackageRow[] }>(res);
+      setPackages(data?.packages ?? []);
+      if (!data) setError("Could not read pricing data from the server.");
+    } else {
+      const data = await readResponseJson<{ error?: string }>(res);
+      setError(data?.error ?? `Could not load packages (${res.status}).`);
     }
     setLoading(false);
   };
@@ -135,15 +141,15 @@ export function AdminPricingSection() {
       );
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Save failed");
+        const data = await readResponseJson<{ error?: string }>(res);
+        throw new Error(data?.error ?? "Save failed");
       }
 
-      const data = (await res.json()) as { package?: SitePricingPackageRow };
+      const data = await readResponseJson<{ package?: SitePricingPackageRow }>(res);
       await load();
       await reload();
 
-      if (isNew && data.package?.id) {
+      if (isNew && data?.package?.id) {
         setEditingId(data.package.id);
       }
 
@@ -195,8 +201,8 @@ export function AdminPricingSection() {
           }),
         });
         if (!res.ok) {
-          const data = (await res.json()) as { error?: string };
-          throw new Error(data.error ?? "Could not seed package");
+          const data = await readResponseJson<{ error?: string }>(res);
+          throw new Error(data?.error ?? "Could not seed package");
         }
       }
       await load();

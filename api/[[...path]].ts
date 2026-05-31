@@ -1,21 +1,21 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import inquiriesHandler from "../../server/routes/inquiries.js";
-import paymentsHandler from "../../server/routes/payments.js";
-import chatHandler from "../../server/routes/chat/main.js";
-import conversationHandler from "../../server/routes/chat/conversation.js";
-import siteAboutHandler from "../../server/routes/site/about.js";
-import siteFeaturesHandler from "../../server/routes/site/features.js";
-import siteProjectsHandler from "../../server/routes/site/projects.js";
-import sitePricingHandler from "../../server/routes/site/pricing.js";
-import adminAboutHandler from "../../server/routes/admin/about.js";
-import adminFeaturesHandler from "../../server/routes/admin/features.js";
-import adminProjectsHandler from "../../server/routes/admin/projects.js";
-import adminInquiriesHandler from "../../server/routes/admin/inquiries.js";
-import adminPaymentsHandler from "../../server/routes/admin/payments.js";
-import adminPricingHandler from "../../server/routes/admin/pricing.js";
-import paystackInitializeHandler from "../../server/routes/paystack/initialize.js";
-import paystackVerifyHandler from "../../server/routes/paystack/verify.js";
-import paystackWebhookHandler from "../../server/routes/paystack/webhook.js";
+import inquiriesHandler from "../server/routes/inquiries.js";
+import paymentsHandler from "../server/routes/payments.js";
+import chatHandler from "../server/routes/chat/main.js";
+import conversationHandler from "../server/routes/chat/conversation.js";
+import siteAboutHandler from "../server/routes/site/about.js";
+import siteFeaturesHandler from "../server/routes/site/features.js";
+import siteProjectsHandler from "../server/routes/site/projects.js";
+import sitePricingHandler from "../server/routes/site/pricing.js";
+import adminAboutHandler from "../server/routes/admin/about.js";
+import adminFeaturesHandler from "../server/routes/admin/features.js";
+import adminProjectsHandler from "../server/routes/admin/projects.js";
+import adminInquiriesHandler from "../server/routes/admin/inquiries.js";
+import adminPaymentsHandler from "../server/routes/admin/payments.js";
+import adminPricingHandler from "../server/routes/admin/pricing.js";
+import paystackInitializeHandler from "../server/routes/paystack/initialize.js";
+import paystackVerifyHandler from "../server/routes/paystack/verify.js";
+import paystackWebhookHandler from "../server/routes/paystack/webhook.js";
 
 export const config = {
   api: { bodyParser: false },
@@ -45,8 +45,13 @@ const paystackRoutes = {
 
 function pathSegments(req: VercelRequest): string[] {
   const raw = req.query.path;
-  if (!raw) return [];
-  return Array.isArray(raw) ? raw : [raw];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw === "string" && raw.length > 0) {
+    return raw.split("/").filter(Boolean);
+  }
+
+  const pathname = (req.url ?? "").split("?")[0] ?? "";
+  return pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean);
 }
 
 async function readRawBody(req: VercelRequest): Promise<string> {
