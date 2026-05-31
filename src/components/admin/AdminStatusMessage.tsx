@@ -22,7 +22,7 @@ export function AdminStatusMessage({ type, message, onDismiss }: AdminStatusMess
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss message"
-          className="shrink-0 rounded p-0.5 opacity-70 transition hover:opacity-100"
+          className="shrink-0 rounded-md px-1.5 py-0.5 text-base leading-none opacity-80 transition hover:bg-black/10 hover:opacity-100"
         >
           ×
         </button>

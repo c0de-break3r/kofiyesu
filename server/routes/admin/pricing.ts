@@ -10,11 +10,6 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-function parseHighlights(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map(String).map((s) => s.trim()).filter(Boolean);
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const adminId = await requireAdminUserId(req);
@@ -41,26 +36,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const slug = slugify(String(body.slug ?? title));
       if (!slug) return res.status(400).json({ error: "slug required" });
 
-      const amountGhs = Number(body.amount_ghs);
-      if (!amountGhs || amountGhs <= 0) {
-        return res.status(400).json({ error: "amount_ghs required" });
-      }
+      const amount = Number(body.amount_ghs);
+      if (!amount || amount <= 0) return res.status(400).json({ error: "amount_ghs required" });
 
       const description = String(body.description ?? "").trim();
       if (!description) return res.status(400).json({ error: "description required" });
-
-      if (body.featured === true) {
-        await prisma.sitePricingPackage.updateMany({ data: { featured: false } });
-      }
 
       const row = await prisma.sitePricingPackage.create({
         data: {
           slug,
           title,
-          amountGhs,
+          amountGhs: amount,
           description,
-          highlights: parseHighlights(body.highlights),
-          featured: body.featured === true,
+          highlights: Array.isArray(body.highlights) ? body.highlights.map(String) : [],
+          featured: Boolean(body.featured),
           sortOrder: Number(body.sort_order) || 0,
           published: body.published !== false,
         },
@@ -80,16 +69,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (body.slug !== undefined) data.slug = slugify(String(body.slug));
       if (body.amount_ghs !== undefined) data.amountGhs = Number(body.amount_ghs);
       if (body.description !== undefined) data.description = String(body.description).trim();
-      if (body.highlights !== undefined) data.highlights = parseHighlights(body.highlights);
-      if (body.featured !== undefined) {
-        data.featured = Boolean(body.featured);
-        if (data.featured) {
-          await prisma.sitePricingPackage.updateMany({
-            where: { NOT: { id } },
-            data: { featured: false },
-          });
-        }
+      if (body.highlights !== undefined) {
+        data.highlights = Array.isArray(body.highlights) ? body.highlights.map(String) : [];
       }
+      if (body.featured !== undefined) data.featured = Boolean(body.featured);
       if (body.sort_order !== undefined) data.sortOrder = Number(body.sort_order);
       if (body.published !== undefined) data.published = Boolean(body.published);
 

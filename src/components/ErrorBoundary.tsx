@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { isChunkLoadError } from "@/lib/lazyWithRetry";
+import { isChunkLoadError, recoverFromStaleDeploy } from "@/lib/lazyWithRetry";
 
 interface Props {
   children: ReactNode;
@@ -18,9 +18,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    if (isChunkLoadError(error) && !sessionStorage.getItem("kofiyesu-chunk-reload")) {
-      sessionStorage.setItem("kofiyesu-chunk-reload", "1");
-      window.location.reload();
+    if (isChunkLoadError(error)) {
+      void recoverFromStaleDeploy();
       return;
     }
 

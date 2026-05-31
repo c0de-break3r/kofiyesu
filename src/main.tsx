@@ -11,10 +11,13 @@ import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { clerkPublishableKey, isClerkConfigured } from "./lib/clerk";
 import { isSentryConfigured } from "./instrument";
+import { isChunkLoadError, recoverFromStaleDeploy } from "./lib/lazyWithRetry";
 import { prefetchSiteContent } from "./lib/prefetchSiteContent";
 import { scheduleResourceLoading } from "./utils/resources";
-import { clearChunkReloadGuard } from "./lib/lazyWithRetry";
+import { markDeployHealthy, installChunkLoadRecovery } from "./lib/lazyWithRetry";
 import "./index.css";
+
+installChunkLoadRecovery();
 
 if (import.meta.env.PROD) {
   void import("virtual:pwa-register").then(({ registerSW }) => {
@@ -25,20 +28,42 @@ if (import.meta.env.PROD) {
       },
     });
   });
+
+  if ("serviceWorker" in navigator) {
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+  }
 }
 
-clearChunkReloadGuard();
+window.setTimeout(() => markDeployHealthy(), 5000);
 
 gsap.registerPlugin(ScrollTrigger);
 
 prefetchSiteContent();
 
 const bootstrap = () => {
+  const reportToSentry = reactErrorHandler();
   const sentryRootOptions = isSentryConfigured()
     ? {
-        onUncaughtError: reactErrorHandler(),
-        onCaughtError: reactErrorHandler(),
-        onRecoverableError: reactErrorHandler(),
+        onUncaughtError: (error: unknown, errorInfo: { componentStack?: string | null }) => {
+          if (isChunkLoadError(error)) {
+            void recoverFromStaleDeploy();
+            return;
+          }
+          reportToSentry(error, errorInfo);
+        },
+        onCaughtError: (error: unknown, errorInfo: { componentStack?: string | null }) => {
+          if (isChunkLoadError(error)) {
+            void recoverFromStaleDeploy();
+            return;
+          }
+          reportToSentry(error, errorInfo);
+        },
+        onRecoverableError: reportToSentry,
       }
     : undefined;
 

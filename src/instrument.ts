@@ -6,6 +6,7 @@ import {
   useLocation,
   useNavigationType,
 } from "react-router-dom";
+import { isChunkLoadError } from "@/lib/lazyWithRetry";
 
 const dsn = import.meta.env.VITE_SENTRY_DSN?.trim();
 
@@ -38,6 +39,12 @@ if (dsn) {
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
     enableLogs: true,
+    beforeSend(event, hint) {
+      if (isChunkLoadError(hint.originalException)) return null;
+      const message = event.exception?.values?.[0]?.value ?? "";
+      if (isChunkLoadError(message)) return null;
+      return event;
+    },
   });
 }
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { AdminActionBar } from "./AdminActionBar";
-import { AdminStatusMessage } from "./AdminStatusMessage";
 import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
 import { AdminMediaUpload } from "./AdminMediaUpload";
 import { ProjectCardPreviewMedia } from "@/features/projects/ProjectCardPreviewMedia";
@@ -83,10 +82,9 @@ export function AdminProjectsSection() {
     clearStatus();
   };
 
-  const startEdit = (row: SiteProjectRow) => {
+  const formFromRow = (row: SiteProjectRow) => {
     const extracted = extractProjectFormFromComponents(row.components ?? []);
-    setEditingId(row.id);
-    setForm({
+    return {
       slug: row.slug,
       title: row.title,
       category_id: row.category_id ?? "",
@@ -102,7 +100,12 @@ export function AdminProjectsSection() {
       sort_order: row.sort_order ?? 0,
       video_border: row.video_border,
       published: row.published,
-    });
+    };
+  };
+
+  const startEdit = (row: SiteProjectRow) => {
+    setEditingId(row.id);
+    setForm(formFromRow(row));
     clearStatus();
   };
 
@@ -173,8 +176,9 @@ export function AdminProjectsSection() {
       await load();
       await reload();
 
-      if (isNew && data.project?.id) {
-        setEditingId(data.project.id);
+      if (data.project) {
+        if (isNew) setEditingId(data.project.id);
+        setForm(formFromRow(data.project));
       }
 
       setSuccess(isNew ? "Project created successfully." : "Project saved successfully.");
@@ -234,28 +238,21 @@ export function AdminProjectsSection() {
           </p>
         </div>
 
-        {!editingId ? (
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={startNew}
-              className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-bold text-white shadow-sm"
-            >
-              + New project
-            </button>
-          </div>
-        ) : null}
-
-        {!editingId && error ? (
-          <AdminStatusMessage type="error" message={error} onDismiss={() => setError(null)} />
-        ) : null}
-        {!editingId && success ? (
-          <AdminStatusMessage type="success" message={success} onDismiss={() => setSuccess(null)} />
-        ) : null}
-
         {editingId ? (
           <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
-            <p className="text-sm font-bold">{editingId === "new" ? "Create project" : "Edit project"}</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-bold">{editingId === "new" ? "Create project" : "Edit project"}</p>
+              {editingId !== "new" ? (
+                <a
+                  href={`/project/${form.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-[var(--color-accent)] hover:underline"
+                >
+                  View project page ↗
+                </a>
+              ) : null}
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <AdminField label="Slug (URL)">
@@ -322,21 +319,49 @@ export function AdminProjectsSection() {
               previewType="video"
             />
 
-            {(form.thumbnail_url || form.preview_video_url) && (
-              <div className="rounded-xl border border-[var(--border)] p-3">
+            {(form.thumbnail_url || form.preview_video_url || form.showcase_video_url) && (
+              <div className="space-y-4 rounded-xl border border-[var(--border)] p-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                  Grid preview (how it looks in Selected Work)
+                  Media preview
                 </p>
-                <div className="group mt-2 max-w-sm overflow-hidden rounded-xl border border-[var(--border)]">
-                  <ProjectCardPreviewMedia
-                    title={form.title || "Project"}
-                    thumbnail={form.thumbnail_url || undefined}
-                    previewVideo={form.preview_video_url || undefined}
-                  />
-                </div>
-                <p className="mt-2 text-[10px] text-[var(--text-muted)]">
-                  Hover (or tap on mobile) to play the short preview clip.
-                </p>
+
+                {(form.thumbnail_url || form.preview_video_url) && (
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--text-muted)]">
+                      Grid card (Selected Work)
+                    </p>
+                    <div className="group mt-2 max-w-sm overflow-hidden rounded-xl border border-[var(--border)]">
+                      <ProjectCardPreviewMedia
+                        title={form.title || "Project"}
+                        thumbnail={form.thumbnail_url || undefined}
+                        previewVideo={form.preview_video_url || undefined}
+                      />
+                    </div>
+                    <p className="mt-2 text-[10px] text-[var(--text-muted)]">
+                      {form.preview_video_url
+                        ? "Hover (or tap on mobile) to play the short preview clip."
+                        : "Add a preview video above for hover playback on the home grid."}
+                    </p>
+                  </div>
+                )}
+
+                {form.showcase_video_url ? (
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--text-muted)]">
+                      Showcase video (project page)
+                    </p>
+                    <video
+                      src={form.showcase_video_url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="mt-2 max-h-52 w-full rounded-xl border border-[var(--border)] bg-black/5 object-contain"
+                    />
+                    {form.showcase_video_caption ? (
+                      <p className="mt-2 text-xs text-[var(--text-muted)]">{form.showcase_video_caption}</p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             )}
 
@@ -461,21 +486,19 @@ export function AdminProjectsSection() {
         </div>
       </div>
 
-      {editingId ? (
-        <AdminActionBar
-          error={error}
-          success={success}
-          info={info}
-          saving={saving}
-          onSave={() => void save()}
-          saveLabel={editingId === "new" ? "Create" : "Save"}
-          onDelete={editingId !== "new" ? deleteEditing : undefined}
-          onCancel={cancelEdit}
-          onDismissError={() => setError(null)}
-          onDismissSuccess={() => setSuccess(null)}
-          onDismissInfo={() => setInfo(null)}
-        />
-      ) : null}
+      <AdminActionBar
+        error={error}
+        success={success}
+        info={info}
+        saving={saving}
+        onSave={() => void (editingId ? save() : startNew())}
+        saveLabel={editingId ? (editingId === "new" ? "Create" : "Save project") : "New project"}
+        onDelete={editingId && editingId !== "new" ? deleteEditing : undefined}
+        onCancel={editingId ? cancelEdit : undefined}
+        onDismissError={() => setError(null)}
+        onDismissSuccess={() => setSuccess(null)}
+        onDismissInfo={() => setInfo(null)}
+      />
     </section>
   );
 }

@@ -38,7 +38,7 @@ export function AdminActionBar({
   extra,
 }: AdminActionBarProps) {
   return (
-    <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 md:px-5">
+    <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-5">
       <div className="space-y-2">
         {error ? (
           <AdminStatusMessage type="error" message={error} onDismiss={onDismissError} />

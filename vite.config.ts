@@ -50,10 +50,30 @@ export default defineConfig(({ mode }) => {
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,webp,woff2,svg,webmanifest}"],
+        cleanupOutdatedCaches: true,
+        globPatterns: ["**/*.{ico,png,webp,svg,woff2,webmanifest}"],
+        globIgnores: ["**/assets/**"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "pages",
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 },
+            },
+          },
+          {
+            urlPattern: /\/assets\/.*\.(?:js|css)$/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "bundled-assets",
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
