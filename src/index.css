@@ -229,3 +229,14 @@ html.route-doc-scroll body {
   overflow: hidden;
   height: 100%;
 }
+
+html.route-doc-scroll #main-content[data-chat-page] {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+html.route-doc-scroll [data-chat-scroll] {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}

@@ -152,7 +152,8 @@ export function ContactChatPanel() {
 
       {isSignedIn && phase === "intake" && (
         <div
-          className="mx-auto flex w-full max-w-xl flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 md:py-8"
+          className="mx-auto flex w-full max-w-xl min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 md:py-6"
+          data-chat-scroll
           data-lenis-prevent
         >
           <div className="mb-6 shrink-0">
@@ -172,10 +173,11 @@ export function ContactChatPanel() {
       )}
 
       {isSignedIn && phase === "chat" && (
-        <div className="flex min-h-0 flex-1 flex-col">
+        <>
           <div
             ref={messagesEl}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-28"
+            data-chat-scroll
             data-lenis-prevent
           >
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6">
@@ -199,11 +201,11 @@ export function ContactChatPanel() {
             </div>
           </div>
 
-          {(routing?.escalateToAdmin || mailtoUrl) && (
-            <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg)]">
-              <div className="mx-auto max-w-3xl space-y-2 px-4 py-3 sm:px-6">
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] flex flex-col gap-2 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:px-6 md:pb-4">
+            {(routing?.escalateToAdmin || mailtoUrl) && (
+              <div className="pointer-events-auto mx-auto w-full max-w-3xl space-y-2">
                 {routing?.escalateToAdmin && (
-                  <p className="rounded-lg bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
+                  <p className="glass-surface rounded-xl px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
                     {t("chat-escalated")}
                   </p>
                 )}
@@ -213,37 +215,37 @@ export function ContactChatPanel() {
                   </a>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg)] pb-[env(safe-area-inset-bottom,0px)]">
-            <div className="mx-auto flex max-w-3xl items-end gap-2 px-4 py-3 sm:px-6 sm:py-4">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSend();
-                  }
-                }}
-                rows={1}
-                placeholder={t("chat-placeholder")}
-                disabled={isLoading}
-                className="max-h-40 min-h-[48px] flex-1 resize-none rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)]"
-              />
-              <button
-                type="button"
-                disabled={!input.trim() || isLoading}
-                onClick={() => void handleSend()}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-lg text-white transition disabled:opacity-40"
-                aria-label={t("chat-send")}
-              >
-                ↑
-              </button>
+            <div className="pointer-events-auto mx-auto w-full max-w-3xl">
+              <div className="glass-surface flex items-end gap-2 rounded-2xl border border-white/60 p-2 shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void handleSend();
+                    }
+                  }}
+                  rows={1}
+                  placeholder={t("chat-placeholder")}
+                  disabled={isLoading}
+                  className="max-h-40 min-h-[44px] flex-1 resize-none rounded-xl border-0 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-[var(--text-muted)] focus:ring-0"
+                />
+                <button
+                  type="button"
+                  disabled={!input.trim() || isLoading}
+                  onClick={() => void handleSend()}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-lg text-white transition disabled:opacity-40"
+                  aria-label={t("chat-send")}
+                >
+                  ↑
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

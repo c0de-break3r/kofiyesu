@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/clerk";
 import { isClerkAdminUser } from "@/lib/clerkAdmin";
@@ -28,16 +29,21 @@ export function AdminSignInOpenPanel() {
 export function AdminFab() {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { toggle, open } = useAdminPanel();
+  const onChat = useLocation().pathname.startsWith("/chat");
 
   if (!isClerkConfigured || !isLoaded || !isSignedIn || !isClerkAdminUser(userId) || open) {
     return null;
   }
 
+  const bottomClass = onChat
+    ? "bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] md:bottom-[5.5rem]"
+    : "bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6";
+
   return (
     <button
       type="button"
       onClick={toggle}
-      className="glass-surface fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full text-lg font-black shadow-lg transition hover:bg-white/50 hover:border-white/70 hover:text-[var(--color-accent)] md:bottom-6"
+      className={`glass-surface fixed right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full text-lg font-black shadow-lg transition hover:bg-white/50 hover:border-white/70 hover:text-[var(--color-accent)] ${bottomClass}`}
       aria-label={open ? "Close admin panel" : "Open admin CMS"}
       title="Admin CMS"
     >

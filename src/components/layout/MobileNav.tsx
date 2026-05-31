@@ -277,7 +277,7 @@ export function MobileNav() {
     return () => observers.forEach((o) => o?.disconnect());
   }, [isHome, location.pathname]);
 
-  if (isProjectRoute || adminOpen) return null;
+  if (isProjectRoute || isChatRoute || adminOpen) return null;
 
   return (
     <div

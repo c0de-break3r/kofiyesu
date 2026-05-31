@@ -66,6 +66,10 @@ const compile = async () => {
 
 const setIsActive = (value: boolean) => {
   isActive = value;
+  if (!value && canvas) {
+    canvas.style.visibility = "hidden";
+    visible = false;
+  }
 };
 
 const compileScene = async (camera: Camera, sceneToCompile: Scene) => {

@@ -11,7 +11,8 @@ export function ChatPage() {
   return (
     <main
       id="main-content"
-      className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--bg)] md:pt-[var(--height-header,5rem)]"
+      data-chat-page
+      className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-[var(--bg)] md:pt-[var(--height-header,5rem)]"
     >
       <div className="shrink-0 px-4 pt-3 pb-2 sm:px-6">
         <BackIconLink to="/" ariaLabel={t("back-to-home")} />
@@ -26,7 +27,9 @@ export function ChatPage() {
           </a>
         </div>
       ) : (
-        <ContactChatPanel />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <ContactChatPanel />
+        </div>
       )}
     </main>
   );

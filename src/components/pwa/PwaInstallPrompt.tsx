@@ -1,10 +1,12 @@
+import { useLocation } from "react-router-dom";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { SITE_SHORT_NAME } from "@/lib/siteMeta";
 
 export function PwaInstallPrompt() {
   const { state, installing, dismiss, install } = usePwaInstall();
+  const onChat = useLocation().pathname.startsWith("/chat");
 
-  if (state === "hidden") return null;
+  if (state === "hidden" || onChat) return null;
 
   const isIos = state === "ios";
 
