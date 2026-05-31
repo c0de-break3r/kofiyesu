@@ -1,13 +1,15 @@
 import { Link } from "react-router-dom";
 import { SignInButton, useAuth } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/Button";
-import { formatGhs, currencyName, currencyCode, servicePackages } from "@/content/payments";
+import { formatGhs, currencyName, currencyCode } from "@/content/payments";
 import { usePaystackPayment } from "@/hooks/usePaystackPayment";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import { t } from "@/i18n/en";
 import { useState } from "react";
 
 export function ServicesPricing() {
   const { isSignedIn, getToken } = useAuth();
+  const { pricingPackages } = useSiteContent();
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -16,8 +18,8 @@ export function ServicesPricing() {
     onError: (msg) => setError(msg),
   });
 
-  const startPackage = async (packageId: string) => {
-    setActiveId(packageId);
+  const startPackage = async (packageSlug: string) => {
+    setActiveId(packageSlug);
     setError(null);
     try {
       const token = await getToken();
@@ -29,7 +31,7 @@ export function ServicesPricing() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ package_id: packageId }),
+        body: JSON.stringify({ package_id: packageSlug }),
       });
 
       if (!res.ok) {
@@ -37,7 +39,16 @@ export function ServicesPricing() {
         throw new Error(data.error ?? "Could not create payment");
       }
 
-      const data = (await res.json()) as { payment: { id: string; title: string; amount_ghs: number; status: string; description: string | null; currency: string } };
+      const data = (await res.json()) as {
+        payment: {
+          id: string;
+          title: string;
+          amount_ghs: number;
+          status: string;
+          description: string | null;
+          currency: string;
+        };
+      };
       await pay(data.payment);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
@@ -61,23 +72,23 @@ export function ServicesPricing() {
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {servicePackages.map((pkg) => (
+          {pricingPackages.map((pkg) => (
             <article
               key={pkg.id}
               className={`flex flex-col rounded-2xl border p-5 transition ${
-                "featured" in pkg && pkg.featured
+                pkg.featured
                   ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_6%,transparent)] shadow-[0_12px_40px_color-mix(in_srgb,var(--color-accent)_12%,transparent)]"
                   : "border-[var(--border)] bg-[var(--bg-elevated)]"
               }`}
             >
-              {"featured" in pkg && pkg.featured ? (
+              {pkg.featured ? (
                 <span className="mb-2 w-fit rounded-full bg-[var(--color-accent)] px-2.5 py-0.5 text-[10px] font-bold uppercase text-white">
                   Popular
                 </span>
               ) : null}
               <h3 className="text-lg font-black">{pkg.title}</h3>
               <p className="mt-2 text-2xl font-black tabular-nums text-[var(--color-accent)]">
-                {formatGhs(pkg.amountGhs)}
+                {formatGhs(pkg.amount_ghs)}
               </p>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--text-muted)]">{pkg.description}</p>
               <ul className="mt-4 space-y-1.5 text-xs text-[var(--text-muted)]">
@@ -91,15 +102,15 @@ export function ServicesPricing() {
               {isSignedIn ? (
                 <Button
                   className="mt-5 w-full"
-                  variant={"featured" in pkg && pkg.featured ? "accent" : "border"}
-                  disabled={paying && activeId === pkg.id}
-                  onClick={() => void startPackage(pkg.id)}
+                  variant={pkg.featured ? "accent" : "border"}
+                  disabled={paying && activeId === pkg.slug}
+                  onClick={() => void startPackage(pkg.slug)}
                 >
-                  {paying && activeId === pkg.id ? t("pay-processing") : t("pay-now")}
+                  {paying && activeId === pkg.slug ? t("pay-processing") : t("pay-now")}
                 </Button>
               ) : (
                 <SignInButton mode="modal">
-                  <Button className="mt-5 w-full" variant={"featured" in pkg && pkg.featured ? "accent" : "border"}>
+                  <Button className="mt-5 w-full" variant={pkg.featured ? "accent" : "border"}>
                     {t("pricing-sign-in-pay")}
                   </Button>
                 </SignInButton>

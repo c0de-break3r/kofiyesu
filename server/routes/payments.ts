@@ -2,24 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { requireSignedInUserId } from "../../api/lib/clerkAuth.js";
 import { isDatabaseConfigured, prisma } from "../../api/lib/prisma.js";
 import { paymentToApi } from "../../api/lib/paymentSerializer.js";
-
-const PACKAGE_AMOUNTS: Record<string, { title: string; amountGhs: number; description: string }> = {
-  discovery: {
-    title: "Discovery session",
-    amountGhs: 150,
-    description: "30-min scoping call — goals, timeline, and fit.",
-  },
-  deposit: {
-    title: "Project kickoff deposit",
-    amountGhs: 500,
-    description: "Reserve a build slot and start discovery documentation.",
-  },
-  audit: {
-    title: "Security review",
-    amountGhs: 800,
-    description: "Focused app or API security assessment with written findings.",
-  },
-};
+import { fallbackPackageAmounts } from "../../api/lib/defaultPricingPackages.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!isDatabaseConfigured()) {
@@ -74,12 +57,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let amountGhs = body.amount_ghs;
     let packageId = body.package_id?.trim() || null;
 
-    if (body.package_id && PACKAGE_AMOUNTS[body.package_id]) {
-      const pkg = PACKAGE_AMOUNTS[body.package_id];
-      title = pkg.title;
-      description = pkg.description;
-      amountGhs = pkg.amountGhs;
-      packageId = body.package_id;
+    if (body.package_id) {
+      const dbPkg = await prisma.sitePricingPackage.findFirst({
+        where: { slug: body.package_id, published: true },
+      });
+      if (dbPkg) {
+        title = dbPkg.title;
+        description = dbPkg.description;
+        amountGhs = Number(dbPkg.amountGhs);
+        packageId = dbPkg.slug;
+      } else if (fallbackPackageAmounts[body.package_id]) {
+        const pkg = fallbackPackageAmounts[body.package_id];
+        title = pkg.title;
+        description = pkg.description;
+        amountGhs = pkg.amountGhs;
+        packageId = body.package_id;
+      } else {
+        return res.status(400).json({ error: "Unknown package" });
+      }
     }
 
     if (!title || !amountGhs || amountGhs <= 0) {
@@ -105,5 +100,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   return res.status(405).json({ error: "Method not allowed" });
 }
-
-export { PACKAGE_AMOUNTS };

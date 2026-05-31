@@ -48,6 +48,20 @@ export interface SiteProjectRow {
   updated_at: string;
 }
 
+export interface SitePricingPackageRow {
+  id: string;
+  slug: string;
+  title: string;
+  amount_ghs: number;
+  description: string;
+  highlights: string[];
+  featured: boolean;
+  sort_order: number;
+  published: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface SiteService {
   name: string;
   info?: string;
