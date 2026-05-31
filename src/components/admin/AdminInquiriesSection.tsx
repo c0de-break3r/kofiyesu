@@ -31,34 +31,11 @@ const statusLabel: Record<InquiryStatus, string> = {
   archived: "Archived",
 };
 
-const statusClass: Record<InquiryStatus, string> = {
-  new: "bg-[color-mix(in_srgb,var(--color-accent)_15%,transparent)] text-[var(--color-accent)]",
-  reviewed: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  replied: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  archived: "bg-[var(--border)] text-[var(--text-muted)]",
-};
-
-const typeMeta: Record<InquiryType, { label: string; icon: string; accent: string }> = {
-  collaboration: {
-    label: "Collaboration",
-    icon: "◆",
-    accent: "text-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]",
-  },
-  security: {
-    label: "Security",
-    icon: "⬡",
-    accent: "text-violet-600 bg-violet-500/10 dark:text-violet-400",
-  },
-  job: {
-    label: "Job",
-    icon: "◎",
-    accent: "text-sky-600 bg-sky-500/10 dark:text-sky-400",
-  },
-  general: {
-    label: "General",
-    icon: "○",
-    accent: "text-[var(--text-muted)] bg-[var(--border)]",
-  },
+const typeLabel: Record<InquiryType, string> = {
+  collaboration: "Project",
+  security: "Security",
+  job: "Job",
+  general: "General",
 };
 
 const filterTabs: { id: FilterTab; label: string }[] = [
@@ -71,7 +48,10 @@ const filterTabs: { id: FilterTab; label: string }[] = [
 ];
 
 const scrollClass =
-  "overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:color-mix(in_srgb,var(--color-accent)_40%,transparent)_transparent]";
+  "overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]";
+
+const fieldClass =
+  "mt-1.5 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]";
 
 function formatWhen(iso: string) {
   try {
@@ -79,18 +59,13 @@ function formatWhen(iso: string) {
     const now = Date.now();
     const diff = now - d.getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1) return "Now";
+    if (mins < 60) return `${mins}m`;
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
+    if (hrs < 24) return `${hrs}h`;
     const days = Math.floor(hrs / 24);
-    if (days < 7) return `${days}d ago`;
-    return d.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    if (days < 7) return `${days}d`;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   } catch {
     return "";
   }
@@ -100,31 +75,11 @@ function ListSkeleton() {
   return (
     <div className="space-y-2 p-3">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="animate-pulse rounded-xl border border-[var(--border)] p-3">
-          <div className="h-3 w-24 rounded bg-[var(--border)]" />
+        <div key={i} className="animate-pulse rounded-lg border border-[var(--border)] p-3">
+          <div className="h-3 w-20 rounded bg-[var(--border)]" />
           <div className="mt-2 h-3 w-full rounded bg-[var(--border)]" />
-          <div className="mt-1 h-3 w-2/3 rounded bg-[var(--border)]" />
         </div>
       ))}
-    </div>
-  );
-}
-
-function StatCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
-  return (
-    <div
-      className={`rounded-xl border px-3 py-2.5 ${
-        highlight
-          ? "border-[color-mix(in_srgb,var(--color-accent)_35%,var(--border))] bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]"
-          : "border-[var(--border)] bg-[var(--bg)]"
-      }`}
-    >
-      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
-      <p
-        className={`mt-0.5 text-xl font-black tabular-nums ${highlight ? "text-[var(--color-accent)]" : ""}`}
-      >
-        {value}
-      </p>
     </div>
   );
 }
@@ -148,8 +103,7 @@ export function AdminInquiriesSection() {
   const stats = useMemo(() => {
     const newCount = inquiries.filter((i) => i.status === "new").length;
     const urgentCount = inquiries.filter((i) => i.needs_admin && i.status !== "archived").length;
-    const pendingCount = inquiries.filter((i) => i.status === "new" || i.status === "reviewed").length;
-    return { newCount, urgentCount, pendingCount, total: inquiries.length };
+    return { newCount, urgentCount, total: inquiries.length };
   }, [inquiries]);
 
   const filtered = useMemo(() => {
@@ -185,7 +139,8 @@ export function AdminInquiriesSection() {
       setSelectedId((current) => {
         if (rows.length === 0) return null;
         if (current && rows.some((r) => r.id === current)) return current;
-        return rows[0].id;
+        const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+        return isDesktop ? rows[0].id : null;
       });
     } catch {
       setError("Failed to load inquiries");
@@ -288,159 +243,159 @@ export function AdminInquiriesSection() {
     void patchInquiry({ status: "replied", mark_reviewed: true, successMessage: "Marked as replied" });
   };
 
+  const selectInquiry = (id: string) => setSelectedId(id);
+  const backToList = () => setSelectedId(null);
+
+  const filterCount = (id: FilterTab) => {
+    if (id === "all") return inquiries.length;
+    if (id === "new") return stats.newCount;
+    if (id === "urgent") return stats.urgentCount;
+    return inquiries.filter((i) => i.inquiry_type === id).length;
+  };
+
   if (loading) {
     return (
       <section className="flex h-full min-h-0 flex-col">
-        <div className="shrink-0 border-b border-[var(--border)] px-4 py-3 md:px-5">
-          <div className="h-5 w-32 animate-pulse rounded bg-[var(--border)]" />
+        <div className="shrink-0 border-b border-[var(--border)] px-4 py-3">
+          <div className="h-5 w-24 animate-pulse rounded bg-[var(--border)]" />
         </div>
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-          <div className="max-h-[40vh] border-b border-[var(--border)] md:max-h-none md:w-[38%] md:border-b-0 md:border-r">
-            <ListSkeleton />
-          </div>
-          <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--text-muted)]">
-            Loading inquiries…
-          </div>
-        </div>
+        <ListSkeleton />
       </section>
     );
   }
 
   if (inquiries.length === 0) {
     return (
-      <section className="flex h-full min-h-0 flex-col p-4 md:p-5">
-        <h2 className="text-lg font-black">Inquiries</h2>
-        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg)] px-6 py-12 text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] text-xl">
-            ✦
-          </div>
-          <p className="text-sm font-bold">Inbox is clear</p>
-          <p className="mt-1 max-w-xs text-xs leading-relaxed text-[var(--text-muted)]">
-            Real project requests, hires, and urgent messages from chat appear here — casual Q&A stays in
-            chat only.
-          </p>
-          <Button variant="border" className="mt-4" onClick={() => void load()}>
-            Refresh
-          </Button>
-        </div>
+      <section className="flex h-full min-h-0 flex-col items-center justify-center px-6 py-12 text-center">
+        <p className="text-sm font-bold">No inquiries yet</p>
+        <p className="mt-1 max-w-xs text-xs text-[var(--text-muted)]">
+          Project requests and urgent chat messages show up here.
+        </p>
+        <Button variant="border" className="mt-4" onClick={() => void load()}>
+          Refresh
+        </Button>
       </section>
     );
   }
 
+  const showListOnMobile = !selectedId;
+  const showDetailOnMobile = Boolean(selectedId);
+
   return (
     <section className="flex h-full min-h-0 flex-col">
-      <header className="shrink-0 border-b border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 md:px-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-black">Inquiries</h2>
-            <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-              Business requests routed from chat
+      {/* Toolbar — list view on mobile; always visible on desktop */}
+      <header
+        className={`shrink-0 border-b border-[var(--border)] px-3 py-2.5 md:px-4 ${
+          showDetailOnMobile ? "hidden md:block" : ""
+        }`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-base font-black md:text-lg">Inbox</h2>
+            <p className="text-[11px] text-[var(--text-muted)] md:text-xs">
+              {stats.total} total
+              {stats.newCount > 0 ? (
+                <span className="text-[var(--color-accent)]"> · {stats.newCount} new</span>
+              ) : null}
+              {stats.urgentCount > 0 ? (
+                <span className="text-red-600"> · {stats.urgentCount} urgent</span>
+              ) : null}
             </p>
           </div>
           <button
             type="button"
             onClick={() => void load()}
-            className="shrink-0 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-bold text-[var(--text-muted)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--color-accent)]"
           >
             Refresh
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <StatCard label="New" value={stats.newCount} highlight={stats.newCount > 0} />
-          <StatCard label="Urgent" value={stats.urgentCount} highlight={stats.urgentCount > 0} />
-          <StatCard label="Pending" value={stats.pendingCount} />
-        </div>
-
-        <div className="mt-3">
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search messages, names, emails…"
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
-          />
-        </div>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search…"
+          className={`${fieldClass} mt-2.5`}
+        />
 
         <div className="mt-2 flex gap-1 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch]">
           {filterTabs.map(({ id, label }) => {
-            const count =
-              id === "all"
-                ? inquiries.length
-                : id === "new"
-                  ? stats.newCount
-                  : id === "urgent"
-                    ? stats.urgentCount
-                    : inquiries.filter((i) => i.inquiry_type === id).length;
+            const count = filterCount(id);
+            const active = filter === id;
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => setFilter(id)}
-                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
-                  filter === id
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition ${
+                  active
                     ? "bg-[var(--color-accent)] text-white"
-                    : "bg-[var(--bg)] text-[var(--text-muted)] hover:bg-[var(--border)]"
+                    : "bg-[var(--bg)] text-[var(--text-muted)] ring-1 ring-[var(--border)]"
                 }`}
               >
                 {label}
-                {count > 0 ? ` (${count})` : ""}
+                {count > 0 && id !== "all" ? ` ${count}` : ""}
               </button>
             );
           })}
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <aside className="flex max-h-[42vh] min-h-0 shrink-0 flex-col border-b border-[var(--border)] md:max-h-none md:w-[38%] md:shrink-0 md:border-b-0 md:border-r lg:w-[36%]">
-          <p className="shrink-0 px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            Inbox · {filtered.length}
-          </p>
+      <div className="flex min-h-0 flex-1 md:flex-row">
+        {/* List */}
+        <aside
+          className={`min-h-0 flex-col border-[var(--border)] md:flex md:w-[min(100%,280px)] md:shrink-0 md:border-r lg:w-72 ${
+            showListOnMobile ? "flex flex-1" : "hidden md:flex"
+          }`}
+        >
           {filtered.length === 0 ? (
-            <p className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">No matches for this filter.</p>
+            <p className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">No matches.</p>
           ) : (
-            <ul className={`min-h-0 flex-1 space-y-2 px-2 pb-3 ${scrollClass}`} data-lenis-prevent>
+            <ul className={`min-h-0 flex-1 space-y-1 p-2 ${scrollClass}`} data-lenis-prevent>
               {filtered.map((item) => {
-                const meta = typeMeta[item.inquiry_type];
+                const active = item.id === selectedId;
+                const client = item.user_name ?? item.user_email ?? "Guest";
                 return (
                   <li key={item.id}>
                     <button
                       type="button"
-                      onClick={() => setSelectedId(item.id)}
-                      className={`w-full rounded-xl border p-3 text-left text-sm transition duration-200 ${
-                        item.id === selectedId
-                          ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)] shadow-sm"
-                          : "border-[var(--border)] bg-[var(--bg)] hover:border-[color-mix(in_srgb,var(--color-accent)_40%,var(--border))] hover:shadow-sm"
+                      onClick={() => selectInquiry(item.id)}
+                      className={`w-full rounded-lg px-3 py-2.5 text-left transition ${
+                        active
+                          ? "bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] ring-1 ring-[var(--color-accent)]"
+                          : "hover:bg-[var(--bg)]"
                       }`}
                     >
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${meta.accent}`}
-                        >
-                          <span aria-hidden>{meta.icon}</span>
-                          {meta.label}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${statusClass[item.status]}`}
-                        >
-                          {statusLabel[item.status]}
-                        </span>
-                        {item.needs_admin && (
-                          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-red-600">
-                            Urgent
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            {item.status === "new" ? (
+                              <span
+                                className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-accent)]"
+                                aria-label="New"
+                              />
+                            ) : null}
+                            {item.needs_admin ? (
+                              <span
+                                className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500"
+                                aria-label="Urgent"
+                              />
+                            ) : null}
+                            <span className="truncate text-sm font-bold">{client}</span>
+                          </div>
+                          <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--text-muted)]">
+                            {item.message}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <time className="text-[10px] font-semibold text-[var(--text-muted)]">
+                            {formatWhen(item.created_at)}
+                          </time>
+                          <span className="text-[10px] font-bold text-[var(--text-muted)]">
+                            {typeLabel[item.inquiry_type]}
                           </span>
-                        )}
-                      </div>
-                      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--text-muted)]">
-                        {item.message}
-                      </p>
-                      <div className="mt-1.5 flex items-center justify-between gap-2">
-                        <span className="truncate text-[10px] font-semibold text-[var(--text-muted)]">
-                          {item.user_name ?? item.user_email ?? "Guest"}
-                        </span>
-                        <time className="shrink-0 text-[10px] font-semibold text-[var(--text-muted)]">
-                          {formatWhen(item.created_at)}
-                        </time>
+                        </div>
                       </div>
                     </button>
                   </li>
@@ -450,169 +405,174 @@ export function AdminInquiriesSection() {
           )}
         </aside>
 
+        {/* Detail */}
         {selected ? (
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <div className={`min-h-0 flex-1 px-4 py-4 md:px-5 ${scrollClass}`} data-lenis-prevent>
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="flex flex-wrap gap-1.5">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${typeMeta[selected.inquiry_type].accent}`}
-                    >
-                      {typeMeta[selected.inquiry_type].icon} {typeMeta[selected.inquiry_type].label}
-                    </span>
-                    {selected.needs_admin && (
-                      <span className="rounded-full bg-red-500/15 px-2.5 py-1 text-[10px] font-bold uppercase text-red-600">
-                        Needs Obed
-                      </span>
-                    )}
+          <div
+            className={`min-h-0 min-w-0 flex-col md:flex md:flex-1 ${
+              showDetailOnMobile ? "flex flex-1" : "hidden md:flex"
+            }`}
+          >
+            {/* Mobile detail header */}
+            <div className="flex shrink-0 items-center gap-2 border-b border-[var(--border)] px-3 py-2 md:hidden">
+              <button
+                type="button"
+                onClick={backToList}
+                className="rounded-lg px-2 py-1.5 text-sm font-bold text-[var(--color-accent)]"
+              >
+                ← Inbox
+              </button>
+              <span className="truncate text-sm font-bold">
+                {selected.user_name ?? selected.user_email ?? "Inquiry"}
+              </span>
+            </div>
+
+            <div className={`min-h-0 flex-1 px-3 py-3 md:px-4 md:py-4 ${scrollClass}`} data-lenis-prevent>
+              <div className="space-y-3 md:space-y-4">
+                <div className="hidden items-start justify-between gap-2 md:flex">
+                  <div>
+                    <p className="text-base font-black">
+                      {selected.user_name ?? "Guest"}
+                    </p>
+                    {selected.user_email ? (
+                      <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                        <a
+                          href={`mailto:${selected.user_email}`}
+                          className="text-sm font-semibold text-[var(--color-accent)]"
+                        >
+                          {selected.user_email}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => void copyEmail()}
+                          className="text-[11px] font-bold text-[var(--text-muted)] underline-offset-2 hover:text-[var(--color-accent)] hover:underline"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
-                  <time className="text-[11px] font-semibold text-[var(--text-muted)]">
-                    {formatWhen(selected.created_at)}
-                  </time>
+                  <div className="text-right text-[11px] font-semibold text-[var(--text-muted)]">
+                    <p>{formatWhen(selected.created_at)}</p>
+                    <p className="mt-0.5">
+                      {typeLabel[selected.inquiry_type]} · {statusLabel[selected.status]}
+                    </p>
+                  </div>
                 </div>
 
-                <p className="text-xs leading-relaxed text-[var(--text-muted)]">
-                  {getInquiryRoute(selected.inquiry_type).description}
-                </p>
-
-                {(selected.user_name || selected.user_email) && (
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3">
-                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                      Client
-                    </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-bold">{selected.user_name ?? "Guest"}</p>
-                      {selected.user_email ? (
-                        <>
-                          <a
-                            href={`mailto:${selected.user_email}`}
-                            className="text-sm font-semibold text-[var(--color-accent)]"
-                          >
-                            {selected.user_email}
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => void copyEmail()}
-                            className="rounded-lg border border-[var(--border)] px-2 py-0.5 text-[10px] font-bold text-[var(--text-muted)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                          >
-                            Copy
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                )}
+                {/* Mobile client + meta */}
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 md:hidden">
+                  {selected.user_email ? (
+                    <a
+                      href={`mailto:${selected.user_email}`}
+                      className="text-sm font-semibold text-[var(--color-accent)]"
+                    >
+                      {selected.user_email}
+                    </a>
+                  ) : (
+                    <p className="text-sm font-bold">{selected.user_name ?? "Guest"}</p>
+                  )}
+                  <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                    {typeLabel[selected.inquiry_type]} · {statusLabel[selected.status]}
+                    {selected.needs_admin ? " · Urgent" : ""}
+                  </p>
+                </div>
 
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                    Message
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 text-sm leading-relaxed">
-                    {selected.message}
-                  </p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{selected.message}</p>
                 </div>
 
-                {selected.intake && Object.keys(selected.intake).length > 0 && (
-                  <div>
-                    <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
+                {selected.intake && Object.keys(selected.intake).length > 0 ? (
+                  <details className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3">
+                    <summary className="cursor-pointer text-xs font-bold text-[var(--text-muted)]">
                       Intake data
-                    </p>
-                    <pre className="max-h-32 overflow-auto rounded-xl bg-[var(--bg)] p-3 text-[10px] leading-relaxed text-[var(--text-muted)]">
+                    </summary>
+                    <pre className="mt-2 max-h-28 overflow-auto text-[10px] leading-relaxed text-[var(--text-muted)]">
                       {JSON.stringify(selected.intake, null, 2)}
                     </pre>
-                  </div>
-                )}
+                  </details>
+                ) : null}
 
-                <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                    Status
-                  </span>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as InquiryStatus)}
-                    className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm font-semibold outline-none focus:border-[var(--color-accent)]"
-                  >
-                    {(Object.keys(statusLabel) as InquiryStatus[]).map((s) => (
-                      <option key={s} value={s}>
-                        {statusLabel[s]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block sm:col-span-2">
+                    <span className="text-xs font-bold text-[var(--text-muted)]">Status</span>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as InquiryStatus)}
+                      className={fieldClass}
+                    >
+                      {(Object.keys(statusLabel) as InquiryStatus[]).map((s) => (
+                        <option key={s} value={s}>
+                          {statusLabel[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-                <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                    Admin notes
-                  </span>
-                  <textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    rows={3}
-                    placeholder="Internal notes — not sent to client…"
-                    className="mt-1 w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-accent)]"
-                  />
-                </label>
+                  <label className="block sm:col-span-2">
+                    <span className="text-xs font-bold text-[var(--text-muted)]">Notes (internal)</span>
+                    <textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      rows={2}
+                      placeholder="Private notes…"
+                      className={`${fieldClass} resize-y`}
+                    />
+                  </label>
 
-                <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                    Reply draft
-                  </span>
-                  <textarea
-                    value={replyDraft}
-                    onChange={(e) => setReplyDraft(e.target.value)}
-                    rows={4}
-                    placeholder="Email reply to the client…"
-                    className="mt-1 w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-accent)]"
-                  />
-                </label>
+                  <label className="block sm:col-span-2">
+                    <span className="text-xs font-bold text-[var(--text-muted)]">Reply draft</span>
+                    <textarea
+                      value={replyDraft}
+                      onChange={(e) => setReplyDraft(e.target.value)}
+                      rows={3}
+                      placeholder="Email reply…"
+                      className={`${fieldClass} resize-y`}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
 
-            <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 shadow-[0_-12px_40px_rgba(0,0,0,0.08)] md:px-5">
-              <div className="space-y-2">
-                {error ? <AdminStatusMessage type="error" message={error} /> : null}
-                {success ? <AdminStatusMessage type="success" message={success} /> : null}
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <Button className="w-full px-4" disabled={saving} onClick={() => void patchInquiry({})}>
+            <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4">
+              {error ? <AdminStatusMessage type="error" message={error} /> : null}
+              {success ? <AdminStatusMessage type="success" message={success} /> : null}
+
+              <div className="mt-2 flex gap-2">
+                <Button className="flex-1" disabled={saving} onClick={() => void patchInquiry({})}>
                   {saving ? "…" : "Save"}
                 </Button>
-                <Button
-                  variant="border"
-                  className="w-full px-3 text-xs sm:text-sm"
+                <Button variant="border" className="flex-1" disabled={saving} onClick={openReplyMail}>
+                  Reply
+                </Button>
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
                   disabled={saving}
                   onClick={() =>
                     void patchInquiry({
                       mark_reviewed: true,
                       status: "reviewed",
-                      successMessage: "Marked reviewed",
+                      successMessage: "Reviewed",
                     })
                   }
+                  className="flex-1 rounded-lg py-2 text-xs font-bold text-[var(--text-muted)] transition hover:bg-[var(--border)] disabled:opacity-50"
                 >
-                  Review
-                </Button>
-                <Button
-                  variant="border"
-                  className="w-full px-3 text-xs sm:text-sm"
-                  disabled={saving}
-                  onClick={openReplyMail}
-                >
-                  Reply via email
-                </Button>
-                <Button
-                  variant="border"
-                  className="w-full px-3 text-xs sm:text-sm"
+                  Mark reviewed
+                </button>
+                <button
+                  type="button"
                   disabled={saving}
                   onClick={() => void patchInquiry({ status: "archived", successMessage: "Archived" })}
+                  className="flex-1 rounded-lg py-2 text-xs font-bold text-[var(--text-muted)] transition hover:bg-[var(--border)] disabled:opacity-50"
                 >
                   Archive
-                </Button>
+                </button>
                 <button
                   type="button"
                   disabled={saving}
                   onClick={() => void deleteInquiry()}
-                  className="col-span-2 w-full rounded-full border border-red-500/40 bg-red-500/5 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-500/15 disabled:opacity-50 sm:col-span-1"
+                  className="rounded-lg px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-500/10 disabled:opacity-50"
                 >
                   Delete
                 </button>
@@ -620,7 +580,7 @@ export function AdminInquiriesSection() {
             </footer>
           </div>
         ) : (
-          <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--text-muted)]">
+          <div className="hidden flex-1 items-center justify-center p-8 text-sm text-[var(--text-muted)] md:flex">
             Select an inquiry
           </div>
         )}
