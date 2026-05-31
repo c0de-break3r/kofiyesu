@@ -13,12 +13,12 @@ export function ChatMessage({ role, content }: Props) {
   const isUser = role === "user";
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+        className={`max-w-[min(100%,42rem)] rounded-2xl px-4 py-3 text-[0.9375rem] leading-relaxed ${
           isUser
-            ? "rounded-br-md bg-[var(--color-accent)] text-white"
-            : "rounded-bl-md border border-[var(--border)] bg-[var(--chat-assistant)]"
+            ? "rounded-br-md bg-[var(--color-accent)] text-white shadow-sm"
+            : "rounded-bl-md bg-transparent text-[var(--text)]"
         }`}
         dangerouslySetInnerHTML={{ __html: formatContent(content) }}
       />

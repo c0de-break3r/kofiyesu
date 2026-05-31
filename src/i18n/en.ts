@@ -40,6 +40,9 @@ export const en = {
   "intake-submitting": "Saving…",
   "intake-done-hint": "Ask follow-up questions below. Kofi was notified if you marked this urgent.",
   "chat-welcome-intake": "Thanks for the details on your {type} inquiry. What would you like to know next?",
+  "chat-ready-title": "How can I help you today?",
+  "chat-ready-subtitle":
+    "Ask anything about skills, projects, security work, timelines, or your intake — I'm ready to answer.",
   "back-to-home": "Back to home",
   "toggle-theme": "Toggle theme",
   "live-view": "View live",

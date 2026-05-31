@@ -22,11 +22,7 @@ import { submitInquiry } from "@/lib/submitInquiry";
 import { clearIntakeDraft } from "@/lib/intakeDraft";
 import { social } from "@/content/social";
 
-interface Props {
-  fixed?: boolean;
-}
-
-export function ContactChatPanel({ fixed }: Props) {
+export function ContactChatPanel() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
 
@@ -131,18 +127,18 @@ export function ContactChatPanel({ fixed }: Props) {
     return buildMailtoUrl(route, userMsgs.join("\n\n"));
   }, [routing, messages]);
 
-  const shellClass = fixed
-    ? "flex min-h-0 flex-1 flex-col"
-    : "flex flex-col gap-4";
+  const hasUserMessages = messages.some((m) => m.role === "user");
+  const showReadyState = phase === "chat" && !hasUserMessages && !isLoading;
 
   return (
-    <div className={shellClass}>
+    <div className="flex min-h-0 flex-1 flex-col">
       {!isLoaded && (
         <p className="p-6 text-sm text-[var(--text-muted)]">{t("chat-loading")}</p>
       )}
 
       {isLoaded && !isSignedIn && (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+          <h1 className="text-xl font-black md:text-2xl">{t("chat-title")}</h1>
           <p className="max-w-sm text-sm text-[var(--text-muted)]">{t("chat-sign-in-required")}</p>
           <SignInButton mode="modal">
             <Button>{t("chat-sign-in")}</Button>
@@ -156,9 +152,13 @@ export function ContactChatPanel({ fixed }: Props) {
 
       {isSignedIn && phase === "intake" && (
         <div
-          className="flex flex-col p-5 sm:p-6"
+          className="mx-auto flex w-full max-w-xl flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 md:py-8"
           data-lenis-prevent
         >
+          <div className="mb-6 shrink-0">
+            <h1 className="text-xl font-black md:text-2xl">{t("chat-title")}</h1>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{t("chat-subtitle")}</p>
+          </div>
           {intakeSubmitting && (
             <p className="text-center text-sm text-[var(--text-muted)]">{t("intake-submitting")}</p>
           )}
@@ -172,39 +172,52 @@ export function ContactChatPanel({ fixed }: Props) {
       )}
 
       {isSignedIn && phase === "chat" && (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col">
           <div
             ref={messagesEl}
-            className={`flex flex-col gap-3 px-4 py-4 sm:px-5 ${
-              fixed ? "min-h-0 flex-1 overflow-y-auto" : ""
-            }`}
-            data-lenis-prevent={fixed ? true : undefined}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            data-lenis-prevent
           >
-            <p className="text-center text-xs text-[var(--text-muted)]">{t("intake-done-hint")}</p>
-            {messages.map((msg, i) => (
-              <ChatMessage key={i} role={msg.role} content={msg.content} />
-            ))}
-            {isLoading && <ChatTyping />}
-            <div ref={bottomRef} />
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6">
+              {showReadyState && (
+                <div className="flex flex-col items-center justify-center py-10 text-center sm:py-16">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] text-2xl">
+                    ✦
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{t("chat-ready-title")}</h2>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
+                    {t("chat-ready-subtitle")}
+                  </p>
+                </div>
+              )}
+              {!showReadyState &&
+                messages.map((msg, i) => (
+                  <ChatMessage key={i} role={msg.role} content={msg.content} />
+                ))}
+              {!showReadyState && isLoading && <ChatTyping />}
+              <div ref={bottomRef} />
+            </div>
           </div>
 
           {(routing?.escalateToAdmin || mailtoUrl) && (
-            <div className="shrink-0 space-y-2 border-t border-[var(--border)] px-4 py-3">
-              {routing?.escalateToAdmin && (
-                <p className="rounded-lg bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
-                  {t("chat-escalated")}
-                </p>
-              )}
-              {mailtoUrl && (
-                <a href={mailtoUrl} className="flex justify-center">
-                  <Button variant="border">{t("chat-send-email")}</Button>
-                </a>
-              )}
+            <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg)]">
+              <div className="mx-auto max-w-3xl space-y-2 px-4 py-3 sm:px-6">
+                {routing?.escalateToAdmin && (
+                  <p className="rounded-lg bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] px-3 py-2 text-center text-sm font-semibold text-[var(--color-accent)]">
+                    {t("chat-escalated")}
+                  </p>
+                )}
+                {mailtoUrl && (
+                  <a href={mailtoUrl} className="flex justify-center">
+                    <Button variant="border">{t("chat-send-email")}</Button>
+                  </a>
+                )}
+              </div>
             </div>
           )}
 
-          <div className="shrink-0 border-t border-[var(--border)] p-3 sm:p-4">
-            <div className="flex items-end gap-2">
+          <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg)] pb-[env(safe-area-inset-bottom,0px)]">
+            <div className="mx-auto flex max-w-3xl items-end gap-2 px-4 py-3 sm:px-6 sm:py-4">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -214,23 +227,23 @@ export function ContactChatPanel({ fixed }: Props) {
                     void handleSend();
                   }
                 }}
-                rows={2}
+                rows={1}
                 placeholder={t("chat-placeholder")}
                 disabled={isLoading}
-                className="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-accent)]"
+                className="max-h-40 min-h-[48px] flex-1 resize-none rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)]"
               />
               <button
                 type="button"
                 disabled={!input.trim() || isLoading}
                 onClick={() => void handleSend()}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-lg text-white transition disabled:opacity-40"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-lg text-white transition disabled:opacity-40"
                 aria-label={t("chat-send")}
               >
                 ↑
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

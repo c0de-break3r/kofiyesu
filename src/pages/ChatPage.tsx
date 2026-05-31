@@ -1,3 +1,4 @@
+import { BackIconLink } from "@/components/layout/BackIconLink";
 import { ContactChatPanel } from "@/components/chat/ContactChatPanel";
 import { isClerkConfigured } from "@/lib/clerk";
 import { social } from "@/content/social";
@@ -10,29 +11,22 @@ export function ChatPage() {
   return (
     <main
       id="main-content"
-      className="mx-auto min-h-screen max-w-3xl px-4 pb-24 pt-6 sm:px-6 md:pb-12 md:pt-20"
+      className="flex min-h-[100dvh] flex-col bg-[var(--bg)] pb-[calc(72px+env(safe-area-inset-bottom,0px))] md:pb-0 md:pt-[var(--height-header,5rem)]"
     >
-      <div className="mb-4 hidden shrink-0 md:block">
-        <h1 className="text-xl font-black md:text-2xl">{t("chat-title")}</h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">{t("chat-subtitle")}</p>
-      </div>
-
-      <div className="mb-4 shrink-0 md:hidden">
-        <h1 className="text-lg font-black">{t("chat-title")}</h1>
-        <p className="mt-1 text-xs text-[var(--text-muted)]">{t("chat-subtitle")}</p>
+      <div className="shrink-0 px-4 pt-4 sm:px-6">
+        <BackIconLink to="/" ariaLabel={t("back-to-home")} />
       </div>
 
       {!isClerkConfigured ? (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-6 text-center text-sm text-[var(--text-muted)]">
+        <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-4 px-4 py-8 text-center text-sm text-[var(--text-muted)] sm:px-6">
+          <h1 className="text-xl font-black text-[var(--text)] md:text-2xl">{t("chat-title")}</h1>
           <p>{t("chat-guest-fallback")}</p>
           <a href={mailLink}>
             <Button>{t("chat-email-cta")}</Button>
           </a>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-lg">
-          <ContactChatPanel />
-        </div>
+        <ContactChatPanel />
       )}
     </main>
   );

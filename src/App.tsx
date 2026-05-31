@@ -36,7 +36,8 @@ function AppRoutes() {
     const lenis = getLenis();
 
     if (onChat || onProject) {
-      lenis?.stop();
+      lenis?.start();
+      lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);
     } else {
       lenis?.start();
