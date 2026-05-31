@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../api/lib/prisma.js";
 import { defaultAbout } from "../src/content/about";
-
-const prisma = new PrismaClient();
 
 const featureDefs = [
   { slug: "web-application", label: "Web Application", sortOrder: 0 },

@@ -1,4 +1,4 @@
-import type { Payment } from "@prisma/client";
+import type { Payment } from "../../generated/prisma/client.js";
 
 export const paymentToApi = (row: Payment) => ({
   id: row.id,

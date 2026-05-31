@@ -1,4 +1,4 @@
-import type { ContactInquiry, SiteAbout, SiteFeature, SiteProject } from "@prisma/client";
+import type { ContactInquiry, SiteAbout, SiteFeature, SiteProject } from "../../generated/prisma/client.js";
 import { featureToApi } from "./featureSerializer.js";
 
 type ProjectRow = SiteProject & { category?: SiteFeature | null };

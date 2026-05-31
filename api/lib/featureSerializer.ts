@@ -1,4 +1,4 @@
-import type { SiteFeature } from "@prisma/client";
+import type { SiteFeature } from "../../generated/prisma/client.js";
 
 export const featureToApi = (row: SiteFeature) => ({
   id: row.id,
