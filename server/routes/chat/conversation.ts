@@ -1,12 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireSignedInUserId } from "../../clerkAuth.js";
+import { requireSignedInUserId } from "../../../api/lib/clerkAuth.js";
 import {
   conversationPreview,
   deriveConversationTitle,
   sanitizeMessages,
-} from "../../chatHistory.js";
-import { isDatabaseConfigured, prisma } from "../../prisma.js";
-import { toInputJson } from "../../prismaJson.js";
+} from "../../../api/lib/chatHistory.js";
+import { isDatabaseConfigured, prisma } from "../../../api/lib/prisma.js";
+import { toInputJson } from "../../../api/lib/prismaJson.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userId = await requireSignedInUserId(req);

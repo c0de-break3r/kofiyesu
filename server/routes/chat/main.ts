@@ -5,7 +5,7 @@ import {
   isInformationalQuestion,
   PORTFOLIO_SERVICES_BLURB,
   wantsToTalkToObed,
-} from "../../inquiryClassifier.js";
+} from "../../../api/lib/inquiryClassifier.js";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
 

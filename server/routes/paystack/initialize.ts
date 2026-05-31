@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
-import { requireSignedInUserId } from "../../clerkAuth.js";
-import { isDatabaseConfigured, prisma } from "../../prisma.js";
-import { initializeTransaction, paystackConfigured } from "../../paystack.js";
-import { paymentToApi } from "../../paymentSerializer.js";
+import { requireSignedInUserId } from "../../../api/lib/clerkAuth.js";
+import { isDatabaseConfigured, prisma } from "../../../api/lib/prisma.js";
+import { initializeTransaction, paystackConfigured } from "../../../api/lib/paystack.js";
+import { paymentToApi } from "../../../api/lib/paymentSerializer.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

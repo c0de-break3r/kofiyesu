@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireSignedInUserId } from "./lib/clerkAuth.js";
-import { isDatabaseConfigured, prisma } from "./lib/prisma.js";
-import { paymentToApi } from "./lib/paymentSerializer.js";
+import { requireSignedInUserId } from "../../api/lib/clerkAuth.js";
+import { isDatabaseConfigured, prisma } from "../../api/lib/prisma.js";
+import { paymentToApi } from "../../api/lib/paymentSerializer.js";
 
 const PACKAGE_AMOUNTS: Record<string, { title: string; amountGhs: number; description: string }> = {
   discovery: {

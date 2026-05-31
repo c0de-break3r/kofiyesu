@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireAdminUserId } from "../../adminAuth.js";
-import { isDatabaseConfigured, prisma } from "../../prisma.js";
-import { aboutToApi } from "../../serializers.js";
+import { requireAdminUserId } from "../../../api/lib/adminAuth.js";
+import { isDatabaseConfigured, prisma } from "../../../api/lib/prisma.js";
+import { aboutToApi } from "../../../api/lib/serializers.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

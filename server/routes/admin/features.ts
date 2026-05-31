@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireAdminUserId } from "../../adminAuth.js";
-import { isDatabaseConfigured, prisma } from "../../prisma.js";
-import { featureToApi } from "../../serializers.js";
+import { requireAdminUserId } from "../../../api/lib/adminAuth.js";
+import { isDatabaseConfigured, prisma } from "../../../api/lib/prisma.js";
+import { featureToApi } from "../../../api/lib/serializers.js";
 
 const slugify = (value: string) =>
   value
