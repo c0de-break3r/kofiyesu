@@ -56,6 +56,6 @@ npm run db:migrate
 
 ## Content
 
-- **Production**: CMS data from Neon (`SiteProject`, `SiteFeature`, `SiteAbout`, `SitePricingPackage`).
+- **Production**: CMS data from Neon (`SiteProject`, `SiteFeature`, `SiteAbout`).
 - **Local dev**: Falls back to static files in `src/content/` when the API is unavailable.
 - **Seed**: `npm run db:seed` upserts default features, projects, pricing packages, and about copy.

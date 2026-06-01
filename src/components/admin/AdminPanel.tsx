@@ -5,15 +5,13 @@ import { AdminInquiriesSection } from "./AdminInquiriesSection";
 import { AdminProjectsSection } from "./AdminProjectsSection";
 import { AdminFeaturesSection } from "./AdminFeaturesSection";
 import { AdminAboutSection } from "./AdminAboutSection";
-import { AdminPricingSection } from "./AdminPricingSection";
 
-type Tab = "inquiries" | "features" | "projects" | "about" | "pricing";
+type Tab = "inquiries" | "features" | "projects" | "about";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "inquiries", label: "Inquiries" },
   { id: "features", label: "Features" },
   { id: "projects", label: "Projects" },
-  { id: "pricing", label: "Services & pricing" },
   { id: "about", label: "About" },
 ];
 
@@ -88,7 +86,6 @@ export function AdminPanel() {
           {tab === "inquiries" && <AdminInquiriesSection />}
           {tab === "projects" && <AdminProjectsSection />}
           {tab === "features" && <AdminFeaturesSection />}
-          {tab === "pricing" && <AdminPricingSection />}
           {tab === "about" && <AdminAboutSection />}
         </div>
       </aside>

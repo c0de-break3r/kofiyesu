@@ -6,13 +6,11 @@ import conversationHandler from "../server/routes/chat/conversation.js";
 import siteAboutHandler from "../server/routes/site/about.js";
 import siteFeaturesHandler from "../server/routes/site/features.js";
 import siteProjectsHandler from "../server/routes/site/projects.js";
-import sitePricingHandler from "../server/routes/site/pricing.js";
 import adminAboutHandler from "../server/routes/admin/about.js";
 import adminFeaturesHandler from "../server/routes/admin/features.js";
 import adminProjectsHandler from "../server/routes/admin/projects.js";
 import adminInquiriesHandler from "../server/routes/admin/inquiries.js";
 import adminPaymentsHandler from "../server/routes/admin/payments.js";
-import adminPricingHandler from "../server/routes/admin/pricing.js";
 import paystackInitializeHandler from "../server/routes/paystack/initialize.js";
 import paystackVerifyHandler from "../server/routes/paystack/verify.js";
 import paystackWebhookHandler from "../server/routes/paystack/webhook.js";
@@ -25,7 +23,6 @@ const siteRoutes = {
   about: siteAboutHandler,
   features: siteFeaturesHandler,
   projects: siteProjectsHandler,
-  pricing: sitePricingHandler,
 } as const;
 
 const adminRoutes = {
@@ -34,7 +31,6 @@ const adminRoutes = {
   projects: adminProjectsHandler,
   inquiries: adminInquiriesHandler,
   payments: adminPaymentsHandler,
-  pricing: adminPricingHandler,
 } as const;
 
 const paystackRoutes = {

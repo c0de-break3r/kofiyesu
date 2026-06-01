@@ -119,25 +119,7 @@ model SiteAbout {
   aboutIntro  String?  @map("about_intro")
   aboutTagline String? @map("about_tagline")
   location    String?
-  services    Json     @default("[]")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("site_about")
-}
-
-model SitePricingPackage {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug        String   @unique
-  title       String
-  amountGhs   Decimal  @map("amount_ghs") @db.Decimal(12, 2)
-  description String
-  highlights  Json     @default("[]")
-  featured    Boolean  @default(false)
-  sortOrder   Int      @default(0) @map("sort_order")
-  published   Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([sortOrder, createdAt])
-  @@map("site_pricing_packages")
 }

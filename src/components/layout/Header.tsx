@@ -117,12 +117,6 @@ export function Header() {
               >
                 {t("projects")}
               </NavLink>
-              <NavLink
-                href={isHome ? "#services-pricing" : "/#services-pricing"}
-                onClick={handleNavSectionClick("services-pricing")}
-              >
-                {t("services")}
-              </NavLink>
               <button
                 type="button"
                 onClick={() => navigate("/chat")}

@@ -5,13 +5,12 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useAboutScrollStory } from "@/hooks/useAboutScrollStory";
 import { Button } from "@/components/ui/Button";
-import { ServiceCard } from "@/features/home/ServiceCard";
 
 const github = social.find((s) => s.name === "github");
 
 export function About() {
   const reducedMotion = useReducedMotion();
-  const { aboutText, services } = useSiteContent();
+  const { aboutText } = useSiteContent();
 
   const introRaw = aboutText("about_intro", defaultAbout.about_intro);
   const paragraphSource = (() => {
@@ -31,7 +30,7 @@ export function About() {
       id="about-content"
       className="relative w-full scroll-mt-[calc(var(--height-header,4.5rem)+0.5rem)] overflow-hidden px-6 pb-10 pt-8 md:pb-14 md:pt-14"
     >
-      <div className="relative z-10 mx-auto grid max-w-6xl gap-12 md:grid-cols-2 md:gap-16">
+      <div className="relative z-10 mx-auto max-w-3xl">
         <div>
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-[0.15em] text-[var(--color-accent)]">
             {t("about")}
@@ -82,12 +81,6 @@ export function About() {
             </a>
           </div>
         </div>
-
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {services.map((s) => (
-            <ServiceCard key={s.name} name={s.name} info={s.info} />
-          ))}
-        </ul>
       </div>
     </section>
   );

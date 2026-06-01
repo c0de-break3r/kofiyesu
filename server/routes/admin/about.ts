@@ -28,7 +28,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (body.about_intro !== undefined) data.aboutIntro = body.about_intro;
       if (body.about_tagline !== undefined) data.aboutTagline = body.about_tagline;
       if (body.location !== undefined) data.location = body.location;
-      if (body.services !== undefined) data.services = body.services;
 
       const row = await prisma.siteAbout.upsert({
         where: { id: "default" },

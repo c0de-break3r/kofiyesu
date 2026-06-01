@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { AdminActionBar } from "./AdminActionBar";
 import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
-import { AdminServicesEditor } from "./AdminServicesEditor";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { readResponseJson } from "@/lib/readResponseJson";
 import { defaultAbout } from "@/content/about";
-import type { SiteAboutRow, SiteService } from "@/types/site";
+import type { SiteAboutRow } from "@/types/site";
 
 function splitIntro(intro: string | null | undefined) {
   const raw = intro?.trim() ?? "";
@@ -19,16 +18,6 @@ function joinIntro(p1: string, p2: string, p3: string) {
   return [p1, p2, p3].map((p) => p.trim()).filter(Boolean).join("\n\n");
 }
 
-function mergeServices(row: SiteAboutRow | null): SiteService[] {
-  const defaultByName = Object.fromEntries(defaultAbout.services.map((s) => [s.name, s.info ?? ""]));
-  const fromDb = row?.services?.filter((s) => s?.name?.trim()) ?? [];
-  const list = fromDb.length ? fromDb : [...defaultAbout.services];
-  return list.map((s) => ({
-    name: s.name,
-    info: s.info?.trim() || defaultByName[s.name] || "",
-  }));
-}
-
 export function AdminAboutSection() {
   const { adminFetch } = useAdminApi();
   const { reload } = useSiteContent();
@@ -39,7 +28,6 @@ export function AdminAboutSection() {
   const [intro2, setIntro2] = useState("");
   const [intro3, setIntro3] = useState("");
   const [vision, setVision] = useState("");
-  const [services, setServices] = useState<SiteService[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -53,7 +41,6 @@ export function AdminAboutSection() {
     setIntro2(b);
     setIntro3(c);
     setVision(row?.about_tagline ?? defaultAbout.about_tagline);
-    setServices(mergeServices(row));
   };
 
   const load = async () => {
@@ -86,10 +73,6 @@ export function AdminAboutSection() {
     setError(null);
     setSaved(false);
     try {
-      const servicesPayload = services
-        .map((s) => ({ name: s.name.trim(), info: s.info?.trim() || "" }))
-        .filter((s) => s.name);
-
       const res = await adminFetch("/api/admin/about", {
         method: "PATCH",
         body: JSON.stringify({
@@ -98,7 +81,6 @@ export function AdminAboutSection() {
           location: location.trim(),
           about_intro: joinIntro(intro1, intro2, intro3),
           about_tagline: vision.trim(),
-          services: servicesPayload,
         }),
       });
 
@@ -127,7 +109,7 @@ export function AdminAboutSection() {
         <div>
           <h2 className="text-lg font-black">About & vision</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Edit hero details, the three Background scroll paragraphs, your long-term vision, and service cards.
+            Edit hero details, the three Background scroll paragraphs, and your long-term vision.
           </p>
         </div>
 
@@ -165,11 +147,6 @@ export function AdminAboutSection() {
           <AdminField label="Long-term vision (tagline under Background)">
             <AdminTextarea rows={3} value={vision} onChange={(e) => setVision(e.target.value)} />
           </AdminField>
-        </div>
-
-        <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">Services</p>
-          <AdminServicesEditor services={services} onChange={setServices} />
         </div>
         </div>
       </div>

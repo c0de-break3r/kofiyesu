@@ -42,9 +42,6 @@ export function ContactSection() {
           <Link to="/chat">
             <Button>{t("start-a-project")}</Button>
           </Link>
-          <a href="#services-pricing">
-            <Button variant="border">{t("view-pricing")}</Button>
-          </a>
           <a href={whatsappContactUrl} target="_blank" rel="noreferrer">
             <Button variant="border">{t("whatsapp-cta")}</Button>
           </a>
