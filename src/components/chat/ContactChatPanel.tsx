@@ -23,6 +23,7 @@ import {
 } from "@/lib/chatAttachments";
 import {
   type ChatConversationSummary,
+  ChatHistoryError,
   clearConversationMessages,
   createConversation,
   deleteConversation,
@@ -73,6 +74,7 @@ export function ContactChatPanel() {
   const [input, setInput] = useState("");
   const [pendingFiles, setPendingFiles] = useState<ChatAttachment[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [routing, setRouting] = useState<RoutingResult | null>(null);
   const [showEscalateBanner, setShowEscalateBanner] = useState(false);
@@ -172,6 +174,7 @@ export function ContactChatPanel() {
     if (!user?.id) return;
     const list = await listConversations(getToken, user.id);
     setConversations(list);
+    setHistoryError(null);
   }, [getToken, user?.id]);
 
   const applyConversation = useCallback(
@@ -194,38 +197,56 @@ export function ContactChatPanel() {
     async (id: string) => {
       if (!user?.id) return;
       setHistoryLoading(true);
-      const loaded = await loadConversation(getToken, user.id, id);
-      setHistoryLoading(false);
-      if (!loaded) return;
-      applyConversation(loaded.id, loaded.messages, loaded.messages.length === 0);
+      setHistoryError(null);
+      try {
+        const loaded = await loadConversation(getToken, user.id, id);
+        if (!loaded) return;
+        applyConversation(loaded.id, loaded.messages, loaded.messages.length === 0);
+      } catch (err) {
+        setHistoryError(
+          err instanceof ChatHistoryError ? err.message : "Could not load this conversation.",
+        );
+      } finally {
+        setHistoryLoading(false);
+      }
     },
     [applyConversation, getToken, user?.id],
   );
+
+  const initChatFromCloud = useCallback(async () => {
+    if (!user?.id) return;
+    setHistoryLoading(true);
+    setHistoryReady(false);
+    setHistoryError(null);
+    try {
+      await refreshConversationList();
+      const active = await ensureActiveConversation(getToken, user.id);
+      applyConversation(active.id, active.messages, active.messages.length === 0);
+      setHistoryReady(true);
+    } catch (err) {
+      const message =
+        err instanceof ChatHistoryError
+          ? err.message
+          : "Could not load chat history. Try again in a moment.";
+      setHistoryError(message);
+      setConversations([]);
+      setConversationId(null);
+      setMessages([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [applyConversation, getToken, refreshConversationList, user?.id]);
 
   useEffect(() => {
     if (!isSignedIn || !isLoaded || !user?.id) {
       setHistoryReady(false);
       setHistoryLoading(false);
+      setHistoryError(null);
       return;
     }
 
-    let cancelled = false;
-    setHistoryLoading(true);
-    setHistoryReady(false);
-
-    void (async () => {
-      await refreshConversationList();
-      const active = await ensureActiveConversation(getToken, user.id);
-      if (cancelled) return;
-      applyConversation(active.id, active.messages, active.messages.length === 0);
-      setHistoryLoading(false);
-      setHistoryReady(true);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isSignedIn, isLoaded, user?.id, getToken, applyConversation, refreshConversationList]);
+    void initChatFromCloud();
+  }, [isSignedIn, isLoaded, user?.id, initChatFromCloud]);
 
   useEffect(() => {
     if (!historyReady) return;
@@ -310,8 +331,13 @@ export function ContactChatPanel() {
   const persistConversation = useCallback(
     (next: ChatMsg[]) => {
       if (!user?.id || !conversationId) return;
-      void saveConversation(getToken, user.id, conversationId, next);
-      void refreshConversationList();
+      void saveConversation(getToken, user.id, conversationId, next)
+        .then(() => refreshConversationList())
+        .catch((err) => {
+          setHistoryError(
+            err instanceof ChatHistoryError ? err.message : "Could not save chat to the cloud.",
+          );
+        });
     },
     [conversationId, getToken, refreshConversationList, user?.id],
   );
@@ -629,9 +655,23 @@ export function ContactChatPanel() {
             onDeleteChat={() => void handleDeleteChat()}
           />
 
+          {historyError && !historyReady && !historyLoading ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-12 text-center">
+              <p className="max-w-md text-sm font-semibold text-red-600">{historyError}</p>
+              <p className="max-w-sm text-xs text-[var(--text-muted)]">
+                Chats are saved to your account in the cloud so they follow you across devices.
+              </p>
+              <Button variant="border" onClick={() => void initChatFromCloud()}>
+                Retry
+              </Button>
+            </div>
+          ) : null}
+
           <div
             ref={messagesEl}
-            className="chat-messages-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+            className={`chat-messages-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain ${
+              historyError && !historyReady ? "hidden" : ""
+            }`}
             data-chat-scroll
             data-lenis-prevent
             data-lenis-prevent-wheel
@@ -653,6 +693,12 @@ export function ContactChatPanel() {
                     {t("chat-ready-subtitle")}
                   </p>
                 </div>
+              )}
+
+              {historyError && (
+                <p className="rounded-lg bg-red-500/10 px-3 py-2 text-center text-sm font-semibold text-red-600">
+                  {historyError}
+                </p>
               )}
 
               {fileError && (

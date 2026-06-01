@@ -1,7 +1,18 @@
 import type { ChatMessage } from "@/lib/contactAi";
 
 const STORAGE_PREFIX = "kofiyesu-chat-v2";
-const MAX_LOCAL_MESSAGES = 120;
+const MIGRATION_FLAG_PREFIX = "kofiyesu-chat-cloud-migrated";
+const MAX_MESSAGES = 120;
+
+export class ChatHistoryError extends Error {
+  status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = "ChatHistoryError";
+    this.status = status;
+  }
+}
 
 export interface ChatConversationSummary {
   id: string;
@@ -13,7 +24,6 @@ export interface ChatConversationSummary {
 }
 
 interface LocalStore {
-  activeId: string | null;
   conversations: Array<{
     id: string;
     title: string;
@@ -25,6 +35,10 @@ interface LocalStore {
 
 function storageKey(userId: string) {
   return `${STORAGE_PREFIX}:${userId}`;
+}
+
+function migrationFlagKey(userId: string) {
+  return `${MIGRATION_FLAG_PREFIX}:${userId}`;
 }
 
 export function ensureMessageIds(messages: ChatMessage[]): ChatMessage[] {
@@ -43,7 +57,7 @@ export function deriveTitle(messages: ChatMessage[]): string {
 }
 
 export function serializeMessagesForStorage(messages: ChatMessage[]): ChatMessage[] {
-  return ensureMessageIds(messages.slice(-MAX_LOCAL_MESSAGES)).map((m) => ({
+  return ensureMessageIds(messages.slice(-MAX_MESSAGES)).map((m) => ({
     id: m.id,
     role: m.role,
     content: m.content,
@@ -56,7 +70,7 @@ export function serializeMessagesForStorage(messages: ChatMessage[]): ChatMessag
   }));
 }
 
-function parseMessages(raw: unknown): ChatMessage[] {
+export function parseMessages(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) return [];
   const out: ChatMessage[] = [];
   for (const item of raw) {
@@ -100,202 +114,244 @@ function parseAttachments(raw: unknown): ChatMessage["attachments"] {
 function readLocalStore(userId: string): LocalStore {
   try {
     const raw = localStorage.getItem(storageKey(userId));
-    if (!raw) return { activeId: null, conversations: [] };
-    const parsed = JSON.parse(raw) as LocalStore;
+    if (!raw) return { conversations: [] };
+    const parsed = JSON.parse(raw) as LocalStore & { activeId?: string };
     return {
-      activeId: parsed.activeId ?? null,
       conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
     };
   } catch {
-    return { activeId: null, conversations: [] };
+    return { conversations: [] };
   }
 }
 
-function writeLocalStore(userId: string, store: LocalStore) {
+function clearLocalStore(userId: string) {
   try {
-    localStorage.setItem(storageKey(userId), JSON.stringify(store));
+    localStorage.removeItem(storageKey(userId));
   } catch {
-    /* quota */
+    /* ignore */
   }
 }
 
-function newLocalId() {
-  return `local-${crypto.randomUUID()}`;
+function markMigrationDone(userId: string) {
+  try {
+    localStorage.setItem(migrationFlagKey(userId), "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+function hasMigrationDone(userId: string): boolean {
+  try {
+    return localStorage.getItem(migrationFlagKey(userId)) === "1";
+  } catch {
+    return false;
+  }
 }
 
 async function authFetch(
   getToken: () => Promise<string | null>,
   init: RequestInit & { query?: Record<string, string> },
-): Promise<Response | null> {
+): Promise<Response> {
   const token = await getToken();
-  if (!token) return null;
+  if (!token) {
+    throw new ChatHistoryError("Sign in required", 401);
+  }
 
-  const qs = init.query
-    ? `?${new URLSearchParams(init.query).toString()}`
-    : "";
+  const qs = init.query ? `?${new URLSearchParams(init.query).toString()}` : "";
   const { query: _q, ...rest } = init;
 
-  return fetch(`/api/chat/conversation${qs}`, {
-    ...rest,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...(rest.headers ?? {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`/api/chat/conversation${qs}`, {
+      ...rest,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...(rest.headers ?? {}),
+      },
+    });
+  } catch {
+    throw new ChatHistoryError("Could not reach chat sync. Check your connection.");
+  }
+
+  if (res.status === 503) {
+    throw new ChatHistoryError(
+      "Chat history requires the database. Set DATABASE_URL on the server.",
+      503,
+    );
+  }
+
+  return res;
+}
+
+async function parseApiError(res: Response, fallback: string): Promise<never> {
+  let message = fallback;
+  try {
+    const data = (await res.json()) as { error?: string };
+    if (data.error) message = data.error;
+  } catch {
+    /* ignore */
+  }
+  throw new ChatHistoryError(message, res.status);
+}
+
+/** One-time upload of legacy browser-only chats after sign-in. */
+async function migrateLocalConversationsToCloud(
+  getToken: () => Promise<string | null>,
+  userId: string,
+): Promise<void> {
+  if (hasMigrationDone(userId)) return;
+
+  const store = readLocalStore(userId);
+  if (store.conversations.length === 0) {
+    markMigrationDone(userId);
+    return;
+  }
+
+  const listRes = await authFetch(getToken, { method: "GET" });
+  if (!listRes.ok) {
+    await parseApiError(listRes, "Could not sync chat history");
+  }
+
+  const listData = (await listRes.json()) as { conversations?: ChatConversationSummary[] };
+  if ((listData.conversations?.length ?? 0) > 0) {
+    clearLocalStore(userId);
+    markMigrationDone(userId);
+    return;
+  }
+
+  const sorted = [...store.conversations].sort((a, b) =>
+    a.updatedAt.localeCompare(b.updatedAt),
+  );
+
+  for (const conv of sorted) {
+    const messages = serializeMessagesForStorage(parseMessages(conv.messages));
+    const title = conv.title?.trim() || deriveTitle(messages);
+
+    const createRes = await authFetch(getToken, {
+      method: "POST",
+      body: JSON.stringify({ title }),
+    });
+    if (!createRes.ok) {
+      await parseApiError(createRes, "Could not migrate a conversation");
+    }
+
+    const created = (await createRes.json()) as { id: string };
+    const saveRes = await authFetch(getToken, {
+      method: "PUT",
+      body: JSON.stringify({ id: created.id, messages, title }),
+    });
+    if (!saveRes.ok) {
+      await parseApiError(saveRes, "Could not migrate messages");
+    }
+  }
+
+  clearLocalStore(userId);
+  markMigrationDone(userId);
 }
 
 export async function listConversations(
   getToken: () => Promise<string | null>,
   userId: string,
 ): Promise<ChatConversationSummary[]> {
-  try {
-    const res = await authFetch(getToken, { method: "GET" });
-    if (res?.ok) {
-      const data = (await res.json()) as { conversations?: ChatConversationSummary[] };
-      return data.conversations ?? [];
-    }
-  } catch {
-    /* local */
+  await migrateLocalConversationsToCloud(getToken, userId);
+
+  const res = await authFetch(getToken, { method: "GET" });
+  if (!res.ok) {
+    await parseApiError(res, "Could not load chat history");
   }
 
-  const store = readLocalStore(userId);
-  return store.conversations
-    .map((c) => ({
-      id: c.id,
-      title: c.title,
-      preview:
-        [...c.messages].reverse().find((m) => m.content.trim())?.content.slice(0, 64) ?? "No messages yet",
-      updatedAt: c.updatedAt,
-      createdAt: c.createdAt,
-      messageCount: c.messages.length,
-    }))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const data = (await res.json()) as { conversations?: ChatConversationSummary[] };
+  return data.conversations ?? [];
 }
 
 export async function loadConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
+  _userId: string,
   conversationId: string,
 ): Promise<{ id: string; title: string; messages: ChatMessage[] } | null> {
-  try {
-    const res = await authFetch(getToken, {
-      method: "GET",
-      query: { id: conversationId },
-    });
-    if (res?.ok) {
-      const data = (await res.json()) as {
-        id: string;
-        title: string;
-        messages?: unknown;
-      };
-      const messages = parseMessages(data.messages);
-      return { id: data.id, title: data.title, messages };
-    }
-  } catch {
-    /* local */
+  if (conversationId.startsWith("local-")) return null;
+
+  const res = await authFetch(getToken, {
+    method: "GET",
+    query: { id: conversationId },
+  });
+
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    await parseApiError(res, "Could not load conversation");
   }
 
-  const store = readLocalStore(userId);
-  const found = store.conversations.find((c) => c.id === conversationId);
-  if (!found) return null;
-  return { id: found.id, title: found.title, messages: parseMessages(found.messages) };
+  const data = (await res.json()) as {
+    id: string;
+    title: string;
+    messages?: unknown;
+  };
+
+  return {
+    id: data.id,
+    title: data.title,
+    messages: parseMessages(data.messages),
+  };
 }
 
 export async function createConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
+  _userId: string,
   title = "New chat",
 ): Promise<{ id: string; title: string }> {
-  try {
-    const res = await authFetch(getToken, {
-      method: "POST",
-      body: JSON.stringify({ title }),
-    });
-    if (res?.ok) {
-      const data = (await res.json()) as { id: string; title: string };
-      return data;
-    }
-  } catch {
-    /* local */
+  const res = await authFetch(getToken, {
+    method: "POST",
+    body: JSON.stringify({ title }),
+  });
+
+  if (!res.ok) {
+    await parseApiError(res, "Could not create conversation");
   }
 
-  const id = newLocalId();
-  const now = new Date().toISOString();
-  const store = readLocalStore(userId);
-  store.conversations.unshift({
-    id,
-    title,
-    messages: [],
-    updatedAt: now,
-    createdAt: now,
-  });
-  store.activeId = id;
-  writeLocalStore(userId, store);
-  return { id, title };
+  const data = (await res.json()) as { id: string; title: string };
+  return { id: data.id, title: data.title };
 }
 
 export async function saveConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
+  _userId: string,
   conversationId: string,
   messages: ChatMessage[],
   title?: string,
 ): Promise<void> {
+  if (conversationId.startsWith("local-")) {
+    throw new ChatHistoryError("Invalid conversation. Start a new chat.");
+  }
+
   const payload = serializeMessagesForStorage(messages);
   const resolvedTitle = title?.trim() || deriveTitle(payload);
-  const now = new Date().toISOString();
 
-  const store = readLocalStore(userId);
-  const idx = store.conversations.findIndex((c) => c.id === conversationId);
-  if (idx >= 0) {
-    store.conversations[idx] = {
-      ...store.conversations[idx],
-      title: resolvedTitle,
-      messages: payload,
-      updatedAt: now,
-    };
-  } else {
-    store.conversations.unshift({
-      id: conversationId,
-      title: resolvedTitle,
-      messages: payload,
-      updatedAt: now,
-      createdAt: now,
-    });
-  }
-  store.activeId = conversationId;
-  writeLocalStore(userId, store);
+  const res = await authFetch(getToken, {
+    method: "PUT",
+    body: JSON.stringify({ id: conversationId, messages: payload, title: resolvedTitle }),
+  });
 
-  try {
-    await authFetch(getToken, {
-      method: "PUT",
-      body: JSON.stringify({ id: conversationId, messages: payload, title: resolvedTitle }),
-    });
-  } catch {
-    /* local only */
+  if (!res.ok) {
+    await parseApiError(res, "Could not save chat");
   }
 }
 
 export async function deleteConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
+  _userId: string,
   conversationId: string,
 ): Promise<void> {
-  const store = readLocalStore(userId);
-  store.conversations = store.conversations.filter((c) => c.id !== conversationId);
-  if (store.activeId === conversationId) {
-    store.activeId = store.conversations[0]?.id ?? null;
-  }
-  writeLocalStore(userId, store);
+  if (conversationId.startsWith("local-")) return;
 
-  try {
-    await authFetch(getToken, {
-      method: "DELETE",
-      query: { id: conversationId },
-    });
-  } catch {
-    /* ignore */
+  const res = await authFetch(getToken, {
+    method: "DELETE",
+    query: { id: conversationId },
+  });
+
+  if (res.status === 404) return;
+  if (!res.ok) {
+    await parseApiError(res, "Could not delete conversation");
   }
 }
 
@@ -307,7 +363,7 @@ export async function clearConversationMessages(
   await saveConversation(getToken, userId, conversationId, [], "New chat");
 }
 
-/** Bootstrap: pick latest conversation or create one. */
+/** Load the most recent cloud conversation or create one. */
 export async function ensureActiveConversation(
   getToken: () => Promise<string | null>,
   userId: string,
@@ -315,7 +371,9 @@ export async function ensureActiveConversation(
   const list = await listConversations(getToken, userId);
   if (list.length > 0) {
     const loaded = await loadConversation(getToken, userId, list[0].id);
-    if (loaded) return { ...loaded, messages: parseMessages(loaded.messages) };
+    if (loaded) {
+      return { ...loaded, messages: parseMessages(loaded.messages) };
+    }
   }
 
   const created = await createConversation(getToken, userId);
