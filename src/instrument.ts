@@ -39,10 +39,26 @@ if (dsn) {
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
     enableLogs: true,
+    ignoreErrors: [
+      /^ChatHistoryError$/,
+      /Could not reach chat sync/i,
+      /Chat sync was cancelled/i,
+      /^Sign in required$/,
+    ],
     beforeSend(event, hint) {
       if (isChunkLoadError(hint.originalException)) return null;
       const message = event.exception?.values?.[0]?.value ?? "";
       if (isChunkLoadError(message)) return null;
+      if (/Could not reach chat sync/i.test(message)) return null;
+
+      const ex = hint.originalException;
+      if (ex && typeof ex === "object" && (ex as Error).name === "ChatHistoryError") {
+        const report =
+          "reportToMonitoring" in ex
+            ? Boolean((ex as { reportToMonitoring?: boolean }).reportToMonitoring)
+            : false;
+        if (!report) return null;
+      }
       return event;
     },
   });

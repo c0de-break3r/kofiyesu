@@ -9,6 +9,15 @@ import { isDatabaseConfigured, prisma } from "../../../api/lib/prisma.js";
 import { toInputJson } from "../../../api/lib/prismaJson.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    return await handleConversation(req, res);
+  } catch (err) {
+    console.error("[chat/conversation]", err);
+    return res.status(500).json({ error: "Chat sync failed" });
+  }
+}
+
+async function handleConversation(req: VercelRequest, res: VercelResponse) {
   const userId = await requireSignedInUserId(req);
   if (!userId) {
     return res.status(401).json({ error: "Sign in required" });

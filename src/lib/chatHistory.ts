@@ -6,11 +6,15 @@ const MAX_MESSAGES = 120;
 
 export class ChatHistoryError extends Error {
   status?: number;
+  /** Expected client/network issues — do not report to error monitoring. */
+  readonly reportToMonitoring: boolean;
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, options?: { reportToMonitoring?: boolean }) {
     super(message);
     this.name = "ChatHistoryError";
     this.status = status;
+    this.reportToMonitoring =
+      options?.reportToMonitoring ?? (status !== 0 && status !== 401);
   }
 }
 
@@ -148,36 +152,95 @@ function hasMigrationDone(userId: string): boolean {
   }
 }
 
+const CHAT_API = "/api/chat/conversation";
+
+function chatApiUrl(path = CHAT_API): string {
+  if (typeof window === "undefined") return path;
+  return new URL(path, window.location.origin).href;
+}
+
+async function resolveAuthToken(getToken: () => Promise<string | null>): Promise<string> {
+  const delays = [0, 150, 300, 500, 800, 1200];
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) {
+      await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
+    try {
+      const token = await getToken();
+      if (token) return token;
+    } catch {
+      /* Clerk may still be hydrating the session */
+    }
+  }
+  throw new ChatHistoryError("Sign in required", 401, { reportToMonitoring: false });
+}
+
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
+
+async function fetchChatApi(
+  token: string,
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  const requestInit: RequestInit = {
+    ...init,
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(init.headers ?? {}),
+    },
+  };
+
+  let lastNetworkError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await fetch(url, requestInit);
+    } catch (err) {
+      lastNetworkError = err;
+      if (isAbortError(err)) {
+        throw new ChatHistoryError("Chat sync was cancelled.", 0, { reportToMonitoring: false });
+      }
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 350));
+      }
+    }
+  }
+
+  console.warn("[chatHistory] network error", lastNetworkError);
+  throw new ChatHistoryError(
+    "Could not reach chat sync. Check your connection and try again.",
+    0,
+    { reportToMonitoring: false },
+  );
+}
+
 async function authFetch(
   getToken: () => Promise<string | null>,
   init: RequestInit & { query?: Record<string, string> },
 ): Promise<Response> {
-  const token = await getToken();
-  if (!token) {
-    throw new ChatHistoryError("Sign in required", 401);
-  }
+  const token = await resolveAuthToken(getToken);
 
   const qs = init.query ? `?${new URLSearchParams(init.query).toString()}` : "";
   const { query: _q, ...rest } = init;
+  const url = `${chatApiUrl()}${qs}`;
 
-  let res: Response;
-  try {
-    res = await fetch(`/api/chat/conversation${qs}`, {
-      ...rest,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        ...(rest.headers ?? {}),
-      },
-    });
-  } catch {
-    throw new ChatHistoryError("Could not reach chat sync. Check your connection.");
+  let res = await fetchChatApi(token, url, rest);
+
+  if (res.status >= 500) {
+    await new Promise((r) => setTimeout(r, 400));
+    res = await fetchChatApi(token, url, rest);
   }
 
   if (res.status === 503) {
     throw new ChatHistoryError(
-      "Chat history requires the database. Set DATABASE_URL on the server.",
+      "Chat history is temporarily unavailable. Try again in a moment.",
       503,
+      { reportToMonitoring: true },
     );
   }
 
@@ -192,7 +255,9 @@ async function parseApiError(res: Response, fallback: string): Promise<never> {
   } catch {
     /* ignore */
   }
-  throw new ChatHistoryError(message, res.status);
+  throw new ChatHistoryError(message, res.status, {
+    reportToMonitoring: res.status >= 500,
+  });
 }
 
 /** One-time upload of legacy browser-only chats after sign-in. */
@@ -321,7 +386,9 @@ export async function saveConversation(
   title?: string,
 ): Promise<void> {
   if (conversationId.startsWith("local-")) {
-    throw new ChatHistoryError("Invalid conversation. Start a new chat.");
+    throw new ChatHistoryError("Invalid conversation. Start a new chat.", undefined, {
+      reportToMonitoring: false,
+    });
   }
 
   const payload = serializeMessagesForStorage(messages);

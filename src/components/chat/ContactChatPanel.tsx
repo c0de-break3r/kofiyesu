@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useAuth, useUser, SignInButton } from "@clerk/clerk-react";
+import { useAuth, useSession, useUser, SignInButton } from "@clerk/clerk-react";
 import { BackIconLink } from "@/components/layout/BackIconLink";
 import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
@@ -62,6 +62,7 @@ function newUserMessage(content: string, attachments?: ChatMessageAttachmentView
 
 export function ContactChatPanel() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { session } = useSession();
   const { user } = useUser();
   const { open: adminOpen } = useAdminPanel();
 
@@ -170,12 +171,21 @@ export function ContactChatPanel() {
     return ensureMessageIds([{ role: "assistant", content: getWelcomeMessage(name) }]);
   }, [user]);
 
+  const reportHistoryError = useCallback((err: unknown, fallback: string) => {
+    const message = err instanceof ChatHistoryError ? err.message : fallback;
+    setHistoryError(message);
+  }, []);
+
   const refreshConversationList = useCallback(async () => {
     if (!user?.id) return;
-    const list = await listConversations(getToken, user.id);
-    setConversations(list);
-    setHistoryError(null);
-  }, [getToken, user?.id]);
+    try {
+      const list = await listConversations(getToken, user.id);
+      setConversations(list);
+      setHistoryError(null);
+    } catch (err) {
+      reportHistoryError(err, "Could not refresh chat history.");
+    }
+  }, [getToken, reportHistoryError, user?.id]);
 
   const applyConversation = useCallback(
     (id: string, loadedMessages: ChatMsg[], isEmpty: boolean) => {
@@ -238,15 +248,18 @@ export function ContactChatPanel() {
   }, [applyConversation, getToken, refreshConversationList, user?.id]);
 
   useEffect(() => {
-    if (!isSignedIn || !isLoaded || !user?.id) {
+    const sessionActive = session?.status === "active";
+    if (!isSignedIn || !isLoaded || !user?.id || !sessionActive) {
       setHistoryReady(false);
       setHistoryLoading(false);
       setHistoryError(null);
       return;
     }
 
-    void initChatFromCloud();
-  }, [isSignedIn, isLoaded, user?.id, initChatFromCloud]);
+    void initChatFromCloud().catch(() => {
+      /* errors handled in initChatFromCloud */
+    });
+  }, [isSignedIn, isLoaded, user?.id, session?.status, initChatFromCloud]);
 
   useEffect(() => {
     if (!historyReady) return;
@@ -334,9 +347,7 @@ export function ContactChatPanel() {
       void saveConversation(getToken, user.id, conversationId, next)
         .then(() => refreshConversationList())
         .catch((err) => {
-          setHistoryError(
-            err instanceof ChatHistoryError ? err.message : "Could not save chat to the cloud.",
-          );
+          reportHistoryError(err, "Could not save chat to the cloud.");
         });
     },
     [conversationId, getToken, refreshConversationList, user?.id],
@@ -386,33 +397,45 @@ export function ContactChatPanel() {
 
   const handleNewChat = async () => {
     if (!user?.id) return;
-    const created = await createConversation(getToken, user.id);
-    await refreshConversationList();
-    applyConversation(created.id, [], true);
-    setHistoryOpen(false);
+    try {
+      const created = await createConversation(getToken, user.id);
+      await refreshConversationList();
+      applyConversation(created.id, [], true);
+      setHistoryOpen(false);
+    } catch (err) {
+      reportHistoryError(err, "Could not start a new chat.");
+    }
   };
 
   const handleClearChat = async () => {
     if (!user?.id || !conversationId) return;
-    await clearConversationMessages(getToken, user.id, conversationId);
-    await refreshConversationList();
-    applyConversation(conversationId, [], true);
-    setHistoryOpen(false);
+    try {
+      await clearConversationMessages(getToken, user.id, conversationId);
+      await refreshConversationList();
+      applyConversation(conversationId, [], true);
+      setHistoryOpen(false);
+    } catch (err) {
+      reportHistoryError(err, "Could not clear this chat.");
+    }
   };
 
   const handleDeleteChat = async () => {
     if (!user?.id || !conversationId) return;
-    await deleteConversation(getToken, user.id, conversationId);
-    const list = await listConversations(getToken, user.id);
-    setConversations(list);
-    if (list.length > 0) {
-      await loadConversationById(list[0].id);
-    } else {
-      const created = await createConversation(getToken, user.id);
-      await refreshConversationList();
-      applyConversation(created.id, [], true);
+    try {
+      await deleteConversation(getToken, user.id, conversationId);
+      const list = await listConversations(getToken, user.id);
+      setConversations(list);
+      if (list.length > 0) {
+        await loadConversationById(list[0].id);
+      } else {
+        const created = await createConversation(getToken, user.id);
+        await refreshConversationList();
+        applyConversation(created.id, [], true);
+      }
+      setHistoryOpen(false);
+    } catch (err) {
+      reportHistoryError(err, "Could not delete this chat.");
     }
-    setHistoryOpen(false);
   };
 
   const handlePickFiles = async (files: FileList | null) => {
@@ -621,7 +644,9 @@ export function ContactChatPanel() {
             <button
               type="button"
               onClick={() => {
-                void refreshConversationList();
+                void refreshConversationList().catch((err) =>
+                  reportHistoryError(err, "Could not refresh chat history."),
+                );
                 setHistoryOpen(true);
               }}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-muted)] shadow-sm transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
