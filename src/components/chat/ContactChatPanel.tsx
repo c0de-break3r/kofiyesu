@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
 import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
 import { ChatMessage, ChatTyping } from "./ChatMessage";
+import { ChatPackageOptions } from "./ChatPackageOptions";
 import { t } from "@/i18n/en";
 import {
   type ChatMessage as ChatMsg,
@@ -32,8 +33,10 @@ import {
   saveConversation,
 } from "@/lib/chatHistory";
 import { shouldQueueInquiry } from "@/lib/inquiryQueue";
+import { readResponseJson } from "@/lib/readResponseJson";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
+import { usePaystackPayment, type PaymentRow } from "@/hooks/usePaystackPayment";
 import { social } from "@/content/social";
 
 function toMessageAttachments(files: ChatAttachment[]): ChatMessageAttachmentView[] {
@@ -72,6 +75,21 @@ export function ContactChatPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [routing, setRouting] = useState<RoutingResult | null>(null);
   const [showEscalateBanner, setShowEscalateBanner] = useState(false);
+  const [payingPackageId, setPayingPackageId] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [paySuccess, setPaySuccess] = useState(false);
+
+  const { pay, paying } = usePaystackPayment({
+    onSuccess: () => {
+      setPaySuccess(true);
+      setPayError(null);
+      setPayingPackageId(null);
+    },
+    onError: (msg) => {
+      setPayError(msg);
+      setPayingPackageId(null);
+    },
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const messagesEl = useRef<HTMLDivElement>(null);
@@ -216,7 +234,44 @@ export function ContactChatPanel() {
       ro.disconnect();
       window.removeEventListener("resize", applyPadding);
     };
-  }, [routing, pendingFiles.length, isSignedIn, historyOpen, adminOpen]);
+  }, [routing, paySuccess, payError, pendingFiles.length, isSignedIn, historyOpen, adminOpen]);
+
+  const handlePackagePay = useCallback(
+    async (packageId: string) => {
+      if (!isSignedIn || paying) return;
+      setPayError(null);
+      setPaySuccess(false);
+      setPayingPackageId(packageId);
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Sign in required");
+
+        const res = await fetch("/api/payments", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            package_id: packageId,
+            user_email: user?.primaryEmailAddress?.emailAddress ?? null,
+            user_name: user?.fullName ?? null,
+          }),
+        });
+
+        const data = await readResponseJson<{ payment: PaymentRow; error?: string }>(res);
+        if (!res.ok || !data?.payment) {
+          throw new Error(data?.error ?? "Could not start payment");
+        }
+
+        await pay(data.payment);
+      } catch (err) {
+        setPayError(err instanceof Error ? err.message : t("chat-pay-error"));
+        setPayingPackageId(null);
+      }
+    },
+    [getToken, isSignedIn, pay, paying, user],
+  );
 
   const persistConversation = useCallback(
     (next: ChatMsg[]) => {
@@ -242,6 +297,8 @@ export function ContactChatPanel() {
       ];
       setRouting(result);
       setShowEscalateBanner(Boolean(result.escalateToAdmin));
+      setPayError(null);
+      if (!result.showPaymentOptions) setPaySuccess(false);
       setMessages(finalMessages);
       persistConversation(finalMessages);
 
@@ -341,6 +398,8 @@ export function ContactChatPanel() {
     setIsLoading(true);
     setRouting(null);
     setShowEscalateBanner(false);
+    setPayError(null);
+    setPaySuccess(false);
     setEditingId(null);
 
     const result = await routeInquiryWithAi({
@@ -359,6 +418,7 @@ export function ContactChatPanel() {
     ];
     setRouting(result);
     setShowEscalateBanner(Boolean(result.escalateToAdmin));
+    if (!result.showPaymentOptions) setPaySuccess(false);
     setMessages(finalMessages);
     persistConversation(finalMessages);
 
@@ -532,6 +592,25 @@ export function ContactChatPanel() {
                 ))}
 
               {historyReady && isLoading && <ChatTyping />}
+
+              {historyReady && routing?.showPaymentOptions && (
+                <ChatPackageOptions
+                  payingPackageId={paying ? payingPackageId : null}
+                  onPay={(packageId) => void handlePackagePay(packageId)}
+                />
+              )}
+
+              {paySuccess && (
+                <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                  {t("pay-success")}
+                </p>
+              )}
+
+              {payError && (
+                <p className="rounded-xl bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-600">
+                  {payError}
+                </p>
+              )}
             </div>
           </div>
 

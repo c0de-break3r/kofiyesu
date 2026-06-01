@@ -12,6 +12,14 @@ export const ESCALATION_PATTERN =
 export const INFORMATIONAL_PATTERN =
   /^(what|which|who|how|tell me|can you explain|do you|does (he|obed|kofi)|describe|list|show me|any examples?)\b|what (can|could|does|do|kind|type|sort|websites?|apps?|projects?|services?)|what (is|are) (your|his|obed|kofi)|who (is|are) (obed|kofi|you|he)|about (obed|kofi|your|his) (skills|work|experience|projects|services|stack)|your (skills|stack|experience|projects|services)|how (does|do) (you|he|obed|kofi) (work|build)|what do you (build|make|offer|specialize)|what websites? can|what (apps?|products?) can|portfolio|résumé|resume|cv\b/i;
 
+/** Pricing / next-step — show Paystack packages in chat. */
+export const PAYMENT_OR_NEXT_STEP_PATTERN =
+  /pay|payment|price|pricing|how much|cost|deposit|package|kickoff|discovery session|paystack|mobile money|card payment|ready to (pay|start|proceed)|next step|get started|proceed with|book (a |the )?session/i;
+
+/** Project specs discussed — offer packages after scoping. */
+export const PROJECT_SPECS_PATTERN =
+  /budget|quote|timeline|deadline|scope|specification|requirements|feature list|milestone|deliverable|stack|platform|users?|integration/i;
+
 /** Clear business intent — reasonable to queue for Obed. */
 export const BUSINESS_INTENT_PATTERN =
   /i (want|need|would like|'d like) to (hire|work|collaborate|start|build|get)|i need (a|an|help|someone)|looking for (a |an )?(developer|engineer|freelancer|pentester|consultant)|my (project|startup|company|business|app|website|product)|we (need|want|are looking)|get (a )?quote|send (me )?a (quote|proposal)|work together on|start a project|budget (is|of|around)|timeline (is|of|by)|deadline (is|by)|ready to (pay|hire|start)|can you build (my|a|an|our)|build (my|our|a|an) (website|app|product)|pentest (my|our|this)|audit (my|our|this)|hire (you|obed|kofi|him)/i;
@@ -46,6 +54,15 @@ export function shouldEscalateToAdmin(text: string): boolean {
   return ESCALATION_PATTERN.test(text.trim());
 }
 
+export function shouldShowPaymentOptions(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (PAYMENT_OR_NEXT_STEP_PATTERN.test(lower)) return true;
+  if (hasBusinessIntent(trimmed) && PROJECT_SPECS_PATTERN.test(lower)) return true;
+  return false;
+}
+
 export interface QueueDecisionInput {
   inquiryType: InquiryType;
   userMessage: string;
@@ -68,6 +85,8 @@ export function shouldQueueInquiry(input: QueueDecisionInput): boolean {
 
   const urgent = Boolean(input.escalateToAdmin);
   const business = hasBusinessIntent(message);
+
+  if (shouldShowPaymentOptions(message) && !urgent) return false;
 
   if (input.queueInquiry === true) {
     return business || urgent;

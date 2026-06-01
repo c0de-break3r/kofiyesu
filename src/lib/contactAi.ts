@@ -2,10 +2,13 @@ import { type InquiryType, inquiryRoutes, getInquiryRoute } from "@/content/cont
 import { chatAssistantBio } from "@/content/about";
 import type { ChatAttachment } from "@/lib/chatAttachments";
 import { attachmentsToApiPayload } from "@/lib/chatAttachments";
+import { formatPackagesForReply } from "@/content/chatPackages";
 import {
   ESCALATION_PATTERN,
+  PAYMENT_OR_NEXT_STEP_PATTERN,
   hasBusinessIntent,
   isInformationalQuestion,
+  shouldShowPaymentOptions,
   wantsToTalkToObed,
 } from "@/lib/inquiryClassifier";
 
@@ -31,7 +34,49 @@ export interface RoutingResult {
   escalateToAdmin?: boolean;
   showEmailCta?: boolean;
   queueInquiry?: boolean;
+  showPaymentOptions?: boolean;
   source?: "gemini" | "openai" | "fallback";
+}
+
+export function mergeRoutingFlags(result: RoutingResult, userText: string): RoutingResult {
+  const informational = isInformationalQuestion(userText);
+  const business = hasBusinessIntent(userText);
+  const talkToObed = wantsToTalkToObed(userText);
+  const paymentContext = shouldShowPaymentOptions(userText);
+
+  let showPaymentOptions = result.showPaymentOptions ?? paymentContext;
+  let queueInquiry = result.queueInquiry;
+  let showEmailCta = result.showEmailCta;
+  let escalated = result.escalateToAdmin ?? ESCALATION_PATTERN.test(userText);
+
+  if (informational) {
+    queueInquiry = false;
+    showEmailCta = false;
+    escalated = false;
+    if (!paymentContext) showPaymentOptions = false;
+  } else if (talkToObed && !business) {
+    queueInquiry = false;
+    showEmailCta = false;
+    escalated = false;
+  } else if (paymentContext && !escalated) {
+    queueInquiry = false;
+    showEmailCta = false;
+    showPaymentOptions = true;
+  } else if (queueInquiry === undefined) {
+    queueInquiry = Boolean(business && (escalated || result.showEmailCta || result.confidence === "high"));
+  }
+
+  if (escalated && !business && !queueInquiry) {
+    escalated = false;
+  }
+
+  return {
+    ...result,
+    escalateToAdmin: escalated,
+    showEmailCta: Boolean(showEmailCta && (queueInquiry || escalated)),
+    queueInquiry: Boolean(queueInquiry),
+    showPaymentOptions,
+  };
 }
 
 const PORTFOLIO_ANSWER =
@@ -92,6 +137,18 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
     };
   }
 
+  if (PAYMENT_OR_NEXT_STEP_PATTERN.test(lower)) {
+    return {
+      inquiryType: type,
+      reply: `Obed offers fixed packages you can pay for right here in chat (Paystack — card or Mobile Money):\n\n${formatPackagesForReply()}\n\nPick one below when you're ready. For a custom scope beyond these, describe your project and we can line up a bespoke quote.`,
+      confidence: "high",
+      showPaymentOptions: true,
+      queueInquiry: false,
+      showEmailCta: false,
+      escalateToAdmin: false,
+    };
+  }
+
   if (informational || /what (websites?|apps?|can|kind)|build for me|services|portfolio|projects/.test(lower)) {
     return {
       inquiryType: type,
@@ -114,10 +171,11 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
     const route = getInquiryRoute(type);
     return {
       inquiryType: type,
-      reply: `Got it — ${route.description} I've added this to Obed's inbox. Share any extra details (timeline, scope, budget) here and he'll follow up.`,
+      reply: `Got it — ${route.description} Share scope, timeline, and goals here and I'll help you choose the right next step. Standard packages are below if you want to reserve a slot or discovery call.`,
       confidence: "high",
-      showEmailCta: true,
-      queueInquiry: true,
+      showPaymentOptions: true,
+      queueInquiry: false,
+      showEmailCta: false,
     };
   }
 
@@ -125,8 +183,9 @@ const buildReply = (type: InquiryType, escalate: boolean, userMessage: string): 
     const route = getInquiryRoute(type);
     return {
       inquiryType: type,
-      reply: `${route.description} Share a few details (scope, timeline, goals) and we can take it from there.`,
+      reply: `${route.description} Share a few details (scope, timeline, goals) and I can answer questions or show payment options when you're ready.`,
       confidence: "medium",
+      showPaymentOptions: shouldShowPaymentOptions(userMessage),
       queueInquiry: false,
     };
   }
@@ -206,16 +265,16 @@ export const routeInquiryWithAi = async ({
 
     const data = (await res.json()) as RoutingResult;
     if (data.inquiryType && data.reply) {
-      return data;
+      return mergeRoutingFlags(data, lastUser?.content ?? "");
     }
   } catch {
     /* fallback */
   }
 
-  return routeInquiryLocally(lastUser?.content ?? "", hasFiles);
+  return mergeRoutingFlags(routeInquiryLocally(lastUser?.content ?? "", hasFiles), lastUser?.content ?? "");
 };
 
 export const getWelcomeMessage = (name?: string | null): string => {
   const greeting = name ? `Hi ${name.split(" ")[0]}!` : "Hi!";
-  return `${greeting} I'm Obed's assistant. Ask about his work, skills, services, or projects — or attach images, PDFs, and text files for analysis. Want Obed personally? Describe your request and I'll route it to his inbox.`;
+  return `${greeting} I'm Obed's assistant — ask anything about Obed's work, pricing, or your project specs. I can answer here and show Paystack payment options when you're ready to start. Attach images, PDFs, or text files for analysis too.`;
 };

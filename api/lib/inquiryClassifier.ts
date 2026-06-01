@@ -9,6 +9,12 @@ export const ESCALATION_PATTERN =
 export const INFORMATIONAL_PATTERN =
   /^(what|which|who|how|tell me|can you explain|do you|does (he|obed|kofi)|describe|list|show me|any examples?)\b|what (can|could|does|do|kind|type|sort|websites?|apps?|projects?|services?)|what (is|are) (your|his|obed|kofi)|who (is|are) (obed|kofi|you|he)|about (obed|kofi|your|his) (skills|work|experience|projects|services|stack)|your (skills|stack|experience|projects|services)|how (does|do) (you|he|obed|kofi) (work|build)|what do you (build|make|offer|specialize)|what websites? can|what (apps?|products?) can|portfolio|résumé|resume|cv\b/i;
 
+export const PAYMENT_OR_NEXT_STEP_PATTERN =
+  /pay|payment|price|pricing|how much|cost|deposit|package|kickoff|discovery session|paystack|mobile money|card payment|ready to (pay|start|proceed)|next step|get started|proceed with|book (a |the )?session/i;
+
+export const PROJECT_SPECS_PATTERN =
+  /budget|quote|timeline|deadline|scope|specification|requirements|feature list|milestone|deliverable|stack|platform|users?|integration/i;
+
 export const BUSINESS_INTENT_PATTERN =
   /i (want|need|would like|'d like) to (hire|work|collaborate|start|build|get)|i need (a|an|help|someone)|looking for (a |an )?(developer|engineer|freelancer|pentester|consultant)|my (project|startup|company|business|app|website|product)|we (need|want|are looking)|get (a )?quote|send (me )?a (quote|proposal)|work together on|start a project|budget (is|of|around)|timeline (is|of|by)|deadline (is|by)|ready to (pay|hire|start)|can you build (my|a|an|our)|build (my|our|a|an) (website|app|product)|pentest (my|our|this)|audit (my|our|this)|hire (you|obed|kofi|him)/i;
 
@@ -35,6 +41,15 @@ export function hasBusinessIntent(text: string): boolean {
 
 export function wantsToTalkToObed(text: string): boolean {
   return WANTS_OBED_PATTERN.test(text.trim());
+}
+
+export function shouldShowPaymentOptions(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (PAYMENT_OR_NEXT_STEP_PATTERN.test(lower)) return true;
+  if (hasBusinessIntent(trimmed) && PROJECT_SPECS_PATTERN.test(lower)) return true;
+  return false;
 }
 
 export const PORTFOLIO_SERVICES_BLURB =

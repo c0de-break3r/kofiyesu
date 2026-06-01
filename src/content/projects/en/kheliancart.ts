@@ -18,7 +18,6 @@ export default {
         type: "image",
         src: kheliancart0,
         alt: "KhelianCart grocery ecommerce store",
-        caption: "KhelianCart — grocery delivery in Ho, Ghana",
       },
     },
     {

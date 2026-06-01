@@ -27,7 +27,6 @@ const projects = [
           type: "image",
           src: "/thumbnails/kheliancart.webp",
           alt: "KhelianCart grocery ecommerce",
-          caption: "KhelianCart — grocery delivery in Ho, Ghana",
         },
       },
       {

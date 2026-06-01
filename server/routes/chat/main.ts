@@ -1,9 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { CHAT_PACKAGES_PROMPT } from "../../../api/lib/chatPackages.js";
 import {
   ESCALATION_PATTERN,
+  PAYMENT_OR_NEXT_STEP_PATTERN,
   hasBusinessIntent,
   isInformationalQuestion,
   PORTFOLIO_SERVICES_BLURB,
+  shouldShowPaymentOptions,
   wantsToTalkToObed,
 } from "../../../api/lib/inquiryClassifier.js";
 
@@ -28,6 +31,7 @@ interface ChatResponse {
   escalateToAdmin?: boolean;
   showEmailCta?: boolean;
   queueInquiry?: boolean;
+  showPaymentOptions?: boolean;
   source?: "gemini" | "openai" | "fallback";
 }
 
@@ -109,6 +113,19 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     };
   }
 
+  if (PAYMENT_OR_NEXT_STEP_PATTERN.test(lower)) {
+    return {
+      inquiryType,
+      reply: `Obed offers fixed packages you can pay for in chat (Paystack — card or Mobile Money):\n\n${CHAT_PACKAGES_PROMPT}\n\nPick a package below when you're ready. For custom scope, describe your project here first.`,
+      confidence: "high",
+      showPaymentOptions: true,
+      escalateToAdmin: false,
+      showEmailCta: false,
+      queueInquiry: false,
+      source: "fallback",
+    };
+  }
+
   if (informational || /what (websites?|apps?|can|kind)|build for me|services|portfolio|projects/.test(lower)) {
     return {
       inquiryType,
@@ -143,11 +160,12 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     };
     return {
       inquiryType,
-      reply: `Got it — ${labels[inquiryType]}. I've added this to Obed's inbox. Share any extra details (timeline, scope, budget) here and he'll follow up.`,
+      reply: `Got it — ${labels[inquiryType]}. Share scope, timeline, and goals here and I'll help you choose the right package. Standard options are below when you're ready to pay.`,
       confidence: "high",
       escalateToAdmin: false,
-      showEmailCta: true,
-      queueInquiry: true,
+      showEmailCta: false,
+      queueInquiry: false,
+      showPaymentOptions: true,
       source: "fallback",
     };
   }
@@ -161,11 +179,12 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     };
     return {
       inquiryType,
-      reply: `Happy to help with ${labels[inquiryType]}. Tell me a bit more about what you need — timeline, scope, or goals — and I can point you to the right next step.`,
+      reply: `Happy to help with ${labels[inquiryType]}. Tell me a bit more — timeline, scope, or goals — and I can answer questions or show payment options when you're ready.`,
       confidence: "medium",
       escalateToAdmin: false,
       showEmailCta: false,
       queueInquiry: false,
+      showPaymentOptions: shouldShowPaymentOptions(text),
       source: "fallback",
     };
   }
@@ -187,21 +206,26 @@ const buildSystemPrompt = (userName?: string, userEmail?: string) =>
 
 ${PORTFOLIO_SERVICES_BLURB}
 
+Standard packages (answer pricing questions using these — do not invent prices):
+${CHAT_PACKAGES_PROMPT}
+
 Rules:
-1. **Answer the visitor's question directly** in 2–5 sentences. Be helpful and conversational.
-2. **Informational questions** (what can you build, what websites/apps, skills, stack, who is Obed, portfolio examples) — answer fully. Set queueInquiry false, showEmailCta false, escalateToAdmin false.
-3. When the user asks to **talk to Obed/Kofi** without a concrete project — invite them to ask any question here first. Do NOT escalate yet. Set queueInquiry false.
-4. **Queue for Obed** (queueInquiry true) only when the user has clear business intent: wants to hire, needs a quote, describes their project/startup, pentest request, job offer, urgent human follow-up WITH substantive details.
-5. When the user shares **images, PDFs, or text files**, analyze them carefully and answer their question. queueInquiry true only if they want Obed to act on the file (e.g. review a brief), not for casual analysis.
-6. **Never** say "general inquiry", "this looks like a … inquiry", or "tap below to email" unless they explicitly want to contact Obed or speak to a human with business intent.
-7. Classify intent internally only (collaboration | security | job | general) — do not announce the category in the reply.
-8. Set escalateToAdmin true only when they need Obed personally AND provided a substantive message (not just "talk to Obed").
-9. Set showEmailCta true only when queueInquiry is true or they explicitly ask to email.
+1. **Answer every question in chat** — skills, pricing, scope, timeline, security work. Be helpful in 2–5 sentences.
+2. **Informational questions** — answer fully. queueInquiry false, showEmailCta false, escalateToAdmin false.
+3. **Pricing / payment / how much / packages / ready to pay / next step** — explain packages from the list above. Set showPaymentOptions true, queueInquiry false, showEmailCta false.
+4. When the user shares **project specs** (budget, timeline, scope, features) with business intent — help them choose a package. Set showPaymentOptions true unless they only want a custom quote with no payment yet.
+5. When the user asks to **talk to Obed/Kofi** without a concrete project — invite questions here first. queueInquiry false.
+6. **queueInquiry true** only for urgent human follow-up with substantive details where they explicitly need Obed to act outside payment (rare). Prefer showPaymentOptions over queueInquiry for hires and quotes.
+7. When the user shares **files**, analyze them. queueInquiry true only if they need Obed to act on a brief, not casual analysis.
+8. Never say "tap below to email" or route to email for pricing — payment happens in chat via showPaymentOptions.
+9. Do not announce inquiry category in the reply.
+10. escalateToAdmin true only when they need Obed personally with a substantive message.
+11. showEmailCta true only when queueInquiry is true.
 
 Visitor: ${userName ?? "Guest"} (${userEmail ?? "not provided"})
 
 JSON only:
-{"inquiryType":"collaboration|security|job|general","reply":"your answer","escalateToAdmin":false,"showEmailCta":false,"queueInquiry":false,"confidence":"high"}`;
+{"inquiryType":"collaboration|security|job|general","reply":"your answer","escalateToAdmin":false,"showEmailCta":false,"queueInquiry":false,"showPaymentOptions":false,"confidence":"high"}`;
 
 const parseAiJson = (content: string): ChatResponse | null => {
   try {
@@ -375,19 +399,26 @@ const normalizeResponse = (parsed: ChatResponse, userText: string, keywordEscala
   const informational = isInformationalQuestion(userText);
   const business = hasBusinessIntent(userText);
   const talkToObed = wantsToTalkToObed(userText);
+  const paymentContext = shouldShowPaymentOptions(userText);
 
   let escalated = parsed.escalateToAdmin ?? keywordEscalate;
   let queueInquiry = parsed.queueInquiry;
   let showEmailCta = parsed.showEmailCta;
+  let showPaymentOptions = parsed.showPaymentOptions ?? paymentContext;
 
   if (informational) {
     queueInquiry = false;
     showEmailCta = false;
     escalated = false;
+    if (!paymentContext) showPaymentOptions = false;
   } else if (talkToObed && !business) {
     queueInquiry = false;
     showEmailCta = false;
     escalated = false;
+  } else if (paymentContext && !escalated) {
+    queueInquiry = false;
+    showEmailCta = false;
+    showPaymentOptions = true;
   } else if (queueInquiry === undefined) {
     queueInquiry = Boolean(business && (escalated || parsed.showEmailCta || parsed.confidence === "high"));
   }
@@ -403,6 +434,7 @@ const normalizeResponse = (parsed: ChatResponse, userText: string, keywordEscala
     escalateToAdmin: escalated,
     showEmailCta: Boolean(showEmailCta && (queueInquiry || escalated)),
     queueInquiry: Boolean(queueInquiry),
+    showPaymentOptions,
     source: parsed.source,
   };
 };
@@ -455,5 +487,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   res.setHeader("X-Chat-Source", "fallback");
-  return res.status(200).json(buildLocalReply(text, escalate, inquiryType, hasFiles));
+  return res.status(200).json(normalizeResponse(buildLocalReply(text, escalate, inquiryType, hasFiles), text, escalate));
 }

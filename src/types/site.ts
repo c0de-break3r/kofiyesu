@@ -11,6 +11,17 @@ function normalizeComponents(raw: unknown): ProjectComponent[] {
   return Array.isArray(raw) ? (raw as ProjectComponent[]) : [];
 }
 
+/** Project detail pages show the image only — no figcaption under hero media. */
+function withoutImageCaptions(components: ProjectComponent[]): ProjectComponent[] {
+  return components.map((c) => {
+    if (c.type === "media" && c.props.type === "image") {
+      const { caption: _omit, ...props } = c.props;
+      return { type: "media", props };
+    }
+    return c;
+  });
+}
+
 function showcaseFromRow(row: SiteProjectRow) {
   const fromColumns = {
     showcase_video_url: row.showcase_video_url?.trim() ?? "",
@@ -98,7 +109,7 @@ export const rowToContent = (row: SiteProjectRow): ProjectContent => {
   const showcase = showcaseFromRow(row);
   const merged = mergeProjectComponents(normalizeComponents(row.components), showcase);
   const synced = syncThumbnailInComponents(merged, row.thumbnail_url);
-  const components = applyMediaCacheBust(synced, row.updated_at);
+  const components = applyMediaCacheBust(withoutImageCaptions(synced), row.updated_at);
 
   return {
     title: row.title,

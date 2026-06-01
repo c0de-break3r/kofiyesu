@@ -58,23 +58,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let packageId = body.package_id?.trim() || null;
 
     if (body.package_id) {
-      const dbPkg = await prisma.sitePricingPackage.findFirst({
-        where: { slug: body.package_id, published: true },
-      });
-      if (dbPkg) {
-        title = dbPkg.title;
-        description = dbPkg.description;
-        amountGhs = Number(dbPkg.amountGhs);
-        packageId = dbPkg.slug;
-      } else if (fallbackPackageAmounts[body.package_id]) {
-        const pkg = fallbackPackageAmounts[body.package_id];
-        title = pkg.title;
-        description = pkg.description;
-        amountGhs = pkg.amountGhs;
-        packageId = body.package_id;
-      } else {
+      const pkg = fallbackPackageAmounts[body.package_id];
+      if (!pkg) {
         return res.status(400).json({ error: "Unknown package" });
       }
+      title = pkg.title;
+      description = pkg.description;
+      amountGhs = pkg.amountGhs;
+      packageId = body.package_id;
     }
 
     if (!title || !amountGhs || amountGhs <= 0) {

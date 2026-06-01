@@ -43,7 +43,10 @@ export const en = {
   "chat-welcome-intake": "Thanks for the details on your {type} inquiry. What would you like to know next?",
   "chat-ready-title": "How can I help you today?",
   "chat-ready-subtitle":
-    "Ask about skills, services, or projects — attach files for analysis. Want Obed personally? Describe your request and I'll route real inquiries to his inbox.",
+    "Ask about skills, pricing, or your project specs — attach files for analysis. When you're ready, pay securely with Paystack right here in chat.",
+  "chat-packages-title": "Choose a package",
+  "chat-packages-hint": "Pay with card or Mobile Money via Paystack (GH₵).",
+  "chat-pay-error": "Payment could not be completed. Try again or ask a follow-up question.",
   "chat-attach": "Attach file",
   "chat-attach-hint": "Images, PDF, TXT, CSV, or Markdown · up to 4 MB each · max 4 files",
   "chat-remove-file": "Remove attachment",
