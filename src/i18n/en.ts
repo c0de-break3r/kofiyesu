@@ -70,7 +70,7 @@ export const en = {
   "chat-save-edit": "Save & re-answer",
   "chat-cancel-edit": "Cancel",
   "chat-edit-placeholder": "Edit your message…",
-  "chat-edit-attachments-hint": "Re-answer uses your edited text. Attachments from the original message are kept as labels only.",
+  "chat-edit-attachments-hint": "Tap + to replace or add images and files.",
   "chat-close-history": "Close history",
   "back-to-home": "Back to home",
   "toggle-theme": "Toggle theme",

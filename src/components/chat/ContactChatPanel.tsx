@@ -95,6 +95,8 @@ export function ContactChatPanel() {
   const [editDraft, setEditDraft] = useState("");
   const messagesEl = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+  const attachmentCacheRef = useRef<Map<string, ChatAttachment[]>>(new Map());
+  const [editPendingFiles, setEditPendingFiles] = useState<ChatAttachment[]>([]);
 
   useEffect(() => {
     if (!showEscalateBanner) return;
@@ -177,6 +179,7 @@ export function ContactChatPanel() {
       setConversationId(id);
       setEditingId(null);
       setEditDraft("");
+      setEditPendingFiles([]);
       setRouting(null);
       if (isEmpty || loadedMessages.length === 0) {
         setMessages(welcomeMessages());
@@ -314,12 +317,17 @@ export function ContactChatPanel() {
   );
 
   const runAssistantTurn = useCallback(
-    async (contextMessages: ChatMsg[], userTextForInquiry: string) => {
+    async (
+      contextMessages: ChatMsg[],
+      userTextForInquiry: string,
+      pendingAttachments?: ChatAttachment[],
+    ) => {
       const result = await routeInquiryWithAi({
         messages: contextMessages,
         userEmail: user?.primaryEmailAddress?.emailAddress,
         userId: user?.id,
         userName: user?.fullName,
+        pendingAttachments,
       });
 
       const finalMessages: ChatMsg[] = [
@@ -421,6 +429,10 @@ export function ContactChatPanel() {
       attachmentViews.length ? attachmentViews : undefined,
     );
 
+    if (userMessage.id && files.length > 0) {
+      attachmentCacheRef.current.set(userMessage.id, [...files]);
+    }
+
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setInput("");
@@ -473,30 +485,77 @@ export function ContactChatPanel() {
     if (msg.role !== "user" || !msg.id) return;
     setEditingId(msg.id);
     setEditDraft(msg.content.startsWith("[Attached:") ? "" : msg.content);
+    const cached = attachmentCacheRef.current.get(msg.id);
+    setEditPendingFiles(cached ? [...cached] : []);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditDraft("");
+    setEditPendingFiles([]);
+  };
+
+  const handlePickEditFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setFileError(null);
+
+    const slots = CHAT_MAX_FILES - editPendingFiles.length;
+    if (slots <= 0) {
+      setFileError(t("chat-max-files", { max: CHAT_MAX_FILES }));
+      return;
+    }
+
+    const picked = Array.from(files).slice(0, slots);
+    try {
+      const next = await Promise.all(picked.map(readFileAsAttachment));
+      setEditPendingFiles((prev) => [...prev, ...next]);
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : "Could not attach file.");
+    }
+  };
+
+  const handleRemoveEditFile = (id: string) => {
+    setEditPendingFiles((prev) => {
+      const removed = prev.find((f) => f.id === id);
+      if (removed) revokeAttachmentPreview(removed);
+      return prev.filter((f) => f.id !== id);
+    });
   };
 
   const handleSaveEdit = async () => {
     if (!editingId || !conversationId) return;
     const text = editDraft.trim();
-    if (!text) return;
+    const files = editPendingFiles;
+    if (!text && files.length === 0) return;
 
     const idx = messages.findIndex((m) => m.id === editingId);
     if (idx < 0 || messages[idx].role !== "user") return;
 
+    const attachmentViews = toMessageAttachments(files);
+    const displayContent = text || attachmentSummary(files);
+
     const updatedUser: ChatMsg = {
       ...messages[idx],
-      content: text,
+      content: displayContent,
+      attachments: attachmentViews.length ? attachmentViews : undefined,
     };
+
+    if (updatedUser.id && files.length > 0) {
+      attachmentCacheRef.current.set(updatedUser.id, [...files]);
+    } else if (updatedUser.id) {
+      attachmentCacheRef.current.delete(updatedUser.id);
+    }
+
     const truncated = [...messages.slice(0, idx), updatedUser];
     setMessages(truncated);
     setEditingId(null);
     setEditDraft("");
+    setEditPendingFiles([]);
     setIsLoading(true);
     setRouting(null);
     setShowEscalateBanner(false);
-    setEditingId(null);
 
-    await runAssistantTurn(truncated, text);
+    await runAssistantTurn(truncated, displayContent, files.length > 0 ? files : undefined);
     setIsLoading(false);
   };
 
@@ -614,11 +673,11 @@ export function ContactChatPanel() {
                     editDraft={editDraft}
                     onStartEdit={() => handleStartEdit(msg)}
                     onEditDraftChange={setEditDraft}
+                    editFiles={editingId === msg.id ? editPendingFiles : undefined}
+                    onPickEditFiles={(list) => void handlePickEditFiles(list)}
+                    onRemoveEditFile={handleRemoveEditFile}
                     onSaveEdit={() => void handleSaveEdit()}
-                    onCancelEdit={() => {
-                      setEditingId(null);
-                      setEditDraft("");
-                    }}
+                    onCancelEdit={handleCancelEdit}
                   />
                 ))}
 

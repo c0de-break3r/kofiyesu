@@ -1,5 +1,13 @@
+import { useRef } from "react";
 import type { ChatMessageAttachmentView } from "@/lib/contactAi";
-import { formatFileSize, isImageMime, isPdfMime } from "@/lib/chatAttachments";
+import {
+  CHAT_FILE_ACCEPT,
+  CHAT_MAX_FILES,
+  formatFileSize,
+  isImageMime,
+  isPdfMime,
+  type ChatAttachment,
+} from "@/lib/chatAttachments";
 import { t } from "@/i18n/en";
 
 interface Props {
@@ -9,8 +17,11 @@ interface Props {
   canEdit?: boolean;
   isEditing?: boolean;
   editDraft?: string;
+  editFiles?: ChatAttachment[];
   onStartEdit?: () => void;
   onEditDraftChange?: (value: string) => void;
+  onPickEditFiles?: (files: FileList | null) => void;
+  onRemoveEditFile?: (id: string) => void;
   onSaveEdit?: () => void;
   onCancelEdit?: () => void;
 }
@@ -30,7 +41,7 @@ function AttachmentList({
 }) {
   if (!attachments.length) return null;
 
-  const muted = variant === "user" ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]";
+  const muted = "text-[var(--text-muted)]";
   const chipBg =
     variant === "user"
       ? "border border-[var(--border)] bg-[var(--bg-elevated)]"
@@ -61,6 +72,79 @@ function AttachmentList({
   );
 }
 
+function EditAttachmentPicker({
+  files,
+  onPick,
+  onRemove,
+}: {
+  files: ChatAttachment[];
+  onPick: (files: FileList | null) => void;
+  onRemove: (id: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const canAdd = files.length < CHAT_MAX_FILES;
+
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-2">
+      {files.map((file) => (
+        <div
+          key={file.id}
+          className="relative flex max-w-[min(100%,10rem)] items-center gap-2 rounded-xl border border-white/30 bg-white/10 py-1 pr-1 pl-1.5"
+        >
+          {isImageMime(file.mimeType) ? (
+            <img
+              src={file.previewUrl}
+              alt=""
+              className="h-12 w-12 shrink-0 rounded-lg object-cover"
+            />
+          ) : (
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/15 text-xs font-bold">
+              {isPdfMime(file.mimeType) ? "PDF" : "FILE"}
+            </span>
+          )}
+          <div className="min-w-0 flex-1 pr-6">
+            <p className="truncate text-[11px] font-semibold text-white">{file.name}</p>
+            <p className="text-[10px] text-white/70">{formatFileSize(file.size)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onRemove(file.id)}
+            className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/30 text-xs text-white hover:bg-black/50"
+            aria-label={t("chat-remove-file")}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      {canAdd ? (
+        <>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={CHAT_FILE_ACCEPT}
+            multiple
+            className="sr-only"
+            onChange={(e) => {
+              onPick(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/5 text-2xl font-light text-white transition hover:border-white hover:bg-white/10"
+            aria-label={t("chat-attach")}
+            title={t("chat-attach-hint")}
+          >
+            +
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function ChatMessage({
   role,
   content,
@@ -68,8 +152,11 @@ export function ChatMessage({
   canEdit,
   isEditing,
   editDraft = "",
+  editFiles = [],
   onStartEdit,
   onEditDraftChange,
+  onPickEditFiles,
+  onRemoveEditFile,
   onSaveEdit,
   onCancelEdit,
 }: Props) {
@@ -77,13 +164,25 @@ export function ChatMessage({
   const trimmed = content.trim();
   const isAttachmentPlaceholder = trimmed.startsWith("[Attached:");
   const hasText = trimmed.length > 0 && !isAttachmentPlaceholder;
-  const showBubble = isEditing || hasText || (!isUser && attachments.length > 0);
+  const canSaveEdit = Boolean(editDraft.trim() || editFiles.length > 0);
+  const showBubble =
+    isEditing || hasText || (!isUser && attachments.length > 0) || (isUser && isEditing);
 
   return (
     <div className={`group flex w-full flex-col ${isUser ? "items-end" : "items-start"}`}>
       {!isEditing && isUser && attachments.length > 0 && (
         <div className="mb-1.5 max-w-[min(100%,42rem)]">
           <AttachmentList attachments={attachments} variant="user" />
+        </div>
+      )}
+
+      {isEditing && isUser && onPickEditFiles && onRemoveEditFile && (
+        <div className="mb-1.5 max-w-[min(100%,42rem)]">
+          <EditAttachmentPicker
+            files={editFiles}
+            onPick={onPickEditFiles}
+            onRemove={onRemoveEditFile}
+          />
         </div>
       )}
 
@@ -104,14 +203,14 @@ export function ChatMessage({
                 className="w-full resize-none rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/60 focus:border-white"
                 placeholder={t("chat-edit-placeholder")}
               />
-              {attachments.length > 0 && (
+              {isUser && editFiles.length === 0 && attachments.length > 0 && !attachments[0]?.previewUrl ? (
                 <p className="text-xs text-white/75">{t("chat-edit-attachments-hint")}</p>
-              )}
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={onSaveEdit}
-                  disabled={!editDraft.trim()}
+                  disabled={!canSaveEdit}
                   className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-accent)] disabled:opacity-50"
                 >
                   {t("chat-save-edit")}
@@ -135,6 +234,26 @@ export function ChatMessage({
               ) : null}
             </>
           )}
+        </div>
+      ) : isEditing && isUser ? (
+        <div className="max-w-[min(100%,42rem)] rounded-2xl rounded-br-md bg-[var(--color-accent)] px-4 py-3 shadow-sm">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onSaveEdit}
+              disabled={!canSaveEdit}
+              className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-accent)] disabled:opacity-50"
+            >
+              {t("chat-save-edit")}
+            </button>
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="rounded-full px-3 py-1.5 text-xs font-semibold text-white/90 hover:bg-white/10"
+            >
+              {t("chat-cancel-edit")}
+            </button>
+          </div>
         </div>
       ) : null}
 
