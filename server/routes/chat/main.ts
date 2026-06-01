@@ -1,14 +1,15 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { CHAT_PACKAGES_PROMPT } from "../../../api/lib/chatPackages.js";
 import {
   ESCALATION_PATTERN,
-  PAYMENT_OR_NEXT_STEP_PATTERN,
   hasBusinessIntent,
   isInformationalQuestion,
+  isProjectBuildRequest,
+  isSimplePricingQuestion,
   PORTFOLIO_SERVICES_BLURB,
-  shouldShowPaymentOptions,
   wantsToTalkToObed,
 } from "../../../api/lib/inquiryClassifier.js";
+import { buildFallbackProjectQuote, formatQuoteReply } from "../../../api/lib/projectQuoteFallback.js";
+import { parseProjectQuote, type ProjectQuote } from "../../../api/lib/projectQuote.js";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
 
@@ -32,6 +33,7 @@ interface ChatResponse {
   showEmailCta?: boolean;
   queueInquiry?: boolean;
   showPaymentOptions?: boolean;
+  projectQuote?: ProjectQuote;
   source?: "gemini" | "openai" | "fallback";
 }
 
@@ -57,7 +59,19 @@ const lastUserText = (messages: ChatMessage[]) => {
   return last?.content?.trim() ?? "";
 };
 
-const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryType, hasFiles: boolean): ChatResponse => {
+const allUserMessagesText = (messages: ChatMessage[]) =>
+  messages
+    .filter((m) => m.role === "user")
+    .map((m) => m.content)
+    .join("\n");
+
+const buildLocalReply = (
+  text: string,
+  escalate: boolean,
+  inquiryType: InquiryType,
+  hasFiles: boolean,
+  allUserText: string,
+): ChatResponse => {
   if (hasFiles && !text) {
     return {
       inquiryType,
@@ -113,15 +127,16 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     };
   }
 
-  if (PAYMENT_OR_NEXT_STEP_PATTERN.test(lower)) {
+  if (isSimplePricingQuestion(text)) {
     return {
       inquiryType,
-      reply: `Obed offers fixed packages you can pay for in chat (Paystack — card or Mobile Money):\n\n${CHAT_PACKAGES_PROMPT}\n\nPick a package below when you're ready. For custom scope, describe your project here first.`,
-      confidence: "high",
-      showPaymentOptions: true,
+      reply:
+        "Obed scopes **custom projects in this chat** (requirements, tool/hosting costs, then a project total you can pay here). Tell me what you want built (e.g. a premium ecommerce site) and I'll walk through specs and a full quote.",
+      confidence: "medium",
       escalateToAdmin: false,
       showEmailCta: false,
       queueInquiry: false,
+      showPaymentOptions: false,
       source: "fallback",
     };
   }
@@ -151,6 +166,41 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     };
   }
 
+  if (isProjectBuildRequest(text) || (business && /build|website|app|ecommerce|store|platform/.test(lower))) {
+    const fallbackQuote = buildFallbackProjectQuote(allUserText);
+    if (fallbackQuote) {
+      return {
+        inquiryType,
+        reply: formatQuoteReply(fallbackQuote),
+        confidence: "high",
+        showPaymentOptions: true,
+        projectQuote: fallbackQuote,
+        escalateToAdmin: false,
+        showEmailCta: false,
+        queueInquiry: false,
+        source: "fallback",
+      };
+    }
+
+    return {
+      inquiryType,
+      reply: `I'd love to scope this with you. To prepare a quote (your requirements, tools/hosting Obed pays for, and the full project total payable here), please share:
+
+1. **Must-have features** (e.g. catalog, Paystack checkout, admin, mobile)
+2. **Timeline** (target launch or phases)
+3. **Design** (brand ready vs needs UI work)
+4. **Scale** (rough product/order volume)
+
+Once that's clear, I'll summarise everything and unlock payment for this project in chat.`,
+      confidence: "medium",
+      escalateToAdmin: false,
+      showEmailCta: false,
+      queueInquiry: false,
+      showPaymentOptions: false,
+      source: "fallback",
+    };
+  }
+
   if (EMAIL_INTENT_PATTERN.test(lower) && business) {
     const labels: Record<InquiryType, string> = {
       collaboration: "a collaboration",
@@ -160,12 +210,12 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     };
     return {
       inquiryType,
-      reply: `Got it — ${labels[inquiryType]}. Share scope, timeline, and goals here and I'll help you choose the right package. Standard options are below when you're ready to pay.`,
+      reply: `Got it — ${labels[inquiryType]}. Tell me what you want built or reviewed and I'll scope requirements, pass-through costs, and a project total you can pay here.`,
       confidence: "high",
       escalateToAdmin: false,
       showEmailCta: false,
       queueInquiry: false,
-      showPaymentOptions: true,
+      showPaymentOptions: false,
       source: "fallback",
     };
   }
@@ -179,12 +229,12 @@ const buildLocalReply = (text: string, escalate: boolean, inquiryType: InquiryTy
     };
     return {
       inquiryType,
-      reply: `Happy to help with ${labels[inquiryType]}. Tell me a bit more — timeline, scope, or goals — and I can answer questions or show payment options when you're ready.`,
+      reply: `Happy to help with ${labels[inquiryType]}. Share what you need built or reviewed and I can scope it in chat.`,
       confidence: "medium",
       escalateToAdmin: false,
       showEmailCta: false,
       queueInquiry: false,
-      showPaymentOptions: shouldShowPaymentOptions(text),
+      showPaymentOptions: false,
       source: "fallback",
     };
   }
@@ -206,26 +256,20 @@ const buildSystemPrompt = (userName?: string, userEmail?: string) =>
 
 ${PORTFOLIO_SERVICES_BLURB}
 
-Standard packages (answer pricing questions using these — do not invent prices):
-${CHAT_PACKAGES_PROMPT}
-
-Rules:
-1. **Answer every question in chat** — skills, pricing, scope, timeline, security work. Be helpful in 2–5 sentences.
-2. **Informational questions** — answer fully. queueInquiry false, showEmailCta false, escalateToAdmin false.
-3. **Pricing / payment / how much / packages / ready to pay / next step** — explain packages from the list above. Set showPaymentOptions true, queueInquiry false, showEmailCta false.
-4. When the user shares **project specs** (budget, timeline, scope, features) with business intent — help them choose a package. Set showPaymentOptions true unless they only want a custom quote with no payment yet.
-5. When the user asks to **talk to Obed/Kofi** without a concrete project — invite questions here first. queueInquiry false.
-6. **queueInquiry true** only for urgent human follow-up with substantive details where they explicitly need Obed to act outside payment (rare). Prefer showPaymentOptions over queueInquiry for hires and quotes.
-7. When the user shares **files**, analyze them. queueInquiry true only if they need Obed to act on a brief, not casual analysis.
-8. Never say "tap below to email" or route to email for pricing — payment happens in chat via showPaymentOptions.
-9. Do not announce inquiry category in the reply.
-10. escalateToAdmin true only when they need Obed personally with a substantive message.
-11. showEmailCta true only when queueInquiry is true.
+**Project scoping workflow (important):**
+- When the user wants something **built** (e.g. "build me a premium ecommerce website"), do NOT show payment on the first vague message.
+- Ask clarifying questions until you know: features, timeline, design/assets, and scale.
+- When you have enough detail, reply with a structured breakdown in \`reply\` (requirements from the user, pass-through costs for tools/hosting/services Obed pays, labour, project total in GHS) and set \`showPaymentOptions\` true with a complete \`projectQuote\` object.
+- **Simple pricing questions** (e.g. "how much for a discovery call?") — answer briefly in chat only. showPaymentOptions false, no projectQuote.
+- Amounts in **Ghana Cedis (GHS)**. labourGhs is Obed's build fee; passThroughCosts are real costs (hosting, domains, paid APIs). totalGhs = labour + sum(passThroughCosts). depositGhs optional (typical 25–40% kickoff).
 
 Visitor: ${userName ?? "Guest"} (${userEmail ?? "not provided"})
 
 JSON only:
-{"inquiryType":"collaboration|security|job|general","reply":"your answer","escalateToAdmin":false,"showEmailCta":false,"queueInquiry":false,"showPaymentOptions":false,"confidence":"high"}`;
+{"inquiryType":"collaboration|security|job|general","reply":"markdown answer","escalateToAdmin":false,"showEmailCta":false,"queueInquiry":false,"showPaymentOptions":false,"confidence":"high","projectQuote":null}
+
+When ready to collect payment, projectQuote example:
+{"projectTitle":"Premium ecommerce website","summary":"one line","requirements":["…"],"passThroughCosts":[{"label":"Hosting year 1","amountGhs":450,"note":"estimate"}],"laborGhs":18000,"depositGhs":5000,"totalGhs":18450}`;
 
 const parseAiJson = (content: string): ChatResponse | null => {
   try {
@@ -310,7 +354,7 @@ const callGeminiModel = async (
       contents,
       generationConfig: {
         temperature: 0.55,
-        maxOutputTokens: hasFiles ? 800 : 400,
+        maxOutputTokens: hasFiles ? 1200 : 900,
         responseMimeType: "application/json",
       },
     }),
@@ -379,7 +423,7 @@ const callOpenAi = async (
         { role: "user", content: conversation },
       ],
       temperature: 0.55,
-      max_tokens: 400,
+      max_tokens: 900,
     }),
   });
 
@@ -395,30 +439,39 @@ const callOpenAi = async (
   return parsed ? { ...parsed, source: "openai" } : null;
 };
 
-const normalizeResponse = (parsed: ChatResponse, userText: string, keywordEscalate: boolean): ChatResponse => {
+const normalizeResponse = (
+  parsed: ChatResponse,
+  userText: string,
+  keywordEscalate: boolean,
+  allUserText: string,
+): ChatResponse => {
   const informational = isInformationalQuestion(userText);
   const business = hasBusinessIntent(userText);
   const talkToObed = wantsToTalkToObed(userText);
-  const paymentContext = shouldShowPaymentOptions(userText);
 
   let escalated = parsed.escalateToAdmin ?? keywordEscalate;
   let queueInquiry = parsed.queueInquiry;
   let showEmailCta = parsed.showEmailCta;
-  let showPaymentOptions = parsed.showPaymentOptions ?? paymentContext;
 
-  if (informational) {
+  let projectQuote =
+    parseProjectQuote(parsed.projectQuote) ??
+    (parsed.showPaymentOptions ? buildFallbackProjectQuote(allUserText) : null);
+
+  let showPaymentOptions = Boolean(projectQuote);
+
+  if (informational || isSimplePricingQuestion(userText)) {
     queueInquiry = false;
     showEmailCta = false;
     escalated = false;
-    if (!paymentContext) showPaymentOptions = false;
+    showPaymentOptions = false;
+    projectQuote = null;
   } else if (talkToObed && !business) {
     queueInquiry = false;
     showEmailCta = false;
     escalated = false;
-  } else if (paymentContext && !escalated) {
+  } else if (showPaymentOptions) {
     queueInquiry = false;
     showEmailCta = false;
-    showPaymentOptions = true;
   } else if (queueInquiry === undefined) {
     queueInquiry = Boolean(business && (escalated || parsed.showEmailCta || parsed.confidence === "high"));
   }
@@ -435,6 +488,7 @@ const normalizeResponse = (parsed: ChatResponse, userText: string, keywordEscala
     showEmailCta: Boolean(showEmailCta && (queueInquiry || escalated)),
     queueInquiry: Boolean(queueInquiry),
     showPaymentOptions,
+    projectQuote: projectQuote ?? undefined,
     source: parsed.source,
   };
 };
@@ -453,6 +507,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const list = messages ?? [];
   const lastUser = [...list].reverse().find((m) => m.role === "user");
   const text = lastUserText(list);
+  const allUserText = allUserMessagesText(list);
   const hasFiles = lastUser ? messageHasAttachments(lastUser) : false;
 
   if (!text && !hasFiles) {
@@ -480,12 +535,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (parsed) {
       res.setHeader("X-Chat-Source", parsed.source ?? "ai");
-      return res.status(200).json(normalizeResponse(parsed, text, escalate));
+      return res.status(200).json(normalizeResponse(parsed, text, escalate, allUserText));
     }
   } catch (err) {
     console.error("[chat] AI handler error", err);
   }
 
   res.setHeader("X-Chat-Source", "fallback");
-  return res.status(200).json(normalizeResponse(buildLocalReply(text, escalate, inquiryType, hasFiles), text, escalate));
+  return res.status(200).json(
+    normalizeResponse(buildLocalReply(text, escalate, inquiryType, hasFiles, allUserText), text, escalate, allUserText),
+  );
 }

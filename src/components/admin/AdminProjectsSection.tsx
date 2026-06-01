@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { AdminActionBar } from "./AdminActionBar";
 import { AdminField, AdminInput, AdminTextarea } from "./AdminField";
 import { AdminMediaUpload } from "./AdminMediaUpload";
-import { ProjectCardPreviewMedia } from "@/features/projects/ProjectCardPreviewMedia";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import {
   buildProjectComponents,
   extractProjectFormFromComponents,
-  mergeProjectComponents,
+  mergeProjectBodyText,
   syncThumbnailInComponents,
 } from "@/lib/projectComponents";
 import { parseCommaList } from "@/lib/parseCommaList";
@@ -21,15 +20,10 @@ const emptyForm = () => ({
   tech_stack: "",
   description: "",
   thumbnail_url: "",
-  preview_video_url: "",
-  showcase_video_url: "",
-  showcase_video_caption: "",
   body_text: "",
   live_url: "",
   source_url: "",
   sort_order: 0,
-  video_border: false,
-  published: true,
 });
 
 const adminScrollClass =
@@ -96,15 +90,10 @@ export function AdminProjectsSection() {
       tech_stack: (row.tech_stack ?? []).join(", "),
       description: row.description ?? "",
       thumbnail_url: row.thumbnail_url ?? "",
-      preview_video_url: row.preview_video_url ?? "",
-      showcase_video_url: row.showcase_video_url ?? extracted.showcase_video_url,
-      showcase_video_caption: row.showcase_video_caption ?? extracted.showcase_video_caption,
       body_text: extracted.body_text,
       live_url: row.live_url ?? "",
       source_url: row.source_url ?? "",
       sort_order: row.sort_order ?? 0,
-      video_border: row.video_border,
-      published: row.published,
     };
   };
 
@@ -136,16 +125,8 @@ export function AdminProjectsSection() {
 
       const baseComponents =
         editingId === "new"
-          ? buildProjectComponents({
-              showcase_video_url: form.showcase_video_url,
-              showcase_video_caption: form.showcase_video_caption,
-              body_text: form.body_text,
-            })
-          : mergeProjectComponents(existingComponents ?? [], {
-              showcase_video_url: form.showcase_video_url,
-              showcase_video_caption: form.showcase_video_caption,
-              body_text: form.body_text,
-            });
+          ? buildProjectComponents({ body_text: form.body_text })
+          : mergeProjectBodyText(existingComponents ?? [], form.body_text);
 
       const payload = {
         slug: form.slug,
@@ -154,14 +135,10 @@ export function AdminProjectsSection() {
         tech_stack: parseCommaList(form.tech_stack),
         description: form.description,
         thumbnail_url: form.thumbnail_url || null,
-        preview_video_url: form.preview_video_url || null,
-        showcase_video_url: form.showcase_video_url || null,
-        showcase_video_caption: form.showcase_video_caption || null,
         live_url: form.live_url || null,
         source_url: form.source_url || null,
-        video_border: form.video_border,
         sort_order: form.sort_order,
-        published: form.published,
+        published: true,
         components: syncThumbnailInComponents(baseComponents, form.thumbnail_url || null),
       };
 
@@ -237,259 +214,175 @@ export function AdminProjectsSection() {
         data-lenis-prevent-wheel
       >
         <div className="space-y-5">
-        <div>
-          <h2 className="text-lg font-black">Selected projects</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Add, edit, or delete portfolio projects. Upload a thumbnail and optional short preview video for the grid.
-            Add a showcase video for the project detail page.
-          </p>
-        </div>
+          <div>
+            <h2 className="text-lg font-black">Selected projects</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Add or edit portfolio entries — thumbnail, copy, links, and category. Saved projects are
+              published on the site automatically.
+            </p>
+          </div>
 
-        {editingId ? (
-          <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-bold">{editingId === "new" ? "Create project" : "Edit project"}</p>
-              {editingId !== "new" ? (
-                <a
-                  href={`/project/${form.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-bold text-[var(--color-accent)] hover:underline"
-                >
-                  View project page ↗
-                </a>
-              ) : null}
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <AdminField label="Slug (URL)">
-                <AdminInput
-                  value={form.slug}
-                  onChange={(e) => set("slug", e.target.value)}
-                  disabled={editingId !== "new"}
-                  placeholder="my-project"
-                />
-              </AdminField>
-              <AdminField label="Sort order">
-                <AdminInput
-                  type="number"
-                  value={String(form.sort_order)}
-                  onChange={(e) => set("sort_order", Number(e.target.value) || 0)}
-                />
-              </AdminField>
-            </div>
-
-            <AdminField label="Title">
-              <AdminInput value={form.title} onChange={(e) => set("title", e.target.value)} />
-            </AdminField>
-
-            <AdminField label="Short description (card & hero)">
-              <AdminTextarea
-                rows={3}
-                value={form.description}
-                onChange={(e) => set("description", e.target.value)}
-                placeholder="HTML allowed: <br/> for line breaks"
-              />
-            </AdminField>
-
-            <AdminMediaUpload
-              label="Thumbnail image"
-              accept="image/*"
-              value={form.thumbnail_url}
-              onChange={(url) => set("thumbnail_url", url)}
-              onError={setError}
-              onSuccess={flashInfo}
-              previewType="image"
-            />
-
-            <AdminMediaUpload
-              label="Preview video (short clip for project grid)"
-              hint="Optional. Shown on hover in Selected Work. MP4 or WebM, keep under ~15s for best UX."
-              accept="video/mp4,video/webm,video/quicktime,video/*"
-              uploadAs="video"
-              value={form.preview_video_url}
-              onChange={(url) => set("preview_video_url", url)}
-              onError={setError}
-              onSuccess={flashInfo}
-              previewType="video"
-            />
-
-            <AdminMediaUpload
-              label="Showcase video (project page)"
-              hint="Main video on the project detail page (below the hero). MP4 or WebM recommended."
-              accept="video/mp4,video/webm,video/quicktime,video/*"
-              uploadAs="video"
-              value={form.showcase_video_url}
-              onChange={(url) => set("showcase_video_url", url)}
-              onError={setError}
-              onSuccess={flashInfo}
-              previewType="video"
-            />
-
-            {(form.thumbnail_url || form.preview_video_url || form.showcase_video_url) && (
-              <div className="space-y-4 rounded-xl border border-[var(--border)] p-3">
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                  Media preview
-                </p>
-
-                {(form.thumbnail_url || form.preview_video_url) && (
-                  <div>
-                    <p className="text-xs font-semibold text-[var(--text-muted)]">
-                      Grid card (Selected Work)
-                    </p>
-                    <div className="group mt-2 max-w-sm overflow-hidden rounded-xl border border-[var(--border)]">
-                      <ProjectCardPreviewMedia
-                        title={form.title || "Project"}
-                        thumbnail={form.thumbnail_url || undefined}
-                        previewVideo={form.preview_video_url || undefined}
-                      />
-                    </div>
-                    <p className="mt-2 text-[10px] text-[var(--text-muted)]">
-                      {form.preview_video_url
-                        ? "Hover (or tap on mobile) to play the short preview clip."
-                        : "Add a preview video above for hover playback on the home grid."}
-                    </p>
-                  </div>
-                )}
-
-                {form.showcase_video_url ? (
-                  <div>
-                    <p className="text-xs font-semibold text-[var(--text-muted)]">
-                      Showcase video (project page)
-                    </p>
-                    <video
-                      src={form.showcase_video_url}
-                      controls
-                      playsInline
-                      preload="metadata"
-                      className="mt-2 max-h-52 w-full rounded-xl border border-[var(--border)] bg-black/5 object-contain"
-                    />
-                    {form.showcase_video_caption ? (
-                      <p className="mt-2 text-xs text-[var(--text-muted)]">{form.showcase_video_caption}</p>
-                    ) : null}
-                  </div>
+          {editingId ? (
+            <div className="space-y-4 rounded-xl border border-[var(--border)] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-bold">{editingId === "new" ? "Create project" : "Edit project"}</p>
+                {editingId !== "new" ? (
+                  <a
+                    href={`/project/${form.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-[var(--color-accent)] hover:underline"
+                  >
+                    View project page ↗
+                  </a>
                 ) : null}
               </div>
-            )}
 
-            <AdminField label="Showcase video caption">
-              <AdminInput
-                value={form.showcase_video_caption}
-                onChange={(e) => set("showcase_video_caption", e.target.value)}
-              />
-            </AdminField>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <AdminField label="Slug (URL)">
+                  <AdminInput
+                    value={form.slug}
+                    onChange={(e) => set("slug", e.target.value)}
+                    disabled={editingId !== "new"}
+                    placeholder="my-project"
+                  />
+                </AdminField>
+                <AdminField label="Sort order">
+                  <AdminInput
+                    type="number"
+                    value={String(form.sort_order)}
+                    onChange={(e) => set("sort_order", Number(e.target.value) || 0)}
+                  />
+                </AdminField>
+              </div>
 
-            <AdminField label="What I built (project page body)">
-              <AdminTextarea
-                rows={4}
-                value={form.body_text}
-                onChange={(e) => set("body_text", e.target.value)}
-              />
-            </AdminField>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <AdminField label="Live URL">
-                <AdminInput value={form.live_url} onChange={(e) => set("live_url", e.target.value)} />
+              <AdminField label="Title">
+                <AdminInput value={form.title} onChange={(e) => set("title", e.target.value)} />
               </AdminField>
-              <AdminField label="Source URL">
-                <AdminInput value={form.source_url} onChange={(e) => set("source_url", e.target.value)} />
-              </AdminField>
-            </div>
 
-            <AdminField label="Category">
-              <select
-                value={form.category_id}
-                onChange={(e) => set("category_id", e.target.value)}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm font-semibold"
-              >
-                <option value="">Uncategorized</option>
-                {features.map((feature) => (
-                  <option key={feature.id} value={feature.id}>
-                    {feature.label}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
-                One category per project. Manage filter options in the Features tab.
-              </p>
-            </AdminField>
-
-            <AdminField label="Tech stack (comma-separated, shown on project page)">
-              <AdminInput
-                value={form.tech_stack}
-                onChange={(e) => set("tech_stack", e.target.value)}
-                placeholder="Node.js, PostgreSQL, React, Express.js"
-              />
-            </AdminField>
-
-            <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input type="checkbox" checked={form.published} onChange={(e) => set("published", e.target.checked)} />
-                Published
-              </label>
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  checked={form.video_border}
-                  onChange={(e) => set("video_border", e.target.checked)}
+              <AdminField label="Short description (card & hero)">
+                <AdminTextarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => set("description", e.target.value)}
+                  placeholder="HTML allowed: <br/> for line breaks"
                 />
-                Video border
-              </label>
+              </AdminField>
+
+              <AdminMediaUpload
+                label="Thumbnail image"
+                accept="image/*"
+                value={form.thumbnail_url}
+                onChange={(url) => set("thumbnail_url", url)}
+                onError={setError}
+                onSuccess={flashInfo}
+                previewType="image"
+              />
+
+              {form.thumbnail_url ? (
+                <div className="overflow-hidden rounded-xl border border-[var(--border)]">
+                  <img
+                    src={form.thumbnail_url}
+                    alt=""
+                    className="max-h-40 w-full object-cover"
+                  />
+                </div>
+              ) : null}
+
+              <AdminField label="What I built (project page body)">
+                <AdminTextarea
+                  rows={4}
+                  value={form.body_text}
+                  onChange={(e) => set("body_text", e.target.value)}
+                />
+              </AdminField>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <AdminField label="Live URL">
+                  <AdminInput value={form.live_url} onChange={(e) => set("live_url", e.target.value)} />
+                </AdminField>
+                <AdminField label="Source URL">
+                  <AdminInput value={form.source_url} onChange={(e) => set("source_url", e.target.value)} />
+                </AdminField>
+              </div>
+
+              <AdminField label="Category">
+                <select
+                  value={form.category_id}
+                  onChange={(e) => set("category_id", e.target.value)}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm font-semibold"
+                >
+                  <option value="">Uncategorized</option>
+                  {features.map((feature) => (
+                    <option key={feature.id} value={feature.id}>
+                      {feature.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  Manage filter options in the Features tab.
+                </p>
+              </AdminField>
+
+              <AdminField label="Tech stack (comma-separated)">
+                <AdminInput
+                  value={form.tech_stack}
+                  onChange={(e) => set("tech_stack", e.target.value)}
+                  placeholder="Node.js, PostgreSQL, React"
+                />
+              </AdminField>
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        {!editingId ? (
-          <ul className="space-y-2">
-            {projects.map((p) => (
-              <li
-                key={p.id}
-                className="flex items-center gap-3 rounded-xl border border-[var(--border)] p-3"
-              >
-                <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[var(--border)]">
-                  {p.thumbnail_url ? (
-                    <img src={p.thumbnail_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[10px] text-[var(--text-muted)]">
-                      No img
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold">{p.title}</p>
-                  <p className="truncate text-xs text-[var(--text-muted)]">
-                    /project/{p.slug}
-                    {p.category?.label ? ` · ${p.category.label}` : ""}
-                    {!p.published && " · draft"}
-                    {p.preview_video_url && " · preview video"}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col gap-1 sm:flex-row sm:gap-2">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(p)}
-                    className="text-xs font-bold text-[var(--color-accent)]"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void remove(p.id, p.title)}
-                    className="text-xs font-bold text-red-500"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+          {!editingId ? (
+            <ul className="space-y-2">
+              {projects.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex items-center gap-3 rounded-xl border border-[var(--border)] p-3 transition hover:border-[color-mix(in_srgb,var(--color-accent)_35%,var(--border))]"
+                >
+                  <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[var(--border)]">
+                    {p.thumbnail_url ? (
+                      <img src={p.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[10px] text-[var(--text-muted)]">
+                        No img
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{p.title}</p>
+                    <p className="truncate text-xs text-[var(--text-muted)]">
+                      /project/{p.slug}
+                      {p.category?.label ? ` · ${p.category.label}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-1 sm:flex-row sm:gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(p)}
+                      className="text-xs font-bold text-[var(--color-accent)]"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void remove(p.id, p.title)}
+                      className="text-xs font-bold text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
-        {projects.length === 0 && !editingId && (
-          <p className="text-sm text-[var(--text-muted)]">
-            No projects in the database yet — the site uses static files until you create one here.
-          </p>
-        )}
+          {projects.length === 0 && !editingId && (
+            <p className="text-sm text-[var(--text-muted)]">
+              No projects yet — create one to replace static portfolio files.
+            </p>
+          )}
         </div>
       </div>
 

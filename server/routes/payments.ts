@@ -3,6 +3,7 @@ import { requireSignedInUserId } from "../../api/lib/clerkAuth.js";
 import { isDatabaseConfigured, prisma } from "../../api/lib/prisma.js";
 import { paymentToApi } from "../../api/lib/paymentSerializer.js";
 import { fallbackPackageAmounts } from "../../api/lib/defaultPricingPackages.js";
+import { PROJECT_QUOTE_MAX_GHS, PROJECT_QUOTE_MIN_GHS } from "../../api/lib/projectQuote.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!isDatabaseConfigured()) {
@@ -68,8 +69,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       packageId = body.package_id;
     }
 
-    if (!title || !amountGhs || amountGhs <= 0) {
-      return res.status(400).json({ error: "Invalid payment details" });
+    if (!title || !amountGhs || amountGhs < PROJECT_QUOTE_MIN_GHS || amountGhs > PROJECT_QUOTE_MAX_GHS) {
+      return res.status(400).json({ error: "Invalid payment amount" });
     }
 
     const row = await prisma.payment.create({

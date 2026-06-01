@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
 import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
 import { ChatMessage, ChatTyping } from "./ChatMessage";
-import { ChatPackageOptions } from "./ChatPackageOptions";
+import { ChatProjectPayment } from "./ChatProjectPayment";
 import { t } from "@/i18n/en";
 import {
   type ChatMessage as ChatMsg,
@@ -37,6 +37,7 @@ import { readResponseJson } from "@/lib/readResponseJson";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { usePaystackPayment, type PaymentRow } from "@/hooks/usePaystackPayment";
+import { paymentDescriptionFromQuote, type ProjectQuote } from "@/lib/projectQuote";
 import { social } from "@/content/social";
 
 function toMessageAttachments(files: ChatAttachment[]): ChatMessageAttachmentView[] {
@@ -75,7 +76,7 @@ export function ContactChatPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [routing, setRouting] = useState<RoutingResult | null>(null);
   const [showEscalateBanner, setShowEscalateBanner] = useState(false);
-  const [payingPackageId, setPayingPackageId] = useState<string | null>(null);
+  const [payingKey, setPayingKey] = useState<"deposit" | "full" | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
   const [paySuccess, setPaySuccess] = useState(false);
 
@@ -83,11 +84,11 @@ export function ContactChatPanel() {
     onSuccess: () => {
       setPaySuccess(true);
       setPayError(null);
-      setPayingPackageId(null);
+      setPayingKey(null);
     },
     onError: (msg) => {
       setPayError(msg);
-      setPayingPackageId(null);
+      setPayingKey(null);
     },
   });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -236,12 +237,19 @@ export function ContactChatPanel() {
     };
   }, [routing, paySuccess, payError, pendingFiles.length, isSignedIn, historyOpen, adminOpen]);
 
-  const handlePackagePay = useCallback(
-    async (packageId: string) => {
+  const handleProjectPay = useCallback(
+    async (quote: ProjectQuote, kind: "deposit" | "full") => {
       if (!isSignedIn || paying) return;
+      const amountGhs =
+        kind === "deposit" && quote.depositGhs != null ? quote.depositGhs : quote.totalGhs;
+      const title =
+        kind === "deposit"
+          ? `${quote.projectTitle} — kickoff deposit`
+          : `${quote.projectTitle} — project payment`;
+
       setPayError(null);
       setPaySuccess(false);
-      setPayingPackageId(packageId);
+      setPayingKey(kind);
       try {
         const token = await getToken();
         if (!token) throw new Error("Sign in required");
@@ -253,7 +261,9 @@ export function ContactChatPanel() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            package_id: packageId,
+            title,
+            amount_ghs: amountGhs,
+            description: paymentDescriptionFromQuote(quote),
             user_email: user?.primaryEmailAddress?.emailAddress ?? null,
             user_name: user?.fullName ?? null,
           }),
@@ -267,7 +277,7 @@ export function ContactChatPanel() {
         await pay(data.payment);
       } catch (err) {
         setPayError(err instanceof Error ? err.message : t("chat-pay-error"));
-        setPayingPackageId(null);
+        setPayingKey(null);
       }
     },
     [getToken, isSignedIn, pay, paying, user],
@@ -593,10 +603,11 @@ export function ContactChatPanel() {
 
               {historyReady && isLoading && <ChatTyping />}
 
-              {historyReady && routing?.showPaymentOptions && (
-                <ChatPackageOptions
-                  payingPackageId={paying ? payingPackageId : null}
-                  onPay={(packageId) => void handlePackagePay(packageId)}
+              {historyReady && routing?.showPaymentOptions && routing.projectQuote && (
+                <ChatProjectPayment
+                  quote={routing.projectQuote}
+                  payingKey={paying ? payingKey : null}
+                  onPay={(kind) => void handleProjectPay(routing.projectQuote!, kind)}
                 />
               )}
 

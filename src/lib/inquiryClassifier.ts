@@ -12,13 +12,17 @@ export const ESCALATION_PATTERN =
 export const INFORMATIONAL_PATTERN =
   /^(what|which|who|how|tell me|can you explain|do you|does (he|obed|kofi)|describe|list|show me|any examples?)\b|what (can|could|does|do|kind|type|sort|websites?|apps?|projects?|services?)|what (is|are) (your|his|obed|kofi)|who (is|are) (obed|kofi|you|he)|about (obed|kofi|your|his) (skills|work|experience|projects|services|stack)|your (skills|stack|experience|projects|services)|how (does|do) (you|he|obed|kofi) (work|build)|what do you (build|make|offer|specialize)|what websites? can|what (apps?|products?) can|portfolio|résumé|resume|cv\b/i;
 
-/** Pricing / next-step — show Paystack packages in chat. */
-export const PAYMENT_OR_NEXT_STEP_PATTERN =
-  /pay|payment|price|pricing|how much|cost|deposit|package|kickoff|discovery session|paystack|mobile money|card payment|ready to (pay|start|proceed)|next step|get started|proceed with|book (a |the )?session/i;
+/** User wants Obed to build something for them — start project scoping (not instant payment). */
+export const PROJECT_BUILD_REQUEST_PATTERN =
+  /(?:want|need|would like|ask(?:ing)?)\s+(?:obed|kofi|you|him)\s+to\s+(?:build|create|develop|make)|(?:build|create|develop|make)\s+(?:me|us|my|our|a|an)\s+(?:premium\s+)?(?:ecommerce|website|web\s*app|mobile\s*app|app|platform|store|saas|product)|(?:premium|custom|full[- ]?stack)\s+(?:ecommerce|website|app|platform|store)/i;
 
-/** Project specs discussed — offer packages after scoping. */
-export const PROJECT_SPECS_PATTERN =
-  /budget|quote|timeline|deadline|scope|specification|requirements|feature list|milestone|deliverable|stack|platform|users?|integration/i;
+/** Casual pricing about fixed offerings — answer in text only, no payment UI. */
+export const SIMPLE_PRICING_QUESTION_PATTERN =
+  /^(how much|what(?:'s| is) the (?:price|cost)|price for|cost of|how do i pay for)\b.*\b(discovery|session|package|audit|kickoff)\b/i;
+
+/** User ready to pay after a quote was discussed. */
+export const READY_TO_PAY_PATTERN =
+  /ready to pay|proceed with payment|pay (the )?(deposit|total|invoice)|let'?s pay|start payment|pay now/i;
 
 /** Clear business intent — reasonable to queue for Obed. */
 export const BUSINESS_INTENT_PATTERN =
@@ -54,13 +58,30 @@ export function shouldEscalateToAdmin(text: string): boolean {
   return ESCALATION_PATTERN.test(text.trim());
 }
 
-export function shouldShowPaymentOptions(text: string): boolean {
+export function isProjectBuildRequest(text: string): boolean {
   const trimmed = text.trim();
   if (!trimmed) return false;
-  const lower = trimmed.toLowerCase();
-  if (PAYMENT_OR_NEXT_STEP_PATTERN.test(lower)) return true;
-  if (hasBusinessIntent(trimmed) && PROJECT_SPECS_PATTERN.test(lower)) return true;
-  return false;
+  return PROJECT_BUILD_REQUEST_PATTERN.test(trimmed) || hasBusinessIntent(trimmed);
+}
+
+export function isSimplePricingQuestion(text: string): boolean {
+  return SIMPLE_PRICING_QUESTION_PATTERN.test(text.trim());
+}
+
+/** Enough detail across the thread to produce a project quote (fallback when AI is offline). */
+export function hasEnoughContextForQuote(allUserText: string): boolean {
+  const lower = allUserText.toLowerCase();
+  const hasDeliverable =
+    /ecommerce|website|web\s*app|mobile\s*app|saas|platform|store|pentest|api|backend/.test(lower);
+  const detailSignals = [
+    /\b(premium|custom|payment|checkout|cart|inventory|admin|dashboard)\b/,
+    /\b(timeline|deadline|weeks?|months?|asap|launch)\b/,
+    /\b(budget|gh[c₵]?|\d+\s*k|\d+\s*gh)\b/,
+    /\b(feature|integration|clerk|paystack|auth|mobile)\b/,
+    /\b(products?|sku|vendor|delivery)\b/,
+  ];
+  const detailCount = detailSignals.filter((p) => p.test(lower)).length;
+  return hasDeliverable && (detailCount >= 2 || lower.length > 140);
 }
 
 export interface QueueDecisionInput {
@@ -86,7 +107,7 @@ export function shouldQueueInquiry(input: QueueDecisionInput): boolean {
   const urgent = Boolean(input.escalateToAdmin);
   const business = hasBusinessIntent(message);
 
-  if (shouldShowPaymentOptions(message) && !urgent) return false;
+  if (isSimplePricingQuestion(message) && !urgent) return false;
 
   if (input.queueInquiry === true) {
     return business || urgent;

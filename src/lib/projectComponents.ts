@@ -49,6 +49,29 @@ export function buildProjectComponents(input: {
   return components;
 }
 
+/** Update only the managed body block; leave videos and other blocks untouched. */
+export function mergeProjectBodyText(
+  existing: ProjectComponent[] = [],
+  body_text?: string,
+): ProjectComponent[] {
+  const rest = existing.filter(
+    (c) => !(c.type === "text" && c.props.title === MANAGED_BODY_TITLE),
+  );
+  if (body_text?.trim()) {
+    return [
+      ...rest,
+      {
+        type: "text",
+        props: {
+          title: MANAGED_BODY_TITLE,
+          text: body_text.trim(),
+        },
+      },
+    ];
+  }
+  return rest;
+}
+
 /** Update CMS-managed showcase + body blocks without dropping other project content. */
 export function mergeProjectComponents(
   existing: ProjectComponent[] = [],
