@@ -30,10 +30,10 @@ function AttachmentList({
 }) {
   if (!attachments.length) return null;
 
-  const muted = variant === "user" ? "text-white/80" : "text-[var(--text-muted)]";
+  const muted = variant === "user" ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]";
   const chipBg =
     variant === "user"
-      ? "bg-white/15"
+      ? "border border-[var(--border)] bg-[var(--bg-elevated)]"
       : "bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]";
 
   return (
@@ -74,58 +74,69 @@ export function ChatMessage({
   onCancelEdit,
 }: Props) {
   const isUser = role === "user";
-  const hasText = content.trim().length > 0;
+  const trimmed = content.trim();
+  const isAttachmentPlaceholder = trimmed.startsWith("[Attached:");
+  const hasText = trimmed.length > 0 && !isAttachmentPlaceholder;
+  const showBubble = isEditing || hasText || (!isUser && attachments.length > 0);
 
   return (
     <div className={`group flex w-full flex-col ${isUser ? "items-end" : "items-start"}`}>
-      <div
-        className={`max-w-[min(100%,42rem)] rounded-2xl px-4 py-3 text-[0.9375rem] leading-relaxed ${
-          isUser
-            ? "rounded-br-md bg-[var(--color-accent)] text-white shadow-sm"
-            : "rounded-bl-md bg-transparent text-[var(--text)]"
-        }`}
-      >
-        {isEditing ? (
-          <div className="space-y-2">
-            <textarea
-              value={editDraft}
-              onChange={(e) => onEditDraftChange?.(e.target.value)}
-              rows={3}
-              className="w-full resize-none rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/60 focus:border-white"
-              placeholder={t("chat-edit-placeholder")}
-            />
-            {attachments.length > 0 && (
-              <p className="text-xs text-white/75">{t("chat-edit-attachments-hint")}</p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={onSaveEdit}
-                disabled={!editDraft.trim()}
-                className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-accent)] disabled:opacity-50"
-              >
-                {t("chat-save-edit")}
-              </button>
-              <button
-                type="button"
-                onClick={onCancelEdit}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold text-white/90 hover:bg-white/10"
-              >
-                {t("chat-cancel-edit")}
-              </button>
+      {!isEditing && isUser && attachments.length > 0 && (
+        <div className="mb-1.5 max-w-[min(100%,42rem)]">
+          <AttachmentList attachments={attachments} variant="user" />
+        </div>
+      )}
+
+      {showBubble ? (
+        <div
+          className={`max-w-[min(100%,42rem)] rounded-2xl px-4 py-3 text-[0.9375rem] leading-relaxed ${
+            isUser
+              ? "rounded-br-md bg-[var(--color-accent)] text-white shadow-sm"
+              : "rounded-bl-md bg-transparent text-[var(--text)]"
+          }`}
+        >
+          {isEditing ? (
+            <div className="space-y-2">
+              <textarea
+                value={editDraft}
+                onChange={(e) => onEditDraftChange?.(e.target.value)}
+                rows={3}
+                className="w-full resize-none rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/60 focus:border-white"
+                placeholder={t("chat-edit-placeholder")}
+              />
+              {attachments.length > 0 && (
+                <p className="text-xs text-white/75">{t("chat-edit-attachments-hint")}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onSaveEdit}
+                  disabled={!editDraft.trim()}
+                  className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-accent)] disabled:opacity-50"
+                >
+                  {t("chat-save-edit")}
+                </button>
+                <button
+                  type="button"
+                  onClick={onCancelEdit}
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold text-white/90 hover:bg-white/10"
+                >
+                  {t("chat-cancel-edit")}
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            <AttachmentList attachments={attachments} variant={isUser ? "user" : "assistant"} />
-            {hasText ? (
-              <div dangerouslySetInnerHTML={{ __html: formatContent(content) }} />
-            ) : attachments.length > 0 && isUser ? (
-              <p className="text-sm text-white/90">{t("chat-sent-attachments")}</p>
-            ) : null}
-          </>
-        )}
-      </div>
+          ) : (
+            <>
+              {!isUser && attachments.length > 0 ? (
+                <AttachmentList attachments={attachments} variant="assistant" />
+              ) : null}
+              {hasText ? (
+                <div dangerouslySetInnerHTML={{ __html: formatContent(content) }} />
+              ) : null}
+            </>
+          )}
+        </div>
+      ) : null}
 
       {canEdit && !isEditing && onStartEdit && (
         <button
