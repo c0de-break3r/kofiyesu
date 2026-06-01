@@ -45,7 +45,9 @@ See `.env.example` for the full list.
 
 ## Deploy
 
-Production deploys via **Vercel Git integration** — push to `main`. The build runs `prisma migrate deploy` then `npm run build`. Set all env vars in the Vercel project dashboard to match `.env.example`.
+Production deploys via **Vercel Git integration** — push to `main`. The build runs `npm run db:migrate` (retries + direct Neon URL) then `npm run build`. Set all env vars in the Vercel project dashboard to match `.env.example`.
+
+**Vercel + Neon:** Add `DIRECT_DATABASE_URL` from the Neon dashboard (**Direct connection**, not pooler). If unset, the build derives a direct host by stripping `-pooler` from `DATABASE_URL`. `db:migrate` also retries and disables Prisma advisory locks (fixes **P1002** on Neon).
 
 If migrate deploy fails with **P3005** (database not empty), the DB was previously synced with `db push`. Run once locally against production:
 
