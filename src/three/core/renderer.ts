@@ -116,7 +116,13 @@ const destroy = () => {
   instance.dispose();
   gsap.ticker.remove(tick);
   instance = null;
-  visible = true;
+  if (canvas) {
+    canvas.style.display = "none";
+    canvas.style.visibility = "hidden";
+  }
+  canvas = null;
+  visible = false;
+  isActive = false;
 };
 
 export const renderer = { init, destroy, getInstance, compile, setIsActive };

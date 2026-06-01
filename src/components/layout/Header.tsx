@@ -5,6 +5,7 @@ import { isClerkConfigured } from "@/lib/clerk";
 import { social } from "@/content/social";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
+import { teardownHomeThreeScene } from "@/lib/threeRoute";
 import { t } from "@/i18n/en";
 
 const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.com";
@@ -119,7 +120,10 @@ export function Header() {
               </NavLink>
               <button
                 type="button"
-                onClick={() => navigate("/chat")}
+                onClick={() => {
+                  teardownHomeThreeScene();
+                  navigate("/chat");
+                }}
                 className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
               >
                 {t("chat")}

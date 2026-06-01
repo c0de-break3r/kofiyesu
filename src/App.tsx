@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { lazyPage } from "@/lib/lazyWithRetry";
+import { syncRouteDocumentClass, teardownHomeThreeScene } from "@/lib/threeRoute";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "@/hooks/useTheme";
 import { getLenis, useScroll } from "@/hooks/useScroll";
@@ -18,8 +19,7 @@ import { SeoManager } from "@/components/seo/SeoManager";
 import { SiteContentProvider } from "@/hooks/useSiteContent";
 import { attachAudioUnlockOnGesture } from "@/features/sounds/unlockAudio";
 import { HomePage } from "@/pages/HomePage";
-
-const ChatPage = lazy(() => lazyPage(() => import("@/pages/ChatPage"), "ChatPage"));
+import { ChatPage } from "@/pages/ChatPage";
 const ProjectPage = lazy(() => lazyPage(() => import("@/pages/ProjectPage"), "ProjectPage"));
 const PayPage = lazy(() => lazyPage(() => import("@/pages/PayPage"), "PayPage"));
 
@@ -32,42 +32,41 @@ function AppRoutes() {
     syncPath(location.pathname);
   }, [location.pathname]);
 
-  useEffect(() => {
-    const onChat = location.pathname.startsWith("/chat");
-    const onPay = location.pathname.startsWith("/pay/");
-    const onProject = location.pathname.startsWith("/project/");
-    const onHome = !onChat && !onProject && !onPay;
-    const lenis = getLenis();
-    const canvasActive = onHome && !reducedMotion;
-
-    void import("@/three/core/renderer").then(({ renderer }) => {
-      renderer.setIsActive(canvasActive);
-    });
+  useLayoutEffect(() => {
+    const { onHome, onChat, onPay } = syncRouteDocumentClass(location.pathname);
 
     if (onChat || onPay) {
-      void import("@/three").then(({ three }) => three.destroy());
-      void import("@/three/core/renderer").then(({ renderer }) => renderer.setIsActive(false));
+      teardownHomeThreeScene();
+    } else if (onHome && !reducedMotion) {
+      void import("@/three/core/renderer").then(({ renderer }) => {
+        renderer.setIsActive(true);
+      });
+    } else {
+      void import("@/three/core/renderer").then(({ renderer }) => {
+        renderer.setIsActive(false);
+      });
+    }
+  }, [location.pathname, reducedMotion]);
+
+  useEffect(() => {
+    const { onHome, onChat, onPay } = syncRouteDocumentClass(location.pathname);
+    const lenis = getLenis();
+
+    if (onChat || onPay) {
       lenis?.start();
       lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);
-      document.documentElement.classList.add("route-doc-scroll");
-    } else if (onProject) {
-      document.documentElement.classList.remove("route-doc-scroll");
+    } else if (!onHome) {
       lenis?.start();
       lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);
     } else {
       lenis?.start();
-      document.documentElement.classList.remove("route-doc-scroll");
       resetHomeScene();
       lenis?.scrollTo(0, { immediate: true });
       requestAnimationFrame(() => ScrollTrigger.refresh());
     }
-
-    return () => {
-      document.documentElement.classList.remove("route-doc-scroll");
-    };
-  }, [location.pathname, reducedMotion]);
+  }, [location.pathname]);
 
   return (
     <Suspense fallback={null}>

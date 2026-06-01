@@ -38,7 +38,7 @@ export function ContactSection() {
           </nav>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
           <Link to="/chat">
             <Button>{t("start-a-project")}</Button>
           </Link>

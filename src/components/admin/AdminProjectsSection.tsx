@@ -5,7 +5,12 @@ import { AdminMediaUpload } from "./AdminMediaUpload";
 import { ProjectCardPreviewMedia } from "@/features/projects/ProjectCardPreviewMedia";
 import { useAdminApi } from "@/hooks/useAdminApi";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { buildProjectComponents, extractProjectFormFromComponents, mergeProjectComponents } from "@/lib/projectComponents";
+import {
+  buildProjectComponents,
+  extractProjectFormFromComponents,
+  mergeProjectComponents,
+  syncThumbnailInComponents,
+} from "@/lib/projectComponents";
 import { parseCommaList } from "@/lib/parseCommaList";
 import type { SiteFeatureRow, SiteProjectRow } from "@/types/site";
 
@@ -129,6 +134,19 @@ export function AdminProjectsSection() {
       const existingComponents =
         editingId !== "new" ? projects.find((p) => p.id === editingId)?.components : undefined;
 
+      const baseComponents =
+        editingId === "new"
+          ? buildProjectComponents({
+              showcase_video_url: form.showcase_video_url,
+              showcase_video_caption: form.showcase_video_caption,
+              body_text: form.body_text,
+            })
+          : mergeProjectComponents(existingComponents ?? [], {
+              showcase_video_url: form.showcase_video_url,
+              showcase_video_caption: form.showcase_video_caption,
+              body_text: form.body_text,
+            });
+
       const payload = {
         slug: form.slug,
         title: form.title,
@@ -144,18 +162,7 @@ export function AdminProjectsSection() {
         video_border: form.video_border,
         sort_order: form.sort_order,
         published: form.published,
-        components:
-          editingId === "new"
-            ? buildProjectComponents({
-                showcase_video_url: form.showcase_video_url,
-                showcase_video_caption: form.showcase_video_caption,
-                body_text: form.body_text,
-              })
-            : mergeProjectComponents(existingComponents ?? [], {
-                showcase_video_url: form.showcase_video_url,
-                showcase_video_caption: form.showcase_video_caption,
-                body_text: form.body_text,
-              }),
+        components: syncThumbnailInComponents(baseComponents, form.thumbnail_url || null),
       };
 
       const isNew = editingId === "new";

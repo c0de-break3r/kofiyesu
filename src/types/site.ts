@@ -1,6 +1,11 @@
 import type { ProjectComponent } from "./projects";
 import type { ProjectContent, ProjectPreview } from "./content";
-import { mergeProjectComponents, extractProjectFormFromComponents } from "@/lib/projectComponents";
+import {
+  mergeProjectComponents,
+  extractProjectFormFromComponents,
+  syncThumbnailInComponents,
+  applyMediaCacheBust,
+} from "@/lib/projectComponents";
 
 function normalizeComponents(raw: unknown): ProjectComponent[] {
   return Array.isArray(raw) ? (raw as ProjectComponent[]) : [];
@@ -91,7 +96,9 @@ export const rowToPreview = (row: SiteProjectRow): ProjectPreview => ({
 
 export const rowToContent = (row: SiteProjectRow): ProjectContent => {
   const showcase = showcaseFromRow(row);
-  const components = mergeProjectComponents(normalizeComponents(row.components), showcase);
+  const merged = mergeProjectComponents(normalizeComponents(row.components), showcase);
+  const synced = syncThumbnailInComponents(merged, row.thumbnail_url);
+  const components = applyMediaCacheBust(synced, row.updated_at);
 
   return {
     title: row.title,

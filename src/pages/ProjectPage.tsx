@@ -14,7 +14,7 @@ const projectPageClass =
 
 export function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { getProjectContent, previews, loaded } = useSiteContent();
+  const { getProjectContent, previews, loaded, projects } = useSiteContent();
   const [content, setContent] = useState<ProjectContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -28,7 +28,7 @@ export function ProjectPage() {
       setNotFound(!data);
       setLoading(false);
     });
-  }, [slug, getProjectContent, loaded]);
+  }, [slug, getProjectContent, loaded, projects]);
 
   const nextProject = useMemo(() => {
     if (!slug || !previews.length) return null;

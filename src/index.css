@@ -230,7 +230,9 @@ html.route-doc-scroll body {
   height: 100%;
 }
 
-html.route-doc-scroll canvas {
+html.route-doc-scroll canvas,
+html[data-route="chat"] canvas,
+html[data-route="pay"] canvas {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;

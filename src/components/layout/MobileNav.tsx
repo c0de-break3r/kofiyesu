@@ -7,6 +7,7 @@ import { t } from "@/i18n/en";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
+import { teardownHomeThreeScene } from "@/lib/threeRoute";
 
 type NavSection = "hero" | "about" | "projects" | "chat";
 
@@ -141,7 +142,12 @@ function MobileAuthButton() {
 
   if (!isClerkConfigured) {
     return (
-      <Link to="/chat" className={mobileAuthCircle} aria-label={t("sign-in")}>
+      <Link
+        to="/chat"
+        className={mobileAuthCircle}
+        aria-label={t("sign-in")}
+        onClick={() => teardownHomeThreeScene()}
+      >
         {signInIcon}
       </Link>
     );
@@ -235,6 +241,7 @@ export function MobileNav() {
 
   const scrollTo = (section: NavSection) => {
     if (section === "chat") {
+      teardownHomeThreeScene();
       navigate("/chat");
       return;
     }

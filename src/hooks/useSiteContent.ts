@@ -30,6 +30,7 @@ type SiteDataSource = "loading" | "api" | "static";
 
 type SiteContentContextValue = {
   previews: ProjectPreview[];
+  projects: SiteProjectRow[];
   features: SiteFeatureRow[];
   about: SiteAboutRow | null;
   loaded: boolean;
@@ -185,6 +186,7 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
   const value = useMemo<SiteContentContextValue>(
     () => ({
       previews,
+      projects,
       features: publishedFeatures,
       about,
       loaded,
@@ -195,7 +197,7 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
       services,
       pricingPackages: publishedPricing,
     }),
-    [previews, publishedFeatures, about, loaded, load, getProjectContent, aboutText, services, publishedPricing],
+    [previews, projects, publishedFeatures, about, loaded, load, getProjectContent, aboutText, services, publishedPricing],
   );
 
   return createElement(SiteContentContext.Provider, { value }, children);
