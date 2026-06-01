@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
 import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
 import { ChatMessage, ChatTyping } from "./ChatMessage";
-import { ChatPaymentBanner } from "./ChatPaymentBanner";
 import { t } from "@/i18n/en";
 import {
   type ChatMessage as ChatMsg,
@@ -35,7 +34,6 @@ import {
 import { shouldQueueInquiry } from "@/lib/inquiryQueue";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
-import { type PaymentRow } from "@/hooks/usePaystackPayment";
 import { social } from "@/content/social";
 
 function toMessageAttachments(files: ChatAttachment[]): ChatMessageAttachmentView[] {
@@ -74,7 +72,6 @@ export function ContactChatPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [routing, setRouting] = useState<RoutingResult | null>(null);
   const [showEscalateBanner, setShowEscalateBanner] = useState(false);
-  const [pendingPayments, setPendingPayments] = useState<PaymentRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const messagesEl = useRef<HTMLDivElement>(null);
@@ -119,29 +116,6 @@ export function ContactChatPanel() {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [historyReady, conversationId, syncRemoteMessages]);
-
-  const loadPendingPayments = useCallback(async () => {
-    if (!isSignedIn) return;
-    try {
-      const token = await getToken();
-      if (!token) return;
-      const res = await fetch("/api/payments", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { payments: PaymentRow[] };
-      setPendingPayments(data.payments.filter((p) => p.status === "pending"));
-    } catch {
-      /* ignore */
-    }
-  }, [getToken, isSignedIn]);
-
-  useEffect(() => {
-    if (!isSignedIn) return;
-    void loadPendingPayments();
-    const interval = window.setInterval(() => void loadPendingPayments(), 15000);
-    return () => window.clearInterval(interval);
-  }, [isSignedIn, loadPendingPayments]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = messagesEl.current;
@@ -536,13 +510,6 @@ export function ContactChatPanel() {
                   {fileError}
                 </p>
               )}
-
-              {pendingPayments.length > 0 ? (
-                <ChatPaymentBanner
-                  payments={pendingPayments}
-                  onPaid={() => void loadPendingPayments()}
-                />
-              ) : null}
 
               {historyReady &&
                 messages.map((msg) => (
