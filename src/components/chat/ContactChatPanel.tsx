@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAuth, useUser, SignInButton } from "@clerk/clerk-react";
 import { BackIconLink } from "@/components/layout/BackIconLink";
 import { Button } from "@/components/ui/Button";
@@ -136,11 +136,30 @@ export function ContactChatPanel() {
     };
   }, [historyReady, conversationId, syncRemoteMessages]);
 
+  const applyComposerPadding = useCallback(() => {
+    const el = messagesEl.current;
+    if (!el) return;
+
+    if (adminOpen || !historyReady) {
+      el.style.paddingBottom = adminOpen ? "1rem" : "";
+      return;
+    }
+
+    const composer = composerRef.current;
+    if (!composer) {
+      el.style.paddingBottom = "7.5rem";
+      return;
+    }
+
+    el.style.paddingBottom = `${composer.offsetHeight + 16}px`;
+  }, [adminOpen, historyReady]);
+
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = messagesEl.current;
     if (!el) return;
+    applyComposerPadding();
     el.scrollTo({ top: el.scrollHeight, behavior });
-  }, []);
+  }, [applyComposerPadding]);
 
   const welcomeMessages = useCallback((): ChatMsg[] => {
     const name = user?.firstName ?? user?.fullName ?? null;
@@ -210,32 +229,34 @@ export function ContactChatPanel() {
     scrollToBottom(historyLoading ? "auto" : "smooth");
   }, [messages, isLoading, routing, scrollToBottom, historyReady, historyLoading]);
 
-  useEffect(() => {
-    const el = messagesEl.current;
-    if (!el) return;
+  useLayoutEffect(() => {
+    applyComposerPadding();
 
-    if (adminOpen) {
-      el.style.paddingBottom = "1rem";
-      return;
-    }
+    if (adminOpen || !historyReady) return;
 
     const composer = composerRef.current;
     if (!composer) return;
 
-    const applyPadding = () => {
-      el.style.paddingBottom = `${composer.offsetHeight + 12}px`;
-    };
-
-    applyPadding();
-    const ro = new ResizeObserver(applyPadding);
+    const ro = new ResizeObserver(() => applyComposerPadding());
     ro.observe(composer);
-    window.addEventListener("resize", applyPadding);
+    window.addEventListener("resize", applyComposerPadding);
 
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", applyPadding);
+      window.removeEventListener("resize", applyComposerPadding);
     };
-  }, [routing, paySuccess, payError, pendingFiles.length, isSignedIn, historyOpen, adminOpen]);
+  }, [
+    applyComposerPadding,
+    historyReady,
+    adminOpen,
+    routing,
+    paySuccess,
+    payError,
+    pendingFiles.length,
+    messages.length,
+    isLoading,
+    showEscalateBanner,
+  ]);
 
   const handleProjectPay = useCallback(
     async (quote: ProjectQuote, kind: "deposit" | "full") => {

@@ -279,16 +279,6 @@ export function AdminProjectsSection() {
                 previewType="image"
               />
 
-              {form.thumbnail_url ? (
-                <div className="overflow-hidden rounded-xl border border-[var(--border)]">
-                  <img
-                    src={form.thumbnail_url}
-                    alt=""
-                    className="max-h-40 w-full object-cover"
-                  />
-                </div>
-              ) : null}
-
               <AdminField label="What I built (project page body)">
                 <AdminTextarea
                   rows={4}

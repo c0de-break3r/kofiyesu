@@ -252,4 +252,7 @@ html.route-doc-scroll [data-chat-scroll] {
 .chat-messages-scroll {
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
+  /* Fallback until JS measures the fixed composer (e.g. after refresh). */
+  padding-bottom: max(7.5rem, calc(5.5rem + env(safe-area-inset-bottom, 0px)));
+  scroll-padding-bottom: max(7.5rem, calc(5.5rem + env(safe-area-inset-bottom, 0px)));
 }
