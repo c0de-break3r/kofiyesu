@@ -4,7 +4,6 @@ import { BackIconLink } from "@/components/layout/BackIconLink";
 import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
 import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
-import { ChatIntakeFlow } from "./ChatIntakeFlow";
 import { ChatMessage, ChatTyping } from "./ChatMessage";
 import { ChatPaymentBanner } from "./ChatPaymentBanner";
 import { t } from "@/i18n/en";
@@ -35,14 +34,6 @@ import {
 } from "@/lib/chatHistory";
 import { shouldQueueInquiry } from "@/lib/inquiryQueue";
 import { submitInquiry } from "@/lib/submitInquiry";
-import {
-  type ChatIntakeData,
-  INTAKE_SESSION_KEY,
-  formatIntakeMessage,
-  intakeNeedsAdmin,
-} from "@/lib/chatIntake";
-import { clearIntakeDraft } from "@/lib/intakeDraft";
-import { getInquiryRoute } from "@/content/contact";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { type PaymentRow } from "@/hooks/usePaystackPayment";
 import { social } from "@/content/social";
@@ -86,11 +77,6 @@ export function ContactChatPanel() {
   const [pendingPayments, setPendingPayments] = useState<PaymentRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
-  const [intakeDone, setIntakeDone] = useState(
-    () => typeof window !== "undefined" && sessionStorage.getItem(INTAKE_SESSION_KEY) === "1",
-  );
-  const [intakeSubmitting, setIntakeSubmitting] = useState(false);
-  const [intakeError, setIntakeError] = useState<string | null>(null);
   const messagesEl = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
 
@@ -450,52 +436,8 @@ export function ContactChatPanel() {
   };
 
   const hasUserMessages = messages.some((m) => m.role === "user");
-  const showIntake =
-    historyReady && !historyLoading && !hasUserMessages && !isLoading && !intakeDone;
-  const showReadyState = historyReady && !historyLoading && !hasUserMessages && !isLoading && intakeDone;
-
-  const handleIntakeComplete = async (intake: ChatIntakeData) => {
-    if (!conversationId) return;
-    setIntakeSubmitting(true);
-    setIntakeError(null);
-
-    const saved = await submitInquiry({
-      inquiryType: intake.projectType,
-      message: formatIntakeMessage(intake),
-      needsAdmin: intakeNeedsAdmin(intake),
-      conversationId,
-      intake,
-      userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
-      userName: user?.fullName ?? null,
-      getToken,
-    });
-
-    setIntakeSubmitting(false);
-    if (!saved.ok) {
-      setIntakeError("Could not save your intake. Try again.");
-      return;
-    }
-
-    sessionStorage.setItem(INTAKE_SESSION_KEY, "1");
-    clearIntakeDraft();
-    setIntakeDone(true);
-
-    const route = getInquiryRoute(intake.projectType);
-    const welcome: ChatMsg = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: t("chat-welcome-intake", { type: route.label.toLowerCase() }),
-    };
-    setMessages([welcome]);
-    persistConversation([welcome]);
-  };
-
-  useEffect(() => {
-    if (hasUserMessages && !intakeDone) {
-      setIntakeDone(true);
-      sessionStorage.setItem(INTAKE_SESSION_KEY, "1");
-    }
-  }, [hasUserMessages, intakeDone]);
+  const showEmptyHint =
+    historyReady && !historyLoading && !hasUserMessages && !isLoading && messages.length === 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -577,21 +519,7 @@ export function ContactChatPanel() {
                 </p>
               )}
 
-              {showIntake && (
-                <div className="py-4">
-                  {intakeSubmitting ? (
-                    <p className="text-center text-sm text-[var(--text-muted)]">{t("intake-submitting")}</p>
-                  ) : null}
-                  {intakeError ? (
-                    <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-center text-sm font-semibold text-red-500">
-                      {intakeError}
-                    </p>
-                  ) : null}
-                  {!intakeSubmitting ? <ChatIntakeFlow onComplete={(data) => void handleIntakeComplete(data)} /> : null}
-                </div>
-              )}
-
-              {showReadyState && (
+              {showEmptyHint && (
                 <div className="flex flex-col items-center justify-center py-10 text-center sm:py-16">
                   <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] text-2xl">
                     ✦
@@ -617,8 +545,6 @@ export function ContactChatPanel() {
               ) : null}
 
               {historyReady &&
-                !showReadyState &&
-                !showIntake &&
                 messages.map((msg) => (
                   <ChatMessage
                     key={msg.id ?? `${msg.role}-${msg.content.slice(0, 16)}`}
@@ -638,11 +564,11 @@ export function ContactChatPanel() {
                   />
                 ))}
 
-              {historyReady && !showReadyState && !showIntake && isLoading && <ChatTyping />}
+              {historyReady && isLoading && <ChatTyping />}
             </div>
           </div>
 
-          {!adminOpen && intakeDone && (
+          {!adminOpen && historyReady && (
             <ChatComposer
               composerRef={composerRef}
               input={input}
