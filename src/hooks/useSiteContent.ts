@@ -168,13 +168,13 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
     const defaultByName = Object.fromEntries(
       defaultAbout.services.map((s) => [s.name, s.info ?? ""]),
     );
-    const fromDb = about?.services?.filter((s) => s?.name?.trim());
-    const list = fromDb?.length ? fromDb : [...defaultAbout.services];
+    // Since we don't store services in the database, we always use the default services.
+    const list = [...defaultAbout.services];
     return list.map((s) => ({
       name: s.name,
       info: s.info?.trim() || defaultByName[s.name] || "",
     }));
-  }, [about]);
+  }, []);
 
   const publishedPricing = useMemo<SitePricingPackageRow[]>(() => {
     const list = pricingPackages.length ? pricingPackages : staticPricingPackages();

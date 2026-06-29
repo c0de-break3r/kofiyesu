@@ -33,7 +33,6 @@ export const aboutToApi = (row: SiteAbout) => ({
   about_intro: row.aboutIntro,
   about_tagline: row.aboutTagline,
   location: row.location,
-  services: row.services,
   updated_at: row.updatedAt.toISOString(),
 });
 

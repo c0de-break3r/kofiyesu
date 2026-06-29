@@ -90,7 +90,6 @@ export interface SiteAboutRow {
   about_intro: string | null;
   about_tagline: string | null;
   location: string | null;
-  services: SiteService[];
   updated_at: string;
 }
 

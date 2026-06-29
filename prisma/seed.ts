@@ -1,6 +1,5 @@
 import { prisma } from "../api/lib/prisma.js";
 import { defaultAbout } from "../src/content/about";
-import { defaultPricingPackages } from "../api/lib/defaultPricingPackages.js";
 
 const featureDefs = [
   { slug: "web-application", label: "Web Application", sortOrder: 0 },
@@ -129,7 +128,6 @@ async function main() {
       aboutIntro: defaultAbout.about_intro,
       aboutTagline: defaultAbout.about_tagline,
       location: defaultAbout.location,
-      services: defaultAbout.services,
     },
     update: {
       displayName: "Obed Prince Kofi Yesu",
@@ -137,7 +135,6 @@ async function main() {
       aboutIntro: defaultAbout.about_intro,
       aboutTagline: defaultAbout.about_tagline,
       location: defaultAbout.location,
-      services: defaultAbout.services,
     },
   });
 
@@ -191,39 +188,12 @@ async function main() {
     });
   }
 
-  for (const pkg of defaultPricingPackages) {
-    await prisma.sitePricingPackage.upsert({
-      where: { slug: pkg.slug },
-      create: {
-        slug: pkg.slug,
-        title: pkg.title,
-        amountGhs: pkg.amountGhs,
-        description: pkg.description,
-        highlights: [...pkg.highlights],
-        featured: pkg.featured,
-        sortOrder: pkg.sortOrder,
-        published: true,
-      },
-      update: {
-        title: pkg.title,
-        amountGhs: pkg.amountGhs,
-        description: pkg.description,
-        highlights: [...pkg.highlights],
-        featured: pkg.featured,
-        sortOrder: pkg.sortOrder,
-        published: true,
-      },
-    });
-  }
-
   console.log(
     "Seed complete: site_about +",
     featureDefs.length,
     "features +",
     projects.length,
-    "projects +",
-    defaultPricingPackages.length,
-    "pricing packages",
+    "projects"
   );
 }
 
