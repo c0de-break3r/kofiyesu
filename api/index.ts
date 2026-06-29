@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import inquiriesHandler from "../server/routes/inquiries.js";
-import paymentsHandler from "../server/routes/payments.js";
 import chatHandler from "../server/routes/chat/main.js";
 import conversationHandler from "../server/routes/chat/conversation.js";
 import siteAboutHandler from "../server/routes/site/about.js";
@@ -10,7 +9,6 @@ import adminAboutHandler from "../server/routes/admin/about.js";
 import adminFeaturesHandler from "../server/routes/admin/features.js";
 import adminProjectsHandler from "../server/routes/admin/projects.js";
 import adminInquiriesHandler from "../server/routes/admin/inquiries.js";
-import adminPaymentsHandler from "../server/routes/admin/payments.js";
 
 export const config = {
   api: { bodyParser: false },
@@ -27,7 +25,6 @@ const adminRoutes = {
   features: adminFeaturesHandler,
   projects: adminProjectsHandler,
   inquiries: adminInquiriesHandler,
-  payments: adminPaymentsHandler,
 } as const;
 
 
@@ -75,11 +72,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (root === "inquiries") {
       await withJsonBody(req);
       return inquiriesHandler(req, res);
-    }
-
-    if (root === "payments") {
-      await withJsonBody(req);
-      return paymentsHandler(req, res);
     }
 
     if (root === "chat") {
