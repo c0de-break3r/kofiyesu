@@ -77,7 +77,7 @@ export function hasEnoughContextForQuote(allUserText: string): boolean {
     /\b(premium|custom|payment|checkout|cart|inventory|admin|dashboard)\b/,
     /\b(timeline|deadline|weeks?|months?|asap|launch)\b/,
     /\b(budget|gh[c₵]?|\d+\s*k|\d+\s*gh)\b/,
-    /\b(feature|integration|clerk|paystack|auth|mobile)\b/,
+    /\b(feature|integration|clerk|auth|mobile)\b/,
     /\b(products?|sku|vendor|delivery)\b/,
   ];
   const detailCount = detailSignals.filter((p) => p.test(lower)).length;

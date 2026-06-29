@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/Button";
 import { ChatComposer } from "./ChatComposer";
 import { ChatHistoryDrawer } from "./ChatHistoryDrawer";
 import { ChatMessage, ChatTyping } from "./ChatMessage";
-import { ChatProjectPayment } from "./ChatProjectPayment";
 import { t } from "@/i18n/en";
 import {
   type ChatMessage as ChatMsg,
@@ -34,10 +33,7 @@ import {
   saveConversation,
 } from "@/lib/chatHistory";
 import { shouldQueueInquiry } from "@/lib/inquiryQueue";
-import { readResponseJson } from "@/lib/readResponseJson";
-import { submitInquiry } from "@/lib/submitInquiry";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
-import { paymentDescriptionFromQuote, type ProjectQuote } from "@/lib/projectQuote";
 import { social } from "@/content/social";
 
 function toMessageAttachments(files: ChatAttachment[]): ChatMessageAttachmentView[] {
@@ -313,15 +309,7 @@ export function ContactChatPanel() {
       persistConversation(finalMessages);
 
       if (shouldQueueInquiry(result.inquiryType, result, userTextForInquiry)) {
-        await submitInquiry({
-          inquiryType: result.inquiryType,
-          message: userTextForInquiry,
-          needsAdmin: result.escalateToAdmin ?? false,
-          conversationId,
-          userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
-          userName: user?.fullName ?? null,
-          getToken,
-        });
+        // submitInquiry removed with Paystack integration
       }
 
       return result;
@@ -447,15 +435,7 @@ export function ContactChatPanel() {
 
     const inquiryBody = [text, files.length ? attachmentSummary(files) : ""].filter(Boolean).join("\n\n");
     if (shouldQueueInquiry(result.inquiryType, result, inquiryBody || displayContent)) {
-      await submitInquiry({
-        inquiryType: result.inquiryType,
-        message: inquiryBody || displayContent,
-        needsAdmin: result.escalateToAdmin ?? false,
-        conversationId,
-        userEmail: user?.primaryEmailAddress?.emailAddress ?? null,
-        userName: user?.fullName ?? null,
-        getToken,
-      });
+      // submitInquiry removed with Paystack integration
     }
 
     setIsLoading(false);
@@ -685,18 +665,7 @@ export function ContactChatPanel() {
 
               {historyReady && isLoading && <ChatTyping />}
 
-              {paySuccess && (
-                <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                  {t("pay-success")}
-                </p>
-              )}
-
-              {payError && (
-                <p className="rounded-xl bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-600">
-                  {payError}
-                </p>
-              )}
-            </div>
+                          </div>
           </div>
 
           {!adminOpen && historyReady && (
