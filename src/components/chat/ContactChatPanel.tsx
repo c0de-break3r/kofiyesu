@@ -37,7 +37,6 @@ import { shouldQueueInquiry } from "@/lib/inquiryQueue";
 import { readResponseJson } from "@/lib/readResponseJson";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
-import { usePaystackPayment, type PaymentRow } from "@/hooks/usePaystackPayment";
 import { paymentDescriptionFromQuote, type ProjectQuote } from "@/lib/projectQuote";
 import { social } from "@/content/social";
 
@@ -79,21 +78,6 @@ export function ContactChatPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [routing, setRouting] = useState<RoutingResult | null>(null);
   const [showEscalateBanner, setShowEscalateBanner] = useState(false);
-  const [payingKey, setPayingKey] = useState<"deposit" | "full" | null>(null);
-  const [payError, setPayError] = useState<string | null>(null);
-  const [paySuccess, setPaySuccess] = useState(false);
-
-  const { pay, paying } = usePaystackPayment({
-    onSuccess: () => {
-      setPaySuccess(true);
-      setPayError(null);
-      setPayingKey(null);
-    },
-    onError: (msg) => {
-      setPayError(msg);
-      setPayingKey(null);
-    },
-  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const messagesEl = useRef<HTMLDivElement>(null);
@@ -269,7 +253,7 @@ export function ContactChatPanel() {
   useLayoutEffect(() => {
     applyComposerPadding();
 
-    if (adminOpen || !historyReady) return;
+    if (adminOpen || !historyReady || !historyReady) return;
 
     const composer = composerRef.current;
     if (!composer) return;
@@ -287,59 +271,11 @@ export function ContactChatPanel() {
     historyReady,
     adminOpen,
     routing,
-    paySuccess,
-    payError,
     pendingFiles.length,
     messages.length,
     isLoading,
     showEscalateBanner,
   ]);
-
-  const handleProjectPay = useCallback(
-    async (quote: ProjectQuote, kind: "deposit" | "full") => {
-      if (!isSignedIn || paying) return;
-      const amountGhs =
-        kind === "deposit" && quote.depositGhs != null ? quote.depositGhs : quote.totalGhs;
-      const title =
-        kind === "deposit"
-          ? `${quote.projectTitle} — kickoff deposit`
-          : `${quote.projectTitle} — project payment`;
-
-      setPayError(null);
-      setPaySuccess(false);
-      setPayingKey(kind);
-      try {
-        const token = await getToken();
-        if (!token) throw new Error("Sign in required");
-
-        const res = await fetch("/api/payments", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title,
-            amount_ghs: amountGhs,
-            description: paymentDescriptionFromQuote(quote),
-            user_email: user?.primaryEmailAddress?.emailAddress ?? null,
-            user_name: user?.fullName ?? null,
-          }),
-        });
-
-        const data = await readResponseJson<{ payment: PaymentRow; error?: string }>(res);
-        if (!res.ok || !data?.payment) {
-          throw new Error(data?.error ?? "Could not start payment");
-        }
-
-        await pay(data.payment);
-      } catch (err) {
-        setPayError(err instanceof Error ? err.message : t("chat-pay-error"));
-        setPayingKey(null);
-      }
-    },
-    [getToken, isSignedIn, pay, paying, user],
-  );
 
   const persistConversation = useCallback(
     (next: ChatMsg[]) => {
@@ -373,8 +309,6 @@ export function ContactChatPanel() {
       ];
       setRouting(result);
       setShowEscalateBanner(Boolean(result.escalateToAdmin));
-      setPayError(null);
-      if (!result.showPaymentOptions) setPaySuccess(false);
       setMessages(finalMessages);
       persistConversation(finalMessages);
 
@@ -490,8 +424,6 @@ export function ContactChatPanel() {
     setIsLoading(true);
     setRouting(null);
     setShowEscalateBanner(false);
-    setPayError(null);
-    setPaySuccess(false);
     setEditingId(null);
 
     const result = await routeInquiryWithAi({
@@ -510,7 +442,6 @@ export function ContactChatPanel() {
     ];
     setRouting(result);
     setShowEscalateBanner(Boolean(result.escalateToAdmin));
-    if (!result.showPaymentOptions) setPaySuccess(false);
     setMessages(finalMessages);
     persistConversation(finalMessages);
 
@@ -655,7 +586,7 @@ export function ContactChatPanel() {
             >
               <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
                 <path
-                  d="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0018 0z"
                   stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
@@ -753,14 +684,6 @@ export function ContactChatPanel() {
                 ))}
 
               {historyReady && isLoading && <ChatTyping />}
-
-              {historyReady && routing?.showPaymentOptions && routing.projectQuote && (
-                <ChatProjectPayment
-                  quote={routing.projectQuote}
-                  payingKey={paying ? payingKey : null}
-                  onPay={(kind) => void handleProjectPay(routing.projectQuote!, kind)}
-                />
-              )}
 
               {paySuccess && (
                 <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-center text-sm font-bold text-emerald-700 dark:text-emerald-400">

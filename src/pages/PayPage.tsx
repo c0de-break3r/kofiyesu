@@ -4,9 +4,18 @@ import { useAuth, useUser, SignInButton } from "@clerk/clerk-react";
 import { BackIconLink } from "@/components/layout/BackIconLink";
 import { Button } from "@/components/ui/Button";
 import { formatGhs, currencyName, currencyCode } from "@/content/payments";
-import { usePaystackPayment, type PaymentRow } from "@/hooks/usePaystackPayment";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { t } from "@/i18n/en";
+
+export type PaymentRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  amount_ghs: number;
+  status: string;
+  currency: string;
+  paystack_reference?: string | null;
+};
 
 export function PayPage() {
   const { paymentId } = useParams<{ paymentId: string }>();
@@ -16,15 +25,6 @@ export function PayPage() {
   const [payment, setPayment] = useState<PaymentRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const { pay, paying } = usePaystackPayment({
-    onSuccess: (p) => {
-      setPayment(p);
-      setSuccess(true);
-    },
-    onError: (msg) => setError(msg),
-  });
 
   useDocumentMeta({
     title: payment ? `Pay ${formatGhs(payment.amount_ghs)} — Obed Prince Kofi Yesu` : undefined,
@@ -54,24 +54,7 @@ export function PayPage() {
         if (!cancelled) setPayment(data.payment);
 
         if (searchParams.get("verify") === "1" && token && data.payment.status === "pending") {
-          const ref = data.payment.paystack_reference;
-          if (ref) {
-            const verifyRes = await fetch("/api/paystack/verify", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ reference: ref, payment_id: paymentId }),
-            });
-            if (verifyRes.ok) {
-              const verified = (await verifyRes.json()) as { payment: PaymentRow };
-              if (!cancelled) {
-                setPayment(verified.payment);
-                setSuccess(true);
-              }
-            }
-          }
+          // Paystack verification removed
         }
       } catch {
         if (!cancelled) setError("Could not load payment");
@@ -115,7 +98,7 @@ export function PayPage() {
 
   if (!payment) return null;
 
-  const paid = payment.status === "paid" || success;
+  const paid = payment.status === "paid";
 
   return (
     <main id="main-content" className={pageClass}>
@@ -133,7 +116,7 @@ export function PayPage() {
 
           <p className="mt-6 text-3xl font-black tabular-nums">{formatGhs(payment.amount_ghs)}</p>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
-            {currencyName} ({currencyCode}) · Card · Mobile Money · Bank
+            {currencyName} ({currencyCode})
           </p>
 
           {paid ? (
@@ -149,10 +132,9 @@ export function PayPage() {
             </div>
           ) : (
             <div className="mt-6 space-y-3">
-              <Button className="w-full" disabled={paying} onClick={() => void pay(payment)}>
-                {paying ? t("pay-processing") : t("pay-now")}
+              <Button className="w-full" disabled>
+                Paystack integration removed
               </Button>
-              {error ? <p className="text-center text-sm font-semibold text-red-600">{error}</p> : null}
               <p className="text-center text-[10px] text-[var(--text-muted)]">
                 {user?.primaryEmailAddress?.emailAddress}
               </p>
