@@ -11,9 +11,6 @@ import adminFeaturesHandler from "../server/routes/admin/features.js";
 import adminProjectsHandler from "../server/routes/admin/projects.js";
 import adminInquiriesHandler from "../server/routes/admin/inquiries.js";
 import adminPaymentsHandler from "../server/routes/admin/payments.js";
-import paystackInitializeHandler from "../server/routes/paystack/initialize.js";
-import paystackVerifyHandler from "../server/routes/paystack/verify.js";
-import paystackWebhookHandler from "../server/routes/paystack/webhook.js";
 
 export const config = {
   api: { bodyParser: false },
@@ -33,11 +30,6 @@ const adminRoutes = {
   payments: adminPaymentsHandler,
 } as const;
 
-const paystackRoutes = {
-  initialize: paystackInitializeHandler,
-  verify: paystackVerifyHandler,
-  webhook: paystackWebhookHandler,
-} as const;
 
 function pathSegments(req: VercelRequest): string[] {
   const raw = req.query.path;
@@ -115,15 +107,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return route(req, res);
     }
 
-    if (root === "paystack" && sub) {
-      if (sub === "webhook") {
-        return paystackWebhookHandler(req, res);
-      }
-      await withJsonBody(req);
-      const route = paystackRoutes[sub as keyof typeof paystackRoutes];
-      if (!route) return res.status(404).json({ error: "Not found" });
-      return route(req, res);
-    }
 
     return res.status(404).json({ error: "Not found" });
   } catch (err) {
