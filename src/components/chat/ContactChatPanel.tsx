@@ -89,7 +89,7 @@ export function ContactChatPanel() {
 
   const syncRemoteMessages = useCallback(async () => {
     if (!user?.id || !conversationId || isLoading) return;
-    const loaded = await loadConversation(getToken, user.id, conversationId);
+    const loaded = await loadConversation(getToken, conversationId);
     if (!loaded) return;
     const remote = ensureMessageIds(loaded.messages);
     setMessages((prev) => {
@@ -159,7 +159,7 @@ export function ContactChatPanel() {
   const refreshConversationList = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const list = await listConversations(getToken, user.id);
+      const list = await listConversations(getToken);
       setConversations(list);
       setHistoryError(null);
     } catch (err) {
@@ -189,7 +189,7 @@ export function ContactChatPanel() {
       setHistoryLoading(true);
       setHistoryError(null);
       try {
-        const loaded = await loadConversation(getToken, user.id, id);
+        const loaded = await loadConversation(getToken, id);
         if (!loaded) return;
         applyConversation(loaded.id, loaded.messages, loaded.messages.length === 0);
       } catch (err) {
@@ -276,7 +276,7 @@ export function ContactChatPanel() {
   const persistConversation = useCallback(
     (next: ChatMsg[]) => {
       if (!user?.id || !conversationId) return;
-      void saveConversation(getToken, user.id, conversationId, next)
+      void saveConversation(getToken, conversationId, next)
         .then(() => refreshConversationList())
         .catch((err) => {
           reportHistoryError(err, "Could not save chat to the cloud.");
@@ -332,7 +332,7 @@ export function ContactChatPanel() {
   const handleClearChat = async () => {
     if (!user?.id || !conversationId) return;
     try {
-      await clearConversationMessages(getToken, user.id, conversationId);
+      await clearConversationMessages(getToken, conversationId);
       await refreshConversationList();
       applyConversation(conversationId, [], true);
       setHistoryOpen(false);
@@ -345,7 +345,7 @@ export function ContactChatPanel() {
     if (!user?.id || !conversationId) return;
     try {
       await deleteConversation(getToken, user.id, conversationId);
-      const list = await listConversations(getToken, user.id);
+      const list = await listConversations(getToken);
       setConversations(list);
       if (list.length > 0) {
         await loadConversationById(list[0].id);
