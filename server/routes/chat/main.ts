@@ -7,9 +7,9 @@ import {
   isSimplePricingQuestion,
   PORTFOLIO_SERVICES_BLURB,
   wantsToTalkToObed,
-} from "../../../api/lib/inquiryClassifier.js";
-import { buildFallbackProjectQuote, formatQuoteReply } from "../../../api/lib/projectQuoteFallback.js";
-import { parseProjectQuote, type ProjectQuote } from "../../../api/lib/projectQuote.js";
+} from "@/lib/inquiryClassifier.js";
+import { buildFallbackProjectQuote, formatQuoteReply } from "@/lib/projectQuoteFallback.js";
+import { parseProjectQuote, type ProjectQuote } from "@/lib/projectQuote.js";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
 

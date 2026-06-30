@@ -1,21 +1,18 @@
-import type { ChatMessage } from "@/lib/contactAi";
+import { toInputJson } from "@/lib/prismaJson";
 
-const STORAGE_PREFIX = "kofiyesu-chat-v2";
-const MIGRATION_FLAG_PREFIX = "kofiyesu-chat-cloud-migrated";
-const MAX_MESSAGES = 120;
+export interface StoredChatAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: number;
+}
 
-export class ChatHistoryError extends Error {
-  status?: number;
-  /** Expected client/network issues — do not report to error monitoring. */
-  readonly reportToMonitoring: boolean;
-
-  constructor(message: string, status?: number, options?: { reportToMonitoring?: boolean }) {
-    super(message);
-    this.name = "ChatHistoryError";
-    this.status = status;
-    this.reportToMonitoring =
-      options?.reportToMonitoring ?? (status !== 0 && status !== 401);
-  }
+export interface StoredChatMessage {
+  id?: string;
+  role: "user" | "assistant";
+  content: string;
+  attachments?: StoredChatAttachment[];
+  createdAt?: string;
 }
 
 export interface ChatConversationSummary {
@@ -23,87 +20,46 @@ export interface ChatConversationSummary {
   title: string;
   preview: string;
   updatedAt: string;
-  createdAt: string;
-  messageCount: number;
 }
 
-interface LocalStore {
-  conversations: Array<{
-    id: string;
-    title: string;
-    messages: ChatMessage[];
-    updatedAt: string;
-    createdAt: string;
-  }>;
-}
+const MAX_MESSAGES = 120;
 
-function storageKey(userId: string) {
-  return `${STORAGE_PREFIX}:${userId}`;
-}
-
-function migrationFlagKey(userId: string) {
-  return `${MIGRATION_FLAG_PREFIX}:${userId}`;
-}
-
-export function ensureMessageIds(messages: ChatMessage[]): ChatMessage[] {
-  return messages.map((m, i) => ({
-    ...m,
-    id: m.id ?? `msg-${i}-${m.role}-${Date.now()}`,
-  }));
-}
-
-export function deriveTitle(messages: ChatMessage[]): string {
-  const firstUser = messages.find((m) => m.role === "user");
-  if (!firstUser?.content.trim()) return "New chat";
-  let text = firstUser.content.trim();
-  if (text.startsWith("[Attached:")) text = "File attachment";
-  return text.length > 52 ? `${text.slice(0, 52)}…` : text;
-}
-
-export function serializeMessagesForStorage(messages: ChatMessage[]): ChatMessage[] {
-  return ensureMessageIds(messages.slice(-MAX_MESSAGES)).map((m) => ({
-    id: m.id,
-    role: m.role,
-    content: m.content,
-    attachments: m.attachments?.map(({ id, name, mimeType, size }) => ({
-      id,
-      name,
-      mimeType,
-      size,
-    })),
-  }));
-}
-
-export function parseMessages(raw: unknown): ChatMessage[] {
+export function sanitizeMessages(raw: unknown): StoredChatMessage[] {
   if (!Array.isArray(raw)) return [];
-  const out: ChatMessage[] = [];
+
+  const out: StoredChatMessage[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
     const row = item as Record<string, unknown>;
-    if (row.role !== "user" && row.role !== "assistant") continue;
+    const role = row.role;
     const content = typeof row.content === "string" ? row.content : "";
-    const attachments = parseAttachments(row.attachments);
-    const hasAttachments = attachments && attachments.length > 0;
+    if (role !== "user" && role !== "assistant") continue;
+
+    const hasAttachments = Array.isArray(row.attachments) && row.attachments.length > 0;
     if (!content.trim() && !hasAttachments) continue;
+
+    const attachments = sanitizeAttachments(row.attachments);
     out.push({
       id: typeof row.id === "string" ? row.id : undefined,
-      role: row.role,
+      role,
       content,
-      attachments: hasAttachments ? attachments : undefined,
+      attachments: attachments.length ? attachments : undefined,
+      createdAt: typeof row.createdAt === "string" ? row.createdAt : undefined,
     });
   }
-  return ensureMessageIds(out);
+
+  return ensureMessageIds(out.slice(-MAX_MESSAGES));
 }
 
-function parseAttachments(raw: unknown): ChatMessage["attachments"] {
-  if (!Array.isArray(raw)) return undefined;
-  const out: NonNullable<ChatMessage["attachments"]> = [];
+function sanitizeAttachments(raw: unknown): StoredChatAttachment[] {
+  if (!Array.isArray(raw)) return [];
+  const out: StoredChatAttachment[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
     const row = item as Record<string, unknown>;
     const name = typeof row.name === "string" ? row.name : "";
     const mimeType = typeof row.mimeType === "string" ? row.mimeType : "";
-    const id = typeof row.id === "string" ? row.id : crypto.randomUUID();
+    const id = typeof row.id === "string" ? row.id : `att-${out.length}`;
     if (!name || !mimeType) continue;
     out.push({
       id,
@@ -112,337 +68,165 @@ function parseAttachments(raw: unknown): ChatMessage["attachments"] {
       size: typeof row.size === "number" ? row.size : undefined,
     });
   }
-  return out.length ? out : undefined;
+  return out;
 }
 
-function readLocalStore(userId: string): LocalStore {
-  try {
-    const raw = localStorage.getItem(storageKey(userId));
-    if (!raw) return { conversations: [] };
-    const parsed = JSON.parse(raw) as LocalStore & { activeId?: string };
-    return {
-      conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
-    };
-  } catch {
-    return { conversations: [] };
+export function ensureMessageIds(messages: StoredChatMessage[]): StoredChatMessage[] {
+  return messages.map((m, i) => ({
+    ...m,
+    id: m.id ?? `msg-${i}-${m.role}`,
+  }));
+}
+
+export function deriveConversationTitle(messages: StoredChatMessage[]): string {
+  const firstUser = messages.find((m) => m.role === "user");
+  if (!firstUser?.content.trim()) return "New chat";
+  let text = firstUser.content.trim();
+  if (text.startsWith("[Attached:")) text = "File attachment";
+  return text.length > 52 ? `${text.slice(0, 52)}…` : text;
+}
+
+export function conversationPreview(messages: StoredChatMessage[]): string {
+  const last = [...messages].reverse().find((m) => m.content.trim());
+  if (!last) return "No messages yet";
+  const text = last.content.trim();
+  return text.length > 64 ? `${text.slice(0, 64)}…` : text;
+}
+
+// HTTP helper
+async function fetchWithToken(path: string, getToken: () => Promise<string | null>, options: RequestInit = {}): Promise<Response> {
+  const token = await getToken();
+  if (token === null) {
+    throw new Error("Unable to get authentication token");
   }
-}
-
-function clearLocalStore(userId: string) {
-  try {
-    localStorage.removeItem(storageKey(userId));
-  } catch {
-    /* ignore */
-  }
-}
-
-function markMigrationDone(userId: string) {
-  try {
-    localStorage.setItem(migrationFlagKey(userId), "1");
-  } catch {
-    /* ignore */
-  }
-}
-
-function hasMigrationDone(userId: string): boolean {
-  try {
-    return localStorage.getItem(migrationFlagKey(userId)) === "1";
-  } catch {
-    return false;
-  }
-}
-
-const CHAT_API = "/api/chat/conversation";
-
-function chatApiUrl(path = CHAT_API): string {
-  if (typeof window === "undefined") return path;
-  return new URL(path, window.location.origin).href;
-}
-
-async function resolveAuthToken(getToken: () => Promise<string | null>): Promise<string> {
-  const delays = [0, 150, 300, 500, 800, 1200];
-  for (let attempt = 0; attempt < delays.length; attempt++) {
-    if (delays[attempt] > 0) {
-      await new Promise((r) => setTimeout(r, delays[attempt]));
-    }
-    try {
-      const token = await getToken();
-      if (token) return token;
-    } catch {
-      /* Clerk may still be hydrating the session */
-    }
-  }
-  throw new ChatHistoryError("Sign in required", 401, { reportToMonitoring: false });
-}
-
-function isAbortError(err: unknown): boolean {
-  return err instanceof DOMException && err.name === "AbortError";
-}
-
-async function fetchChatApi(
-  token: string,
-  url: string,
-  init: RequestInit,
-): Promise<Response> {
-  const requestInit: RequestInit = {
-    ...init,
-    credentials: "same-origin",
-    cache: "no-store",
+  return fetch(path, {
     headers: {
+      ...options.headers,
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...(init.headers ?? {}),
     },
-  };
-
-  let lastNetworkError: unknown;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      return await fetch(url, requestInit);
-    } catch (err) {
-      lastNetworkError = err;
-      if (isAbortError(err)) {
-        throw new ChatHistoryError("Chat sync was cancelled.", 0, { reportToMonitoring: false });
-      }
-      if (attempt === 0) {
-        await new Promise((r) => setTimeout(r, 350));
-      }
-    }
-  }
-
-  console.warn("[chatHistory] network error", lastNetworkError);
-  throw new ChatHistoryError(
-    "Could not reach chat sync. Check your connection and try again.",
-    0,
-    { reportToMonitoring: false },
-  );
-}
-
-async function authFetch(
-  getToken: () => Promise<string | null>,
-  init: RequestInit & { query?: Record<string, string> },
-): Promise<Response> {
-  const token = await resolveAuthToken(getToken);
-
-  const qs = init.query ? `?${new URLSearchParams(init.query).toString()}` : "";
-  const { query: _q, ...rest } = init;
-  const url = `${chatApiUrl()}${qs}`;
-
-  let res = await fetchChatApi(token, url, rest);
-
-  if (res.status >= 500) {
-    await new Promise((r) => setTimeout(r, 400));
-    res = await fetchChatApi(token, url, rest);
-  }
-
-  if (res.status === 503) {
-    throw new ChatHistoryError(
-      "Chat history is temporarily unavailable. Try again in a moment.",
-      503,
-      { reportToMonitoring: true },
-    );
-  }
-
-  return res;
-}
-
-async function parseApiError(res: Response, fallback: string): Promise<never> {
-  let message = fallback;
-  try {
-    const data = (await res.json()) as { error?: string };
-    if (data.error) message = data.error;
-  } catch {
-    /* ignore */
-  }
-  throw new ChatHistoryError(message, res.status, {
-    reportToMonitoring: res.status >= 500,
+    ...options,
   });
 }
 
-/** One-time upload of legacy browser-only chats after sign-in. */
-async function migrateLocalConversationsToCloud(
-  getToken: () => Promise<string | null>,
-  userId: string,
-): Promise<void> {
-  if (hasMigrationDone(userId)) return;
-
-  const store = readLocalStore(userId);
-  if (store.conversations.length === 0) {
-    markMigrationDone(userId);
-    return;
-  }
-
-  const listRes = await authFetch(getToken, { method: "GET" });
-  if (!listRes.ok) {
-    await parseApiError(listRes, "Could not sync chat history");
-  }
-
-  const listData = (await listRes.json()) as { conversations?: ChatConversationSummary[] };
-  if ((listData.conversations?.length ?? 0) > 0) {
-    clearLocalStore(userId);
-    markMigrationDone(userId);
-    return;
-  }
-
-  const sorted = [...store.conversations].sort((a, b) =>
-    a.updatedAt.localeCompare(b.updatedAt),
-  );
-
-  for (const conv of sorted) {
-    const messages = serializeMessagesForStorage(parseMessages(conv.messages));
-    const title = conv.title?.trim() || deriveTitle(messages);
-
-    const createRes = await authFetch(getToken, {
-      method: "POST",
-      body: JSON.stringify({ title }),
-    });
-    if (!createRes.ok) {
-      await parseApiError(createRes, "Could not migrate a conversation");
-    }
-
-    const created = (await createRes.json()) as { id: string };
-    const saveRes = await authFetch(getToken, {
-      method: "PUT",
-      body: JSON.stringify({ id: created.id, messages, title }),
-    });
-    if (!saveRes.ok) {
-      await parseApiError(saveRes, "Could not migrate messages");
-    }
-  }
-
-  clearLocalStore(userId);
-  markMigrationDone(userId);
-}
-
+// Exported functions
 export async function listConversations(
   getToken: () => Promise<string | null>,
-  userId: string,
+  userId: string
 ): Promise<ChatConversationSummary[]> {
-  await migrateLocalConversationsToCloud(getToken, userId);
-
-  const res = await authFetch(getToken, { method: "GET" });
+  const res = await fetchWithToken(`/api/chat/conversation`, getToken);
   if (!res.ok) {
-    await parseApiError(res, "Could not load chat history");
+    throw new Error(`Failed to list conversations: ${res.status}`);
   }
-
-  const data = (await res.json()) as { conversations?: ChatConversationSummary[] };
-  return data.conversations ?? [];
+  const data = await res.json();
+  return data.conversations.map((conv: any) => ({
+    id: conv.id,
+    title: conv.title,
+    preview: conv.preview,
+    updatedAt: conv.updatedAt,
+  }));
 }
 
 export async function loadConversation(
   getToken: () => Promise<string | null>,
-  _userId: string,
-  conversationId: string,
-): Promise<{ id: string; title: string; messages: ChatMessage[] } | null> {
-  if (conversationId.startsWith("local-")) return null;
-
-  const res = await authFetch(getToken, {
-    method: "GET",
-    query: { id: conversationId },
-  });
-
-  if (res.status === 404) return null;
+  userId: string,
+  conversationId: string
+): Promise<{ id: string; messages: StoredChatMessage[] } | null> {
+  const res = await fetchWithToken(`/api/chat/conversation?id=${conversationId}`, getToken);
   if (!res.ok) {
-    await parseApiError(res, "Could not load conversation");
+    if (res.status === 404) {
+      return null;
+    }
+    throw new Error(`Failed to load conversation: ${res.status}`);
   }
-
-  const data = (await res.json()) as {
-    id: string;
-    title: string;
-    messages?: unknown;
-  };
-
+  const data = await res.json();
   return {
     id: data.id,
-    title: data.title,
-    messages: parseMessages(data.messages),
+    messages: sanitizeMessages(data.messages),
   };
-}
-
-export async function createConversation(
-  getToken: () => Promise<string | null>,
-  _userId: string,
-  title = "New chat",
-): Promise<{ id: string; title: string }> {
-  const res = await authFetch(getToken, {
-    method: "POST",
-    body: JSON.stringify({ title }),
-  });
-
-  if (!res.ok) {
-    await parseApiError(res, "Could not create conversation");
-  }
-
-  const data = (await res.json()) as { id: string; title: string };
-  return { id: data.id, title: data.title };
 }
 
 export async function saveConversation(
   getToken: () => Promise<string | null>,
-  _userId: string,
+  userId: string,
   conversationId: string,
-  messages: ChatMessage[],
-  title?: string,
+  messages: StoredChatMessage[]
 ): Promise<void> {
-  if (conversationId.startsWith("local-")) {
-    throw new ChatHistoryError("Invalid conversation. Start a new chat.", undefined, {
-      reportToMonitoring: false,
-    });
-  }
-
-  const payload = serializeMessagesForStorage(messages);
-  const resolvedTitle = title?.trim() || deriveTitle(payload);
-
-  const res = await authFetch(getToken, {
+  const res = await fetchWithToken(`/api/chat/conversation`, getToken, {
     method: "PUT",
-    body: JSON.stringify({ id: conversationId, messages: payload, title: resolvedTitle }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: conversationId,
+      messages: toInputJson(messages),
+    }),
   });
-
   if (!res.ok) {
-    await parseApiError(res, "Could not save chat");
-  }
-}
-
-export async function deleteConversation(
-  getToken: () => Promise<string | null>,
-  _userId: string,
-  conversationId: string,
-): Promise<void> {
-  if (conversationId.startsWith("local-")) return;
-
-  const res = await authFetch(getToken, {
-    method: "DELETE",
-    query: { id: conversationId },
-  });
-
-  if (res.status === 404) return;
-  if (!res.ok) {
-    await parseApiError(res, "Could not delete conversation");
+    throw new Error(`Failed to save conversation: ${res.status}`);
   }
 }
 
 export async function clearConversationMessages(
   getToken: () => Promise<string | null>,
   userId: string,
-  conversationId: string,
+  conversationId: string
 ): Promise<void> {
-  await saveConversation(getToken, userId, conversationId, [], "New chat");
+  await saveConversation(getToken, userId, conversationId, []);
 }
 
-/** Load the most recent cloud conversation or create one. */
-export async function ensureActiveConversation(
+export async function createConversation(
   getToken: () => Promise<string | null>,
   userId: string,
-): Promise<{ id: string; title: string; messages: ChatMessage[] }> {
-  const list = await listConversations(getToken, userId);
-  if (list.length > 0) {
-    const loaded = await loadConversation(getToken, userId, list[0].id);
-    if (loaded) {
-      return { ...loaded, messages: parseMessages(loaded.messages) };
-    }
+  title: string = "New chat"
+): Promise<{ id: string }> {
+  const res = await fetchWithToken(`/api/chat/conversation`, getToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to create conversation: ${res.status}`);
   }
+  const data = await res.json();
+  return { id: data.id };
+}
 
+export async function deleteConversation(
+  getToken: () => Promise<string | null>,
+  userId: string,
+  conversationId: string
+): Promise<void> {
+  const res = await fetchWithToken(`/api/chat/conversation?id=${conversationId}`, getToken, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to delete conversation: ${res.status}`);
+  }
+}
+
+export async function ensureActiveConversation(
+  getToken: () => Promise<string | null>,
+  userId: string
+): Promise<{ id: string; messages: StoredChatMessage[] }> {
+  const conversations = await listConversations(getToken, userId);
+  if (conversations.length > 0) {
+    const firstId = conversations[0].id;
+    const loaded = await loadConversation(getToken, userId, firstId);
+    if (loaded !== null) {
+      return loaded;
+    }
+    // If loading fails, fall through to create a new one.
+  }
   const created = await createConversation(getToken, userId);
-  return { id: created.id, title: created.title, messages: [] };
+  const loaded = await loadConversation(getToken, userId, created.id);
+  if (loaded === null) {
+    throw new Error("Failed to load newly created conversation");
+  }
+  return loaded;
+}
+
+// ChatHistoryError class
+export class ChatHistoryError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ChatHistoryError";
+  }
 }

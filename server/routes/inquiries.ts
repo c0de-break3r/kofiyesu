@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireSignedInUserId } from "../../api/lib/clerkAuth.js";
-import { isDatabaseConfigured, prisma } from "../../api/lib/prisma.js";
-import { notifyAdminInquiry } from "../../api/lib/notifyAdmin.js";
-import { toInputJson } from "../../api/lib/prismaJson.js";
+import { requireSignedInUserId } from "@/lib/clerkAuth.js";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma.js";
+import { notifyAdminInquiry } from "@/lib/notifyAdmin.js";
+import { toInputJson } from "@/lib/prismaJson.js";
 
 type InquiryType = "collaboration" | "security" | "job" | "general";
 

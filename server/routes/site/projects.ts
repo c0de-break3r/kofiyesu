@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { isDatabaseConfigured, prisma } from "../../../api/lib/prisma.js";
-import { projectToApi } from "../../../api/lib/serializers.js";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma.js";
+import { projectToApi } from "@/lib/serializers.js";
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {

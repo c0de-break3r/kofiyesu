@@ -1,5 +1,5 @@
-import { hasEnoughContextForQuote } from "./inquiryClassifier.js";
-import { normalizeProjectQuote, type ProjectQuote } from "./projectQuote.js";
+import { hasEnoughContextForQuote } from "./inquiryClassifier";
+import { normalizeProjectQuote, type ProjectQuote } from "./projectQuote";
 
 export function buildFallbackProjectQuote(allUserText: string): ProjectQuote | null {
   if (!hasEnoughContextForQuote(allUserText)) return null;
@@ -12,7 +12,7 @@ export function buildFallbackProjectQuote(allUserText: string): ProjectQuote | n
         "Full-stack ecommerce build based on your brief — catalog, checkout, admin, and Ghana-friendly payments.",
       requirements: [
         "Product catalog, categories, and search",
-        "Cart, checkout, and Paystack (Mobile Money + cards)",
+        "Cart, checkout (credit card)",
         "Customer accounts and order history",
         "Admin dashboard for products, orders, and basic analytics",
         "Deployed on modern hosting with SSL",
@@ -22,12 +22,7 @@ export function buildFallbackProjectQuote(allUserText: string): ProjectQuote | n
           label: "Domain + hosting (year 1, estimated)",
           amountGhs: 450,
           note: "e.g. Vercel + Neon — actual vendor bills passed through",
-        },
-        {
-          label: "Paystack / Clerk / email",
-          amountGhs: 0,
-          note: "Usage-based; usually billed on accounts you own",
-        },
+        }
       ],
       laborGhs: 18_000,
       depositGhs: 5_000,
@@ -83,5 +78,5 @@ ${costs}
 
 ${quote.summary}
 
-Use the payment section below when you're ready (Paystack — card or Mobile Money).`;
+Use the payment section below when you're ready.`;
 }

@@ -72,7 +72,12 @@ function buildFallbackProjectQuote(allUserText: string): ProjectQuote | null {
           label: "Domain + hosting (year 1, estimated)",
           amountGhs: 450,
           note: "e.g. Vercel + Neon — actual vendor bills passed through",
-        }
+        },
+        {
+          label: "Paystack / Clerk / email",
+          amountGhs: 0,
+          note: "Usage-based; usually billed on accounts you own",
+        },
       ],
       laborGhs: 18_000,
       depositGhs: 5_000,
@@ -266,7 +271,7 @@ const buildReply = (
       inquiryType: type,
       reply: `I'd love to scope this with you. To prepare a proper quote (your requirements, tools/hosting Obed pays for, and the full project total payable here), please share:
 
-1. **Must-have features** (e.g. catalog, checkout, admin, mobile)
+1. **Must-have features** (e.g. catalog, Paystack checkout, admin, mobile)
 2. **Timeline** (target launch or phases)
 3. **Design** (brand ready vs needs UI work)
 4. **Scale** (rough product/order volume)
@@ -327,7 +332,7 @@ ${costs}
 
 ${quote.summary}
 
-Use the payment section below when you're ready.`;
+Use the payment section below when you're ready (Paystack — card or Mobile Money).`;
 }
 
 export const routeInquiryLocally = (userMessage: string, hasFiles = false, allUserText?: string): RoutingResult => {
@@ -419,5 +424,5 @@ export const routeInquiryWithAi = async ({
 
 export const getWelcomeMessage = (name?: string | null): string => {
   const greeting = name ? `Hi ${name.split(" ")[0]}!` : "Hi!";
-  return `${greeting} I'm Obed's assistant. Describe a project (e.g. a premium ecommerce site) and I'll capture your requirements, estimate tools/hosting costs, and prepare a project total you can pay here. Ask about skills or past work anytime.`;
+  return `${greeting} I'm Obed's assistant. Describe a project (e.g. a premium ecommerce site) and I'll capture your requirements, estimate tools/hosting costs, and prepare a project total you can pay here with Paystack. Ask about skills or past work anytime.`;
 };

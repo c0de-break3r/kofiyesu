@@ -1,5 +1,5 @@
-import type { ContactInquiry, SiteAbout, SiteFeature, SiteProject } from "../../generated/prisma/client.js";
-import { featureToApi } from "./featureSerializer.js";
+import type { ContactInquiry, SiteAbout, SiteFeature, SiteProject } from "../../generated/prisma/client";
+import { featureToApi } from "./featureSerializer";
 
 type ProjectRow = SiteProject & { category?: SiteFeature | null };
 

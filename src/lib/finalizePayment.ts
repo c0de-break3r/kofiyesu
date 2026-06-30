@@ -1,5 +1,5 @@
-import { prisma } from "./prisma.js";
-import { appendAdminReplyToChat } from "./publishAdminReply.js";
+import { prisma } from "./prisma";
+import { appendAdminReplyToChat } from "./publishAdminReply";
 
 export async function finalizePayment(paymentId: string, paidAtIso?: string) {
   const payment = await prisma.payment.update({

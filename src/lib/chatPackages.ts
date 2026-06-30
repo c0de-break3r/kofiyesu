@@ -1,4 +1,4 @@
-import { defaultPricingPackages } from "./defaultPricingPackages.js";
+import { defaultPricingPackages } from "./defaultPricingPackages";
 
 export const CHAT_PAYMENT_PACKAGES = defaultPricingPackages.map((pkg) => ({
   id: pkg.slug,

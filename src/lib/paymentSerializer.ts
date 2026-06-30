@@ -1,4 +1,4 @@
-import type { Payment } from "../../generated/prisma/client.js";
+import type { Payment } from "../../generated/prisma/client";
 
 export const paymentToApi = (row: Payment) => ({
   id: row.id,
@@ -12,7 +12,6 @@ export const paymentToApi = (row: Payment) => ({
   currency: row.currency || "GHS",
   status: row.status,
   package_id: row.packageId,
-  paystack_reference: row.paystackReference,
   paid_at: row.paidAt?.toISOString() ?? null,
   created_at: row.createdAt.toISOString(),
   updated_at: row.updatedAt.toISOString(),

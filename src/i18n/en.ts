@@ -44,7 +44,7 @@ export const en = {
   "chat-ready-title": "How can I help you today?",
   "chat-ready-subtitle":
     "Describe a project you want built — I'll scope requirements, costs, and payment here. Attach files for briefs or designs.",
-  "chat-packages-hint": "Pay with card or Mobile Money via Paystack (GH₵).",
+  "chat-packages-hint": "Pay with card or Mobile Money (GH₵).",
   "chat-project-payment-title": "Project payment",
   "chat-project-requirements": "Your requirements",
   "chat-project-passthrough": "Tools & services (Obed's costs)",
@@ -94,10 +94,10 @@ export const en = {
   "pricing-eyebrow": "Services & pricing",
   "pricing-title": "Start with a clear package",
   "pricing-subtitle":
-    "Pay securely with card or Mobile Money via Paystack. Custom scopes — chat first and Obed will quote.",
+    "Pay securely with card or Mobile Money. Custom scopes — chat first and Obed will quote.",
   "pricing-sign-in-pay": "Sign in to pay",
   "pricing-custom": "Need something bespoke?",
-  "pay-now": "Pay with Paystack",
+  "pay-now": "Pay",
   "pay-processing": "Processing…",
   "pay-success": "Payment received — thanks! Obed will follow up on next steps.",
   "pay-sign-in": "Sign in with the same account you used in chat to complete payment.",

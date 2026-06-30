@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { ensureMessageIds, sanitizeMessages, type StoredChatMessage } from "./chatHistory.js";
-import { prisma } from "./prisma.js";
-import { toInputJson } from "./prismaJson.js";
+import { ensureMessageIds, sanitizeMessages, type StoredChatMessage } from "./chatHistory";
+import { prisma } from "./prisma";
+import { toInputJson } from "./prismaJson";
 
 const ADMIN_REPLY_PREFIX = "**Obed:** ";
 

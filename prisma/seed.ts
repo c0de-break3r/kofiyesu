@@ -1,4 +1,4 @@
-import { prisma } from "../api/lib/prisma.js";
+import { prisma } from "@/lib/prisma.js";
 import { defaultAbout } from "../src/content/about";
 
 const featureDefs = [
