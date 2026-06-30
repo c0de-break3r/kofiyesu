@@ -13,12 +13,5 @@ export function shouldQueueInquiry(
 ): boolean {
   if (result.projectQuote) return false;
 
-  return classifyQueue({
-    inquiryType,
-    userMessage,
-    escalateToAdmin: result.escalateToAdmin,
-    showEmailCta: result.showEmailCta,
-    confidence: result.confidence,
-    queueInquiry: result.queueInquiry,
-  });
+  return classifyQueue(inquiryType, result, userMessage);
 }

@@ -60,31 +60,33 @@ export function hasEnoughContextForQuote(allUserText: string): boolean {
   const lower = allUserText.toLowerCase();
   const hasDeliverable =
     /ecommerce|website|web\s*app|mobile\s*app|saas|platform|store|pentest|api|backend/.test(lower);
-  const detailSignals = [
+  const detailSigns = [
     /\b(premium|custom|payment|checkout|cart|inventory|admin|dashboard)\b/,
     /\b(timeline|deadline|weeks?|months?|asap|launch)\b/,
     /\b(budget|gh[c₵]?|\d+\s*k|\d+\s*gh)\b/,
     /\b(feature|integration|clerk|auth|mobile)\b/,
     /\b(products?|sku|vendor|delivery)\b/,
   ];
-  const detailCount = detailSignals.filter((p) => p.test(lower)).length;
+  const detailCount = detailSigns.filter((p) => p.test(lower)).length;
   return hasDeliverable && (detailCount >= 2 || lower.length > 140);
 }
 
 export const PORTFOLIO_SERVICES_BLURB =
   "Obed builds full-stack web and mobile apps (React, Next.js, React Native, TypeScript), secure REST APIs (Node.js, Express, PostgreSQL/Neon), ecommerce and SaaS products, auth with Clerk, and security-focused work — pentesting workflows, API hardening, and recon automation. Recent work includes KhelianCart (grocery ecommerce in Ghana) and security tooling for bug bounty recon.";
 
+type RoutingResultPick = Pick<
+  import("@/lib/contactAi").RoutingResult,
+  "escalateToAdmin" | "showEmailCta" | "confidence" | "queueInquiry" | "projectQuote"
+>;
+
 /**
  * Determine whether a chat turn should be queued for admin follow‑up.
  */
 export function shouldQueueInquiry(
   inquiryType: InquiryType,
-  result: Pick<
-    import("@/lib/contactAi").RoutingResult,
-    "escalateToAdmin" | "showEmailCta" | "confidence" | "queueInquiry" | "projectQuote"
-  >,
+  result: RoutingResultPick,
   userMessage: string,
 ): boolean {
   if (result.projectQuote) return false;
-  return result.queueInquiry || result.escalateToAdmin;
+  return (result.queueInquiry ?? false) || (result.escalateToAdmin ?? false);
 }

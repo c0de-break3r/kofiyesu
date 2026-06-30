@@ -110,8 +110,7 @@ async function fetchWithToken(path: string, getToken: () => Promise<string | nul
 
 // Exported functions
 export async function listConversations(
-  getToken: () => Promise<string | null>,
-  userId: string
+  getToken: () => Promise<string | null>
 ): Promise<ChatConversationSummary[]> {
   const res = await fetchWithToken(`/api/chat/conversation`, getToken);
   if (!res.ok) {
@@ -128,7 +127,6 @@ export async function listConversations(
 
 export async function loadConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
   conversationId: string
 ): Promise<{ id: string; messages: StoredChatMessage[] } | null> {
   const res = await fetchWithToken(`/api/chat/conversation?id=${conversationId}`, getToken);
@@ -147,7 +145,6 @@ export async function loadConversation(
 
 export async function saveConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
   conversationId: string,
   messages: StoredChatMessage[]
 ): Promise<void> {
@@ -166,15 +163,13 @@ export async function saveConversation(
 
 export async function clearConversationMessages(
   getToken: () => Promise<string | null>,
-  userId: string,
   conversationId: string
 ): Promise<void> {
-  await saveConversation(getToken, userId, conversationId, []);
+  await saveConversation(getToken, conversationId, []);
 }
 
 export async function createConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
   title: string = "New chat"
 ): Promise<{ id: string }> {
   const res = await fetchWithToken(`/api/chat/conversation`, getToken, {
@@ -191,7 +186,6 @@ export async function createConversation(
 
 export async function deleteConversation(
   getToken: () => Promise<string | null>,
-  userId: string,
   conversationId: string
 ): Promise<void> {
   const res = await fetchWithToken(`/api/chat/conversation?id=${conversationId}`, getToken, {
@@ -203,20 +197,19 @@ export async function deleteConversation(
 }
 
 export async function ensureActiveConversation(
-  getToken: () => Promise<string | null>,
-  userId: string
+  getToken: () => Promise<string | null>
 ): Promise<{ id: string; messages: StoredChatMessage[] }> {
-  const conversations = await listConversations(getToken, userId);
+  const conversations = await listConversations(getToken);
   if (conversations.length > 0) {
     const firstId = conversations[0].id;
-    const loaded = await loadConversation(getToken, userId, firstId);
+    const loaded = await loadConversation(getToken, firstId);
     if (loaded !== null) {
       return loaded;
     }
     // If loading fails, fall through to create a new one.
   }
-  const created = await createConversation(getToken, userId);
-  const loaded = await loadConversation(getToken, userId, created.id);
+  const created = await createConversation(getToken);
+  const loaded = await loadConversation(getToken, created.id);
   if (loaded === null) {
     throw new Error("Failed to load newly created conversation");
   }
