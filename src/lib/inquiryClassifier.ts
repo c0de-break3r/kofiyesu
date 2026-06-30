@@ -83,9 +83,9 @@ type RoutingResultPick = Pick<
  * Determine whether a chat turn should be queued for admin follow‑up.
  */
 export function shouldQueueInquiry(
-  inquiryType: InquiryType,
+  _inquiryType: InquiryType,
   result: RoutingResultPick,
-  userMessage: string,
+  _userMessage: string,
 ): boolean {
   if (result.projectQuote) return false;
   return (result.queueInquiry ?? false) || (result.escalateToAdmin ?? false);

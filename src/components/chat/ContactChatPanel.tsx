@@ -210,7 +210,7 @@ export function ContactChatPanel() {
     setHistoryError(null);
     try {
       await refreshConversationList();
-      const active = await ensureActiveConversation(getToken, user.id);
+      const active = await ensureActiveConversation(getToken);
       applyConversation(active.id, active.messages, active.messages.length === 0);
       setHistoryReady(true);
     } catch (err) {
@@ -236,7 +236,7 @@ export function ContactChatPanel() {
       return;
     }
 
-    void initChatFromCloud().catch(() => {
+    initChatFromCloud().catch(() => {
       /* errors handled in initChatFromCloud */
     });
   }, [isSignedIn, isLoaded, user?.id, session?.status, initChatFromCloud]);
@@ -344,7 +344,7 @@ export function ContactChatPanel() {
   const handleDeleteChat = async () => {
     if (!user?.id || !conversationId) return;
     try {
-      await deleteConversation(getToken, user.id, conversationId);
+      await deleteConversation(getToken, conversationId);
       const list = await listConversations(getToken);
       setConversations(list);
       if (list.length > 0) {
