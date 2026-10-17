@@ -27,16 +27,16 @@ export default defineConfig(({ mode }) => {
         name: "Kofi Yesu Portfolio",
         short_name: "Kofi Yesu",
         description:
-          "Portfolio of Obed Prince Kofi Yesu — projects, about, and chat. Install for quick access and a smoother experience.",
+          "Portfolio of Obed Prince Kofi Yesu — software projects, experience, and contact. Install for quick access.",
         start_url: "/",
         scope: "/",
         id: "/",
         display: "standalone",
         orientation: "portrait-primary",
-        theme_color: "#f6672a",
-        background_color: "#ffffff",
+        theme_color: "#ea5a1e",
+        background_color: "#faf9f7",
         lang: "en",
-        categories: ["portfolio", "business", "productivity"],
+        categories: ["portfolio"],
         icons: [
           { src: "/meta/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "/meta/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
@@ -48,7 +48,6 @@ export default defineConfig(({ mode }) => {
         globPatterns: ["**/*.{ico,png,webp,svg,woff2,webmanifest}"],
         globIgnores: ["**/assets/**"],
         navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === "navigate",
@@ -104,13 +103,6 @@ export default defineConfig(({ mode }) => {
     sourcemap: sentryAuthToken ? "hidden" : false,
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules/gsap")) return "gsap";
-        },
-      },
-    },
   },
   };
 });

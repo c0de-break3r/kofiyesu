@@ -1,17 +1,15 @@
-import "./instrument";
-
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { reactErrorHandler } from "@sentry/react";
 import { BrowserRouter } from "react-router-dom";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { isSentryConfigured } from "./instrument";
-import { isChunkLoadError, recoverFromStaleDeploy } from "./lib/lazyWithRetry";
-import { prefetchSiteContent } from "./lib/prefetchSiteContent";
-import { markDeployHealthy, installChunkLoadRecovery } from "./lib/lazyWithRetry";
+import { initSentry, type SentryErrorHandler } from "./instrument";
+import {
+  isChunkLoadError,
+  recoverFromStaleDeploy,
+  markDeployHealthy,
+  installChunkLoadRecovery,
+} from "./lib/lazyWithRetry";
 import "./index.css";
 
 installChunkLoadRecovery();
@@ -38,13 +36,10 @@ if (import.meta.env.PROD) {
 
 window.setTimeout(() => markDeployHealthy(), 5000);
 
-gsap.registerPlugin(ScrollTrigger);
+const bootstrap = async () => {
+  const reportToSentry: SentryErrorHandler | null = await initSentry();
 
-prefetchSiteContent();
-
-const bootstrap = () => {
-  const reportToSentry = reactErrorHandler();
-  const sentryRootOptions = isSentryConfigured()
+  const sentryRootOptions = reportToSentry
     ? {
         onUncaughtError: (error: unknown, errorInfo: { componentStack?: string | null }) => {
           if (isChunkLoadError(error)) {
@@ -66,17 +61,15 @@ const bootstrap = () => {
 
   const root = createRoot(document.getElementById("root")!, sentryRootOptions);
 
-  const app = (
+  root.render(
     <StrictMode>
       <ErrorBoundary>
         <BrowserRouter>
           <App />
         </BrowserRouter>
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   );
-
-  root.render(app);
 };
 
-bootstrap();
+void bootstrap();

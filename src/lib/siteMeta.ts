@@ -1,5 +1,3 @@
-import { siteMetaDescription } from "@/content/about";
-
 export const SITE_URL = "https://www.kofiyesu.com";
 
 export const SITE_NAME = "Obed Prince Kofi Yesu";
@@ -7,27 +5,26 @@ export const SITE_NAME = "Obed Prince Kofi Yesu";
 export const SITE_SHORT_NAME = "Kofi Yesu";
 
 export const SITE_TITLE =
-  "Obed Prince Kofi Yesu — Software Engineer, AI Product Builder & Cybersecurity Practitioner";
+  "Obed Prince Kofi Yesu — Software Engineer · AI & Automation · Cybersecurity";
 
-export const SITE_TAGLINE = "Software Engineering · AI Products · Cybersecurity · Accra, Ghana";
+export const SITE_TAGLINE = "Software Engineering · AI & Automation · Cybersecurity · Accra, Ghana";
 
-export const SITE_DESCRIPTION = siteMetaDescription;
+export const SITE_DESCRIPTION =
+  "Portfolio of Obed Prince Kofi Yesu, a software engineer in Accra, Ghana — web applications, AI and automation tools, and security-minded engineering.";
 
 export const SITE_KEYWORDS = [
   "Obed Prince Kofi Yesu",
   "Kofi Yesu",
   "software engineer Ghana",
-  "cybersecurity practitioner",
+  "cybersecurity",
   "full-stack developer",
   "React developer",
   "Next.js",
-  "React Native",
-  "Node.js",
   "TypeScript portfolio",
   "application security",
   "API security",
   "PostgreSQL",
-  "AI product builder",
+  "AI and automation",
   "web developer Ghana",
 ].join(", ");
 
@@ -36,13 +33,7 @@ export const OG_IMAGE_PATH = "/meta/icon-512.png";
 export const OG_IMAGE_URL = `${SITE_URL}${OG_IMAGE_PATH}`;
 
 export const PWA_DESCRIPTION =
-  "Portfolio of Obed Prince Kofi Yesu — projects, about and contact. Install for quick access and a smoother experience.";
-
-export const STATIC_PROJECT_SLUGS = [
-  "kheliancart",
-  "security-recon-toolkit",
-  "api-pentest-workflows",
-] as const;
+  "Portfolio of Obed Prince Kofi Yesu — software projects, experience, and contact. Install for quick access.";
 
 export function absoluteUrl(path: string): string {
   if (path.startsWith("http")) return path;
@@ -56,7 +47,7 @@ export function buildPersonJsonLd() {
     name: SITE_NAME,
     url: SITE_URL,
     image: OG_IMAGE_URL,
-    jobTitle: "Software Engineer · AI Product Builder · Cybersecurity Practitioner",
+    jobTitle: "Software Engineer · AI & Automation · Cybersecurity",
     address: {
       "@type": "PostalAddress",
       addressCountry: "GH",

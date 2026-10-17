@@ -1,48 +1,29 @@
+import { Link } from "react-router-dom";
 import { Hero } from "@/features/home/Hero";
-import { Projects } from "@/features/home/Projects";
-import { About } from "@/features/home/About";
+import { SelectedProjects } from "@/features/home/SelectedProjects";
 import { ContactSection } from "@/features/home/ContactSection";
 import { Footer } from "@/components/layout/Footer";
-import { t } from "@/i18n/en";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
+import { profile } from "@/data/profile";
+import { experience } from "@/data/experience";
 
-const capabilities = [
-  {
-    title: "Build products",
-    body: "Web apps, SaaS platforms, marketplaces, APIs and service platforms — from idea to shipped interface.",
-  },
-  {
-    title: "Develop AI workflows",
-    body: "Intelligent assistants, creative automation and AI-enabled product features grounded in real workflows.",
-  },
-  {
-    title: "Engineer secure systems",
-    body: "Authentication, access control, API security, validation and secure development practices baked into delivery.",
-  },
-  {
-    title: "Ship & maintain",
-    body: "Databases, deployment, monitoring, debugging and production improvements that keep software reliable.",
-  },
-];
-
-function Capabilities() {
+function Expertise() {
   return (
-    <section
-      id="capabilities"
-      className="relative w-full bg-[var(--surface-dark)] px-6 py-16 text-white md:py-24"
-    >
+    <section className="w-full bg-[var(--surface-muted)] px-6 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
-        <span className="mb-3 inline-block text-xs font-bold uppercase tracking-[0.15em] text-[var(--color-accent)]">
-          {t("capabilities-kicker")}
-        </span>
-        <h2 className="max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
-          {t("capabilities-heading")}
-        </h2>
-
-        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2">
-          {capabilities.map((item) => (
-            <div key={item.title} className="flex flex-col gap-2 bg-[var(--surface-dark)] p-6 md:p-8">
-              <h3 className="text-lg font-bold text-white">{item.title}</h3>
-              <p className="text-sm leading-relaxed text-white/60">{item.body}</p>
+        <header className="mb-10 max-w-xl">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-accent)]">
+            What I do
+          </span>
+          <h2 className="text-3xl font-black tracking-tight text-[var(--text)] sm:text-4xl">
+            Technical focus
+          </h2>
+        </header>
+        <div className="grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
+          {profile.expertise.map((item) => (
+            <div key={item.title} className="bg-[var(--surface)] p-6 md:p-8">
+              <h3 className="text-lg font-bold tracking-tight text-[var(--text)]">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{item.body}</p>
             </div>
           ))}
         </div>
@@ -51,30 +32,64 @@ function Capabilities() {
   );
 }
 
-export function HomePage() {
+function ExperiencePreview() {
   return (
-    <div
-      id="main-content"
-      className="relative pb-[calc(72px+env(safe-area-inset-bottom,0px))] md:pb-0"
-    >
-      <Hero />
+    <section className="w-full px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-3xl">
+        <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <span className="mb-3 inline-block text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-accent)]">
+              Background
+            </span>
+            <h2 className="text-3xl font-black tracking-tight text-[var(--text)] sm:text-4xl">
+              Experience
+            </h2>
+          </div>
+          <Link
+            to="/experience"
+            className="text-sm font-bold text-[var(--color-accent)] transition hover:text-[var(--color-accent-deep)]"
+          >
+            Full timeline →
+          </Link>
+        </header>
 
-      <div id="projects" className="relative">
-        <Projects />
+        <ol className="space-y-8 border-l border-[var(--border)] pl-6">
+          {experience.map((entry) => (
+            <li key={entry.id} className="relative">
+              <span
+                aria-hidden
+                className="absolute -left-[1.6rem] top-1.5 h-3 w-3 rounded-full bg-[var(--color-accent)] ring-4 ring-[var(--bg)]"
+              />
+              <h3 className="text-lg font-bold tracking-tight text-[var(--text)]">{entry.role}</h3>
+              <p className="mt-1 text-sm font-semibold text-[var(--text-muted)]">
+                {entry.organization} · {entry.period}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
+                {entry.responsibilities[0]}
+              </p>
+            </li>
+          ))}
+        </ol>
       </div>
-
-      <Capabilities />
-
-      <div id="about" className="relative">
-        <About />
-      </div>
-
-      <div id="contact" className="relative">
-        <ContactSection />
-      </div>
-
-      <Footer className="pb-[calc(72px+env(safe-area-inset-bottom,0px))] md:pb-12" />
-    </div>
+    </section>
   );
 }
 
+export function HomePage() {
+  useDocumentMeta({
+    title: `${profile.name} — Software Engineer`,
+    description: profile.intro,
+    canonicalPath: "/",
+  });
+
+  return (
+    <div id="main-content" className="relative">
+      <Hero />
+      <SelectedProjects />
+      <Expertise />
+      <ExperiencePreview />
+      <ContactSection />
+      <Footer />
+    </div>
+  );
+}

@@ -1,213 +1,101 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { t } from "@/i18n/en";
-import { getLenis } from "@/hooks/useScroll";
-import { scrollToSectionHash } from "@/hooks/useHashScroll";
+import { useEffect, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { profile } from "@/data/profile";
 
-type NavSection = "hero" | "about" | "projects";
-
-function NavIcon({ children }: { children: ReactNode }) {
-  return <span className="h-5 w-5 [&_svg]:h-full [&_svg]:w-full">{children}</span>;
-}
-
-function IconHome() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconAbout() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconProjects() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M4 7h6l2 2h8v10H4V7z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path d="M4 7V5a1 1 0 0 1 1-1h5l2 2h7a1 1 0 0 1 1 1v2" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  );
-}
-
-const navItems: {
-  id: NavSection;
-  icon: typeof IconHome;
-  labelKey: "home" | "about" | "projects";
-}[] = [
-  { id: "hero", icon: IconHome, labelKey: "home" },
-  { id: "about", icon: IconAbout, labelKey: "about" },
-  { id: "projects", icon: IconProjects, labelKey: "projects" },
+const links = [
+  { to: "/", label: "Home", end: true },
+  { to: "/projects", label: "Projects", end: false },
+  { to: "/experience", label: "Experience", end: false },
+  { to: "/about", label: "About", end: false },
 ];
 
-const mobilePillBase =
-  "glass-surface flex items-center self-stretch rounded-full px-2 py-2";
-const mobilePillMain = `${mobilePillBase} min-w-0 flex-1`;
-
-const NAV_ICON_SIZE = "h-11 w-11";
-
-function MobileNavCell({
-  active,
-  children,
-  className = "",
-  bareIcon = false,
-}: {
-  active?: boolean;
-  children: ReactNode;
-  className?: string;
-  bareIcon?: boolean;
-}) {
-  const iconClass = `flex ${NAV_ICON_SIZE} shrink-0 items-center justify-center rounded-full transition-colors ${
-    active && !bareIcon ? "bg-[var(--color-accent)] text-white" : bareIcon ? "" : "text-neutral-400"
-  }`;
-
+function MenuIcon({ open }: { open: boolean }) {
   return (
-    <div className={`flex min-w-[4.25rem] flex-col items-center px-0.5 py-0.5 ${className}`} aria-hidden>
-      {bareIcon ? (
-        <div className={`flex ${NAV_ICON_SIZE} shrink-0 items-center justify-center`}>{children}</div>
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className="h-6 w-6">
+      {open ? (
+        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
       ) : (
-        <span className={iconClass}>
-          <NavIcon>{children}</NavIcon>
-        </span>
+        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
       )}
-    </div>
-  );
-}
-
-function NavItem({
-  active,
-  label,
-  onClick,
-  icon: Icon,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-  icon: typeof IconHome;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-current={active ? "page" : undefined}
-      className="min-w-0 flex-1 border-0 bg-transparent p-0 font-[inherit]"
-    >
-      <MobileNavCell active={active} className="mx-auto w-full min-w-0">
-        <Icon />
-      </MobileNavCell>
-    </button>
+    </svg>
   );
 }
 
 export function MobileNav() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState<NavSection | null>("hero");
+  const [open, setOpen] = useState(false);
 
-  const isHome = location.pathname === "/";
-  const isProjectRoute = location.pathname.startsWith("/project/");
-
-  const scrollToSection = (section: NavSection) => {
-    setActiveSection(section);
-    const lenis = getLenis();
-    const target = section === "hero" ? 0 : `#${section}`;
-
-    if (section !== "hero") scrollToSectionHash(section);
-
-    if (lenis) {
-      lenis.scrollTo(target, { immediate: section === "hero" });
-      requestAnimationFrame(() => ScrollTrigger.refresh());
-      return;
-    }
-
-    if (section === "hero") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-
-    document.getElementById(section)?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const scrollTo = (section: NavSection) => {
-    if (!isHome) {
-      navigate(section === "hero" ? "/" : `/#${section}`);
-      window.setTimeout(() => scrollToSection(section), 50);
-      return;
-    }
-
-    scrollToSection(section);
-  };
-
+  // Close the menu whenever the route changes.
   useEffect(() => {
-    if (!isHome) {
-      setActiveSection(null);
-      return;
-    }
-
-    const sections: { id: NavSection; trigger: string }[] = [
-      { id: "hero", trigger: "#hero" },
-      { id: "about", trigger: "#about" },
-      { id: "projects", trigger: "#projects" },
-    ];
-
-    const observers = sections.map(({ id, trigger }) => {
-      const el = document.querySelector(trigger);
-      if (!el) return null;
-
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry?.isIntersecting) setActiveSection(id);
-        },
-        { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
-      );
-      observer.observe(el);
-      return observer;
-    });
-
-    return () => observers.forEach((o) => o?.disconnect());
-  }, [isHome, location.pathname]);
-
-  if (isProjectRoute) return null;
+    setOpen(false);
+  }, [location.pathname]);
 
   return (
-    <div
-      className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[90] flex items-center justify-center gap-3 px-4 md:hidden"
-      aria-label="Mobile navigation"
-    >
-      <nav className={`${mobilePillMain} justify-around`}>
-        {navItems.map(({ id, icon, labelKey }) => (
-          <NavItem
-            key={id}
-            active={activeSection === id}
-            label={t(labelKey)}
-            icon={icon}
-            onClick={() => scrollTo(id)}
-          />
-        ))}
-      </nav>
+    <div className="md:hidden">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_88%,transparent)] backdrop-blur">
+        <div className="flex h-[var(--height-header)] items-center justify-between px-6">
+          <Link
+            to="/"
+            className="text-sm font-black uppercase tracking-[0.14em] text-[var(--text)]"
+          >
+            {profile.shortName}
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+          >
+            <MenuIcon open={open} />
+          </button>
+        </div>
+      </header>
+
+      {open ? (
+        <div
+          id="mobile-menu"
+          className="fixed inset-x-0 top-[var(--height-header)] z-40 border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4 shadow-[0_20px_40px_-28px_rgba(27,29,33,0.4)]"
+        >
+          <nav className="flex flex-col" aria-label="Mobile">
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                className={({ isActive }) =>
+                  `rounded-xl px-3 py-3 text-base font-semibold transition ${
+                    isActive
+                      ? "bg-[var(--color-accent-soft)] text-[var(--color-accent-deep)]"
+                      : "text-[var(--text)] hover:bg-[var(--surface-muted)]"
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+
+            <div className="mt-3 flex flex-col gap-2 border-t border-[var(--border)] pt-3">
+              <a
+                href={profile.github}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl px-3 py-3 text-base font-semibold text-[var(--text)] transition hover:bg-[var(--surface-muted)]"
+              >
+                GitHub
+              </a>
+              <a
+                href={`mailto:${profile.email}`}
+                className="rounded-xl bg-[var(--color-accent)] px-3 py-3 text-center text-base font-bold text-white transition hover:bg-[var(--color-accent-deep)]"
+              >
+                Email me
+              </a>
+            </div>
+          </nav>
+        </div>
+      ) : null}
     </div>
   );
 }
