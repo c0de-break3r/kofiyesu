@@ -22,9 +22,8 @@ import {
   writeCachedProjects,
 } from "@/lib/prefetchSiteContent";
 import type { ProjectContent, ProjectPreview } from "@/types/content";
-import { rowToContent, rowToPreview, type SiteAboutRow, type SiteFeatureRow, type SitePricingPackageRow, type SiteProjectRow } from "@/types/site";
+import { rowToContent, rowToPreview, type SiteAboutRow, type SiteFeatureRow, type SiteProjectRow } from "@/types/site";
 import { defaultAbout } from "@/content/about";
-import { servicePackages } from "@/content/payments";
 
 type SiteDataSource = "loading" | "api" | "static";
 
@@ -42,24 +41,9 @@ type SiteContentContextValue = {
     fallback: string,
   ) => string;
   services: { name: string; info: string }[];
-  pricingPackages: SitePricingPackageRow[];
 };
 
 const SiteContentContext = createContext<SiteContentContextValue | null>(null);
-
-function staticPricingPackages(): SitePricingPackageRow[] {
-  return servicePackages.map((pkg, index) => ({
-    id: pkg.id,
-    slug: pkg.id,
-    title: pkg.title,
-    amount_ghs: pkg.amountGhs,
-    description: pkg.description,
-    highlights: [...pkg.highlights],
-    featured: "featured" in pkg && pkg.featured === true,
-    sort_order: index,
-    published: true,
-  }));
-}
 
 function SiteContentProviderInner({ children }: { children: ReactNode }) {
   const cachedProjects = readCachedProjects();
@@ -67,7 +51,6 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<SiteProjectRow[]>(() => cachedProjects ?? []);
   const [features, setFeatures] = useState<SiteFeatureRow[]>(() => cachedFeatures ?? []);
   const [about, setAbout] = useState<SiteAboutRow | null>(null);
-  const [pricingPackages, setPricingPackages] = useState<SitePricingPackageRow[]>([]);
   const [loaded, setLoaded] = useState(() => cachedProjects !== null && cachedFeatures !== null);
   const [source, setSource] = useState<SiteDataSource>(() =>
     cachedProjects !== null && cachedFeatures !== null ? "api" : "loading",
@@ -80,18 +63,9 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
       takePrefetchedFeatures() ?? fetchJson<{ features?: SiteFeatureRow[] }>("/api/site/features");
     const aboutPromise =
       takePrefetchedAbout() ?? fetchJson<{ about?: SiteAboutRow | null }>("/api/site/about");
-    const pricingPromise =
-      fetchJson<{ packages?: SitePricingPackageRow[] }>("/api/site/pricing");
 
     void aboutPromise.then((aboutData) => {
       if (aboutData !== null) setAbout(aboutData.about ?? null);
-    });
-
-    void pricingPromise.then((pricingData) => {
-      if (pricingData !== null) {
-        const rows = pricingData.packages ?? [];
-        setPricingPackages(rows.length ? rows : staticPricingPackages());
-      }
     });
 
     const [projectsData, featuresData] = await Promise.all([projectsPromise, featuresPromise]);
@@ -176,13 +150,6 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const publishedPricing = useMemo<SitePricingPackageRow[]>(() => {
-    const list = pricingPackages.length ? pricingPackages : staticPricingPackages();
-    return [...list]
-      .filter((p) => p.published)
-      .sort((a, b) => a.sort_order - b.sort_order);
-  }, [pricingPackages]);
-
   const value = useMemo<SiteContentContextValue>(
     () => ({
       previews,
@@ -195,9 +162,8 @@ function SiteContentProviderInner({ children }: { children: ReactNode }) {
       getProjectContent,
       aboutText,
       services,
-      pricingPackages: publishedPricing,
     }),
-    [previews, projects, publishedFeatures, about, loaded, load, getProjectContent, aboutText, services, publishedPricing],
+    [previews, projects, publishedFeatures, about, loaded, load, getProjectContent, aboutText, services],
   );
 
   return createElement(SiteContentContext.Provider, { value }, children);

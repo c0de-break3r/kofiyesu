@@ -1,10 +1,10 @@
 export const defaultAbout = {
-  job_title: "Software Engineer & Cybersecurity Practitioner",
-  location: "Ghana",
+  job_title: "Software Engineer · AI Product Builder · Cybersecurity Practitioner",
+  location: "Accra, Ghana",
   about_intro: [
-    "Software Engineer and Cybersecurity Practitioner based in Ghana, specializing in secure, scalable, and production-ready web and mobile applications. Experienced in modern full-stack development using JavaScript and TypeScript ecosystems, with strong expertise in React, Next.js, React Native with Expo, Node.js, Express.js, Vite, Tailwind CSS, and shadcn/ui.",
-    "Skilled in building high-performance applications with modern authentication systems using Clerk, scalable backend architectures, REST APIs, real-time systems, and database solutions including PostgreSQL, Neon, Supabase, MongoDB, and Firebase Firestore. Experienced with monitoring and analytics platforms such as Sentry and PostHog to improve reliability, performance, and user experience across production environments.",
-    "Strong cybersecurity background with knowledge in application security, API security, security automation, authentication security, penetration testing fundamentals, and secure software development practices. Passionate about creating digital products that combine exceptional user experiences with strong security foundations and scalable architecture.",
+    "Software Engineer, AI product builder and Cybersecurity Practitioner based in Accra, Ghana, specializing in secure, scalable and production-ready web and mobile applications. Experienced in modern full-stack development across the JavaScript and TypeScript ecosystems, with strong expertise in React, Next.js, React Native with Expo, Node.js, Express.js, Vite, Tailwind CSS and shadcn/ui.",
+    "Skilled at building high-performance products with scalable backend architectures, REST APIs, real-time systems and data layers across PostgreSQL (Neon), Supabase, MongoDB and Firebase Firestore. I ship AI-assisted features and automations that solve real workflows, and use monitoring platforms such as Sentry and PostHog to improve reliability, performance and user experience across production environments.",
+    "Strong cybersecurity background spanning application security, API security, security automation, authentication security, penetration-testing fundamentals and secure software development practices. Passionate about creating digital products that combine exceptional user experiences with strong security foundations and scalable architecture.",
   ].join("\n\n"),
   about_tagline:
     "Driven by a long-term vision of building interactive, immersive, and gamified platforms inspired by modern digital ecosystems and social gaming experiences — creating applications that encourage creativity, collaboration, engagement, and digital identity at scale.",
@@ -22,8 +22,8 @@ export const defaultAbout = {
       info: "Secure SDLC practices, OWASP-aware reviews, API hardening, auth security, and penetration-testing fundamentals baked into delivery.",
     },
     {
-      name: "Auth & Real-time Systems",
-      info: "Clerk authentication, session and role models, WebSockets, and live features that stay reliable under real user load.",
+      name: "AI & Automation",
+      info: "AI-assisted product features, intelligent assistants, workflow automation and real-time systems that stay reliable under real user load.",
     },
     {
       name: "PostgreSQL & Cloud Data",
@@ -56,7 +56,4 @@ export function splitAboutIntro(introRaw: string): string[] {
 }
 
 export const siteMetaDescription =
-  "Software Engineer and Cybersecurity Practitioner in Ghana. Full-stack web and mobile apps with React, Next.js, React Native, Node.js, Clerk, PostgreSQL, and secure, production-ready architecture.";
-
-export const chatAssistantBio =
-  "Software Engineer & Cybersecurity Practitioner from Ghana — full-stack (React, Next.js, React Native, Node.js, TypeScript), Clerk auth, PostgreSQL/Neon/Supabase, application security, and production observability with Sentry and PostHog.";
+  "Software Engineer, AI product builder and Cybersecurity Practitioner in Accra, Ghana. Full-stack web and mobile products with React, Next.js, React Native, Node.js, PostgreSQL and secure, production-ready architecture.";

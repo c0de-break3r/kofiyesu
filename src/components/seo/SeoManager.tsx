@@ -6,15 +6,11 @@ import { SITE_TITLE } from "@/lib/siteMeta";
 export function SeoManager() {
   const { pathname } = useLocation();
   const isProject = pathname.startsWith("/project/");
-  const isChat = pathname.startsWith("/chat");
 
   useDocumentMeta({
     enabled: !isProject,
     canonicalPath: pathname || "/",
-    title: isChat ? `Chat — ${SITE_TITLE}` : SITE_TITLE,
-    description: isChat
-      ? "Start a project or ask about full-stack development, mobile apps, and application security with Obed Prince Kofi Yesu."
-      : undefined,
+    title: SITE_TITLE,
   });
 
   return null;

@@ -1,4 +1,4 @@
-import type { ContactInquiry, SiteAbout, SiteFeature, SiteProject } from "../../generated/prisma/client";
+import type { SiteAbout, SiteFeature, SiteProject } from "../../generated/prisma/client";
 import { featureToApi } from "./featureSerializer";
 
 type ProjectRow = SiteProject & { category?: SiteFeature | null };
@@ -33,26 +33,6 @@ export const aboutToApi = (row: SiteAbout) => ({
   about_intro: row.aboutIntro,
   about_tagline: row.aboutTagline,
   location: row.location,
-  updated_at: row.updatedAt.toISOString(),
-});
-
-export const inquiryToApi = (row: ContactInquiry) => ({
-  id: row.id,
-  inquiry_type: row.inquiryType,
-  message: row.message,
-  needs_admin: row.needsAdmin,
-  status: row.status,
-  admin_notes: row.adminNotes,
-  reply_draft: row.replyDraft,
-  admin_reply: row.adminReply,
-  admin_reply_at: row.adminReplyAt?.toISOString() ?? null,
-  conversation_id: row.conversationId,
-  user_email: row.userEmail,
-  user_id: row.userId,
-  user_name: row.userName,
-  intake: row.intake,
-  reviewed_at: row.reviewedAt?.toISOString() ?? null,
-  created_at: row.createdAt.toISOString(),
   updated_at: row.updatedAt.toISOString(),
 });
 

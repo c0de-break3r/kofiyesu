@@ -1,6 +1,6 @@
 # Kofiyesu — Portfolio (kofiyesu.com)
 
-Personal portfolio for **Obed Prince Kofi Yesu**: interactive 3D home scene, project case studies, AI chat intake, admin CMS, and Paystack payments (GHS).
+Personal portfolio for **Obed Prince Kofi Yesu**: interactive 3D home scene and project case studies, with contact via email/WhatsApp.
 
 Built with **React 19**, **TypeScript**, **Vite 7**, and **Tailwind CSS v4**. Motion via **GSAP** and **Lenis**, 3D via **Three.js**, audio via **Howler**. GLSL shaders compile through **vite-plugin-glsl**.
 
@@ -23,11 +23,7 @@ Built with **React 19**, **TypeScript**, **Vite 7**, and **Tailwind CSS v4**. Mo
 
 Copy `.env.example` → `.env` and fill in values. Required for full production:
 
-- **Clerk** — auth, chat, admin CMS
-- **Neon `DATABASE_URL`** — CMS, inquiries, chat history, payments
-- **Gemini** — AI chat replies
-- **Paystack** — GHS checkout
-- **Cloudinary** — admin media uploads (optional for read-only site)
+- **Neon `DATABASE_URL`** — site content (features, projects, about); falls back to bundled static content when unset
 - **Sentry** — error monitoring (optional)
 
 See `.env.example` for the full list.
@@ -38,7 +34,6 @@ See `.env.example` for the full list.
 | ------ | ----- |
 | Pages & features | `src/pages/`, `src/features/` |
 | 3D scene | `src/three/` |
-| Admin CMS | `src/components/admin/` |
 | API router (Vercel) | `api/index.ts` → `server/routes/` |
 | Prisma schema | `prisma/schema.prisma` |
 | Static content (seed / dev fallback) | `src/content/` |

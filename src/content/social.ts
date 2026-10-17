@@ -7,7 +7,7 @@ export type SocialLink = {
 
 export const social = [
   { url: `mailto:${contactEmail}`, name: "mail" },
-  { url: "https://github.com/kofiyesu", name: "github" },
+  { url: "https://github.com/c0de-break3r", name: "github" },
 ] as const satisfies SocialLink[];
 
 /** Social links shown in the site footer (excludes mail + GitHub — those live in Get in touch). */

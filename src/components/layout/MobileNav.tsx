@@ -1,15 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { isClerkConfigured } from "@/lib/clerk";
 import { t } from "@/i18n/en";
-import { useAdminPanel } from "@/hooks/useAdminPanel";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
-import { teardownHomeThreeScene } from "@/lib/threeRoute";
 
-type NavSection = "hero" | "about" | "projects" | "chat";
+type NavSection = "hero" | "about" | "projects";
 
 function NavIcon({ children }: { children: ReactNode }) {
   return <span className="h-5 w-5 [&_svg]:h-full [&_svg]:w-full">{children}</span>;
@@ -56,50 +52,19 @@ function IconProjects() {
   );
 }
 
-function IconChat() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3V6a1 1 0 0 1 1-1z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconUser() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 const navItems: {
   id: NavSection;
   icon: typeof IconHome;
-  labelKey: "home" | "about" | "projects" | "chat";
+  labelKey: "home" | "about" | "projects";
 }[] = [
   { id: "hero", icon: IconHome, labelKey: "home" },
   { id: "about", icon: IconAbout, labelKey: "about" },
   { id: "projects", icon: IconProjects, labelKey: "projects" },
-  { id: "chat", icon: IconChat, labelKey: "chat" },
 ];
 
 const mobilePillBase =
   "glass-surface flex items-center self-stretch rounded-full px-2 py-2";
 const mobilePillMain = `${mobilePillBase} min-w-0 flex-1`;
-
-const MOBILE_AUTH_SIZE = "size-[4.25rem]";
-const mobileAuthCircle = `glass-surface flex ${MOBILE_AUTH_SIZE} shrink-0 items-center justify-center rounded-full`;
 
 const NAV_ICON_SIZE = "h-11 w-11";
 
@@ -128,57 +93,6 @@ function MobileNavCell({
         </span>
       )}
     </div>
-  );
-}
-
-function MobileAuthButton() {
-  const signInIcon = (
-    <span className={`flex ${NAV_ICON_SIZE} items-center justify-center text-neutral-400`}>
-      <NavIcon>
-        <IconUser />
-      </NavIcon>
-    </span>
-  );
-
-  if (!isClerkConfigured) {
-    return (
-      <Link
-        to="/chat"
-        className={mobileAuthCircle}
-        aria-label={t("sign-in")}
-        onClick={() => teardownHomeThreeScene()}
-      >
-        {signInIcon}
-      </Link>
-    );
-  }
-
-  return (
-    <>
-      <SignedOut>
-        <SignInButton mode="modal">
-          <button
-            type="button"
-            className={`${mobileAuthCircle} border-0 bg-transparent p-0 font-[inherit]`}
-            aria-label={t("sign-in")}
-          >
-            {signInIcon}
-          </button>
-        </SignInButton>
-      </SignedOut>
-      <SignedIn>
-        <div className={mobileAuthCircle} aria-label="Account">
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: "h-14 w-14",
-                userButtonTrigger: "focus:shadow-none",
-              },
-            }}
-          />
-        </div>
-      </SignedIn>
-    </>
   );
 }
 
@@ -211,12 +125,10 @@ function NavItem({
 export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { open: adminOpen } = useAdminPanel();
   const [activeSection, setActiveSection] = useState<NavSection | null>("hero");
 
   const isHome = location.pathname === "/";
   const isProjectRoute = location.pathname.startsWith("/project/");
-  const isChatRoute = location.pathname.startsWith("/chat");
 
   const scrollToSection = (section: NavSection) => {
     setActiveSection(section);
@@ -240,12 +152,6 @@ export function MobileNav() {
   };
 
   const scrollTo = (section: NavSection) => {
-    if (section === "chat") {
-      teardownHomeThreeScene();
-      navigate("/chat");
-      return;
-    }
-
     if (!isHome) {
       navigate(section === "hero" ? "/" : `/#${section}`);
       window.setTimeout(() => scrollToSection(section), 50);
@@ -284,7 +190,7 @@ export function MobileNav() {
     return () => observers.forEach((o) => o?.disconnect());
   }, [isHome, location.pathname]);
 
-  if (isProjectRoute || isChatRoute || adminOpen) return null;
+  if (isProjectRoute) return null;
 
   return (
     <div
@@ -295,14 +201,13 @@ export function MobileNav() {
         {navItems.map(({ id, icon, labelKey }) => (
           <NavItem
             key={id}
-            active={id === "chat" ? location.pathname.startsWith("/chat") : activeSection === id}
+            active={activeSection === id}
             label={t(labelKey)}
             icon={icon}
             onClick={() => scrollTo(id)}
           />
         ))}
       </nav>
-      <MobileAuthButton />
     </div>
   );
 }

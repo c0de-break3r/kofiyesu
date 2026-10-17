@@ -7,9 +7,9 @@ export const SITE_NAME = "Obed Prince Kofi Yesu";
 export const SITE_SHORT_NAME = "Kofi Yesu";
 
 export const SITE_TITLE =
-  "Obed Prince Kofi Yesu — Software Engineer & Cybersecurity Practitioner";
+  "Obed Prince Kofi Yesu — Software Engineer, AI Product Builder & Cybersecurity Practitioner";
 
-export const SITE_TAGLINE = "Full-stack · Mobile · Application Security · Ghana";
+export const SITE_TAGLINE = "Software Engineering · AI Products · Cybersecurity · Accra, Ghana";
 
 export const SITE_DESCRIPTION = siteMetaDescription;
 
@@ -27,7 +27,7 @@ export const SITE_KEYWORDS = [
   "application security",
   "API security",
   "PostgreSQL",
-  "Clerk authentication",
+  "AI product builder",
   "web developer Ghana",
 ].join(", ");
 
@@ -36,7 +36,7 @@ export const OG_IMAGE_PATH = "/meta/icon-512.png";
 export const OG_IMAGE_URL = `${SITE_URL}${OG_IMAGE_PATH}`;
 
 export const PWA_DESCRIPTION =
-  "Portfolio of Obed Prince Kofi Yesu — projects, about, and chat. Install for quick access and a smoother experience.";
+  "Portfolio of Obed Prince Kofi Yesu — projects, about and contact. Install for quick access and a smoother experience.";
 
 export const STATIC_PROJECT_SLUGS = [
   "kheliancart",
@@ -56,12 +56,12 @@ export function buildPersonJsonLd() {
     name: SITE_NAME,
     url: SITE_URL,
     image: OG_IMAGE_URL,
-    jobTitle: "Software Engineer & Cybersecurity Practitioner",
+    jobTitle: "Software Engineer · AI Product Builder · Cybersecurity Practitioner",
     address: {
       "@type": "PostalAddress",
       addressCountry: "GH",
     },
-    sameAs: ["https://github.com/kofiyesu", "https://kofiyesu.com"],
+    sameAs: ["https://github.com/c0de-break3r", "https://kofiyesu.com"],
     description: SITE_DESCRIPTION,
   };
 }

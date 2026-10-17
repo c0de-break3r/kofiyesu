@@ -1,4 +1,46 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import siteAboutHandler from "../server/routes/site/about.js";
+import siteFeaturesHandler from "../server/routes/site/features.js";
+import siteProjectsHandler from "../server/routes/site/projects.js";
+
+const siteRoutes = {
+  about: siteAboutHandler,
+  features: siteFeaturesHandler,
+  projects: siteProjectsHandler,
+} as const;
+
+function pathSegments(req: VercelRequest): string[] {
+  const raw = req.query.path;
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw === "string" && raw.length > 0) {
+    return raw.split("/").filter(Boolean);
+  }
+
+  const pathname = (req.url ?? "").split("?")[0] ?? "";
+  return pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean);
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const [root, sub] = pathSegments(req);
+
+  if (!root) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  try {
+    if (root === "site" && sub) {
+      const route = siteRoutes[sub as keyof typeof siteRoutes];
+      if (!route) return res.status(404).json({ error: "Not found" });
+      return route(req, res);
+    }
+
+    return res.status(404).json({ error: "Not found" });
+  } catch (err) {
+    console.error("[api]", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import inquiriesHandler from "../server/routes/inquiries.js";
 import chatHandler from "../server/routes/chat/main.js";
 import conversationHandler from "../server/routes/chat/conversation.js";

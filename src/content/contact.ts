@@ -55,3 +55,14 @@ export const buildMailtoUrl = (route: InquiryRoute, message: string): string => 
   const subject = encodeURIComponent(route.subject);
   return `mailto:${route.email}?subject=${subject}&body=${body}`;
 };
+
+/** Country code, no + — override with VITE_WHATSAPP_NUMBER in .env */
+export const whatsappNumber =
+  import.meta.env.VITE_WHATSAPP_NUMBER?.replace(/\D/g, "") || "233000000000";
+
+export const whatsappUrl = (message: string) =>
+  `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+export const whatsappContactUrl = whatsappUrl(
+  "Hi Obed — I saw your portfolio and would like to discuss a project.",
+);

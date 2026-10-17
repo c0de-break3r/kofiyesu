@@ -1,7 +1,6 @@
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { social } from "@/content/social";
-import { whatsappContactUrl } from "@/content/payments";
+import { whatsappContactUrl } from "@/content/contact";
 import { t } from "@/i18n/en";
 
 const labels: Record<string, string> = {
@@ -39,9 +38,6 @@ export function ContactSection() {
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-3">
-          <Link to="/chat">
-            <Button>{t("start-a-project")}</Button>
-          </Link>
           <a href={whatsappContactUrl} target="_blank" rel="noreferrer">
             <Button variant="border">{t("whatsapp-cta")}</Button>
           </a>

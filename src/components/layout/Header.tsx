@@ -1,52 +1,20 @@
 import { type MouseEvent, type PropsWithChildren } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
-import { isClerkConfigured } from "@/lib/clerk";
 import { social } from "@/content/social";
 import { getLenis } from "@/hooks/useScroll";
 import { scrollToSectionHash } from "@/hooks/useHashScroll";
-import { teardownHomeThreeScene } from "@/lib/threeRoute";
 import { t } from "@/i18n/en";
 
 const mailLink = social.find((s) => s.name === "mail")?.url ?? "mailto:hello@kofiyesu.com";
 
 function DesktopAuthActions() {
-  const { isLoaded } = useAuth();
   const signInClass =
     "glass-surface rounded-full px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-white/50 hover:border-white/70 hover:text-[var(--color-accent)]";
 
-  if (!isClerkConfigured) {
-    return (
-      <a href={mailLink} className={signInClass}>
-        {t("get-in-touch")}
-      </a>
-    );
-  }
-
-  if (!isLoaded) {
-    return <span className="inline-block h-9 w-9 shrink-0 rounded-full bg-white/30" aria-hidden />;
-  }
-
   return (
-    <>
-      <SignedOut>
-        <SignInButton mode="modal">
-          <button type="button" className={signInClass}>
-            {t("sign-in")}
-          </button>
-        </SignInButton>
-      </SignedOut>
-      <SignedIn>
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-9 w-9 ring-0",
-              userButtonTrigger: "focus:shadow-none shadow-none ring-0",
-            },
-          }}
-        />
-      </SignedIn>
-    </>
+    <a href={mailLink} className={signInClass}>
+      {t("get-in-touch")}
+    </a>
   );
 }
 
@@ -74,9 +42,7 @@ export function Header() {
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const isProjectRoute = location.pathname.startsWith("/project/");
-  const isChatRoute = location.pathname.startsWith("/chat");
-  const isPayRoute = location.pathname.startsWith("/pay/");
-  const isMinimalNav = isProjectRoute || isChatRoute || isPayRoute;
+  const isMinimalNav = isProjectRoute;
 
   const handleHomeClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome) return;
@@ -118,16 +84,6 @@ export function Header() {
               >
                 {t("projects")}
               </NavLink>
-              <button
-                type="button"
-                onClick={() => {
-                  teardownHomeThreeScene();
-                  navigate("/chat");
-                }}
-                className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/60 hover:text-[var(--color-accent)]"
-              >
-                {t("chat")}
-              </button>
             </nav>
           ) : null}
 

@@ -179,7 +179,7 @@ export function Projects() {
 
         {loaded && sortedPreviews.length === 0 ? (
           <p className="py-12 text-center text-sm text-[var(--text-muted)]">
-            No projects published yet. Add and publish projects in the admin CMS.
+            No projects published yet — check back soon.
           </p>
         ) : loaded && activeFeatureId && filtered.length === 0 ? (
           <div className="py-12 text-center">
