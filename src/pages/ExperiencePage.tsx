@@ -1,4 +1,5 @@
 import { Footer } from "@/components/layout/Footer";
+import { TechStackCard } from "@/components/ui/TechStackCard";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { experience } from "@/data/experience";
 
@@ -65,16 +66,11 @@ export default function ExperiencePage() {
               </ul>
 
               {entry.technologies?.length ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {entry.technologies.map((tech) => (
-                    <span
-                      key={tech}
-                      className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)]"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
+                <TechStackCard
+                  label="Tools & tech"
+                  technologies={entry.technologies}
+                  className="mt-5"
+                />
               ) : null}
             </li>
           ))}

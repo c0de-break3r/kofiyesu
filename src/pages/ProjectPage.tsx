@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { getAdjacentProjects, getCategoryLabel, getProjectBySlug } from "@/lib/projects";
+import { TechStackCard } from "@/components/ui/TechStackCard";
 import { STATUS_LABELS } from "@/data/types";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -120,19 +121,7 @@ export function ProjectPage() {
         {project.contribution ? <Section title="My contribution">{project.contribution}</Section> : null}
 
         {project.stack?.length ? (
-          <section className="mt-10">
-            <h2 className="text-lg font-bold tracking-tight text-[var(--text)]">Technology stack</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {project.stack.map((tech) => (
-                <span
-                  key={tech}
-                  className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)]"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </section>
+          <TechStackCard technologies={project.stack} className="mt-10" />
         ) : null}
 
         {project.gallery?.length ? (

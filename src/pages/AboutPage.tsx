@@ -1,4 +1,5 @@
 import { Footer } from "@/components/layout/Footer";
+import { TechStackCard } from "@/components/ui/TechStackCard";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { profile } from "@/data/profile";
 import portraitImage from "@/assets/images/portrait-cutout.webp";
@@ -62,16 +63,11 @@ export default function AboutPage() {
 
         <section className="mt-10">
           <h2 className="text-lg font-bold tracking-tight text-[var(--text)]">Technologies</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {profile.technologies.map((tech) => (
-              <span
-                key={tech}
-                className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)]"
-              >
-                {tech}
-              </span>
-            ))}
-          </div>
+          <TechStackCard
+            label=""
+            technologies={profile.technologies}
+            className="mt-4"
+          />
         </section>
 
         <section className="mt-12 flex flex-wrap gap-3">
