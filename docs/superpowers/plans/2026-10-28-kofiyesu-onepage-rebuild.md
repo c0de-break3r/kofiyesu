@@ -1,6 +1,6 @@
 # kofiyesu One-Page Rebuild Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Rebuild `/` of the kofiyesu portfolio as a premium one-page scroll in the Wensity UI template aesthetic, using rea-uncensored as the RE tool for reference extraction, then push to GitHub and deploy to kofiyesu.vercel.app.
 
@@ -37,48 +37,48 @@
 ### Task 1: REA reference extraction (informational, parallel)
 
 - [x] wget-mirror `https://aarav-sharma-liart.vercel.app` (robots on, depth 2, assets) into `../Freelancing/aarav-liart-mirror/`
-- [ ] Run fork CLI: `rea analyze-javascript-application ../Freelancing/aarav-liart-mirror --json > ../Freelancing/aarav-liart-rea-analysis.json`
-- [ ] Write `../Freelancing/aarav-liart-rea-analysis-summary.md` (section order, tokens observed, motion patterns)
-- [ ] Note: no commit (files live outside the repo)
+- [x] Run fork CLI: `rea analyze-javascript-application ../Freelancing/aarav-liart-mirror --json > ../Freelancing/aarav-liart-rea-analysis.json`
+- [x] Write `../Freelancing/aarav-liart-rea-analysis-summary.md` (section order, tokens observed, motion patterns)
+- [x] Note: no commit (files live outside the repo)
 
 ### Task 2: Dependencies + design system (index.css)
 
 - [x] `bun add framer-motion @fontsource-variable/space-grotesk @fontsource-variable/jetbrains-mono`
-- [ ] Rewrite `src/index.css`: fonts imports, `@theme` (sans/mono/accent), `:root` dark vars, focus/selection, `.eyebrow`, `.bg-grid`, scrollbar, anchor `scroll-margin-top`
-- [ ] `bun run typecheck` → 0 errors; commit `feat: dark one-page design system tokens and fonts`
+- [x] Rewrite `src/index.css`: fonts imports, `@theme` (sans/mono/accent), `:root` dark vars, focus/selection, `.eyebrow`, `.bg-grid`, scrollbar, anchor `scroll-margin-top`
+- [x] `bun run typecheck` → 0 errors; commit `feat: dark one-page design system tokens and fonts`
 
 ### Task 3: Data additions + misc theme cleanup
 
-- [ ] `profile.ts`: add `tagline` (Build with purpose. Automate with intent. Secure by design.), `currentlyBuilding[]` (CineFlow, Barbers Eazy Connect, Africana Mobility, DocxBase, SOCANA AI — name, description, focus tags, honest "in development")
-- [ ] `index.html`: `data-theme="dark"`, theme-color/Tile `#0a0a0b`, remove Urbanist preloads + stale API prefetch script, keep favicon/manifest
-- [ ] `vite.config.ts`: manifest `theme_color: "#00e5ff"`, `background_color: "#0a0a0b"`
-- [ ] `ProjectCard.tsx`: dark status chips (`bg-emerald-400/10 text-emerald-300 border-emerald-400/20` pattern ×5)
-- [ ] typecheck; commit `feat: content + meta updates for dark one-pager`
+- [x] `profile.ts`: add `tagline` (Build with purpose. Automate with intent. Secure by design.), `currentlyBuilding[]` (CineFlow, Barbers Eazy Connect, Africana Mobility, DocxBase, SOCANA AI — name, description, focus tags, honest "in development")
+- [x] `index.html`: `data-theme="dark"`, theme-color/Tile `#0a0a0b`, remove Urbanist preloads + stale API prefetch script, keep favicon/manifest
+- [x] `vite.config.ts`: manifest `theme_color: "#00e5ff"`, `background_color: "#0a0a0b"`
+- [x] `ProjectCard.tsx`: dark status chips (`bg-emerald-400/10 text-emerald-300 border-emerald-400/20` pattern ×5)
+- [x] typecheck; commit `feat: content + meta updates for dark one-pager`
 
 ### Task 4: Primitives + home sections
 
-- [ ] `SectionHeader.tsx` — props `{ index: string; title: string; children? }` → mono eyebrow `01 — EXPERIENCE` + h2
-- [ ] `Reveal.tsx` — framer-motion `whileInView` fade/24px-rise wrapper, `useReducedMotion` respected; exports `Reveal({children, delay, className})`
-- [ ] `HeroSection.tsx` — location eyebrow + dot, tagline quote, name h1, title mono line, CTAs (mailto + `#work`), GitHub/Email socials, portrait + cyan glow, `.bg-grid` backdrop
-- [ ] `ExperienceSection.tsx` — `experience.slice(0,3)` timeline (org, role, period, first responsibility)
-- [ ] `ProofOfWorkSection.tsx` — `getSelectedProjects(6)` grid of existing `ProjectCard`
-- [ ] `CurrentlyBuildingSection.tsx` — `profile.currentlyBuilding` mini-cards
-- [ ] `ContributionsSection.tsx` — imported locally committed stat images (stats/streak/top-langs), fallback <noscript>-safe
-- [ ] `StackSection.tsx` — `TechStackCard` with site tech list
-- [ ] `SelectedWorkSection.tsx` — 3 deep-dive rows → `/project/:slug`
-- [ ] `ConnectSection.tsx` — GitHub + Email cards
-- [ ] Rewrite `HomePage.tsx` composing all sections + `Footer`; delete superseded `Hero.tsx`/`SelectedProjects.tsx`/`ContactSection.tsx`
-- [ ] typecheck + build; commit `feat: one-page home sections in Wensity-style dark theme`
+- [x] `SectionHeader.tsx` — props `{ index: string; title: string; children? }` → mono eyebrow `01 — EXPERIENCE` + h2
+- [x] `Reveal.tsx` — framer-motion `whileInView` fade/24px-rise wrapper, `useReducedMotion` respected; exports `Reveal({children, delay, className})`
+- [x] `HeroSection.tsx` — location eyebrow + dot, tagline quote, name h1, title mono line, CTAs (mailto + `#work`), GitHub/Email socials, portrait + cyan glow, `.bg-grid` backdrop
+- [x] `ExperienceSection.tsx` — `experience.slice(0,3)` timeline (org, role, period, first responsibility)
+- [x] `ProofOfWorkSection.tsx` — `getSelectedProjects(6)` grid of existing `ProjectCard`
+- [x] `CurrentlyBuildingSection.tsx` — `profile.currentlyBuilding` mini-cards
+- [x] `ContributionsSection.tsx` — imported locally committed stat images (stats/streak/top-langs), fallback <noscript>-safe
+- [x] `StackSection.tsx` — `TechStackCard` with site tech list
+- [x] `SelectedWorkSection.tsx` — 3 deep-dive rows → `/project/:slug`
+- [x] `ConnectSection.tsx` — GitHub + Email cards
+- [x] Rewrite `HomePage.tsx` composing all sections + `Footer`; delete superseded `Hero.tsx`/`SelectedProjects.tsx`/`ContactSection.tsx`
+- [x] typecheck + build; commit `feat: one-page home sections in Wensity-style dark theme`
 
 ### Task 5: Footer credit + final polish
 
-- [ ] `Footer.tsx`: add "Template by Wensity UI" credit line · keep copy/idempotent
-- [ ] Reuse check: no dangling imports of removed components
-- [ ] typecheck + build + `npm run dev` manual anchor/theme pass; commit `feat: footer attribution + final polish`
+- [x] `Footer.tsx`: add "Template by Wensity UI" credit line · keep copy/idempotent
+- [x] Reuse check: no dangling imports of removed components
+- [x] typecheck + build + `npm run dev` manual anchor/theme pass; commit `feat: footer attribution + final polish`
 
 ### Task 6: REA summary of reference (from Task 1 artifacts)
 
-- [ ] Write summary MD, cite tokens/motion observations; no repo commit
+- [x] Write summary MD, cite tokens/motion observations; no repo commit
 
 ### Task 7: Push + deploy
 
