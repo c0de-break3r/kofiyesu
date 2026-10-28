@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="330" viewBox="0 0 1080 330" role="img" aria-label="GitHub snapshot for c0de-break3r">
+  <rect width="1080" height="330" rx="16" fill="#0a0a0b" stroke="#232327" />
+  <text x="24" y="52" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="14" letter-spacing="3" fill="#00e5ff">GITHUB — @c0de-break3r</text>
+  <text x="1056" y="52" text-anchor="end" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="12" fill="#9ba0a6">snapshot 2026-10-28</text>
+  <line x1="24" y1="72" x2="1056" y2="72" stroke="#232327" />
+
+    <g transform="translate(24, 96)">
+      <text x="0" y="0" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="12" letter-spacing="3" fill="#9ba0a6">PUBLIC REPOS</text>
+      <text x="0" y="52" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-weight="700" font-size="52" fill="#f4f4f5">8</text>
+    </g>
+    <g transform="translate(300, 96)">
+      <text x="0" y="0" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="12" letter-spacing="3" fill="#9ba0a6">STARS EARNED</text>
+      <text x="0" y="52" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-weight="700" font-size="52" fill="#f4f4f5">5</text>
+    </g>
+    <g transform="translate(576, 96)">
+      <text x="0" y="0" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="12" letter-spacing="3" fill="#9ba0a6">FOLLOWERS</text>
+      <text x="0" y="52" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-weight="700" font-size="52" fill="#f4f4f5">9</text>
+    </g>
+    <g transform="translate(852, 96)">
+      <text x="0" y="0" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="12" letter-spacing="3" fill="#9ba0a6">EVENTS / 30D</text>
+      <text x="0" y="52" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-weight="700" font-size="52" fill="#f4f4f5">26</text>
+    </g>
+  <text x="24" y="206" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="12" letter-spacing="3" fill="#9ba0a6">TOP LANGUAGES (REPO COUNT)</text>
+
+    <g transform="translate(24, 218)">
+      <rect width="190" height="36" rx="8" fill="#111113" stroke="#232327" />
+      <text x="16" y="24" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="14" fill="#f4f4f5">TypeScript</text>
+      <text x="174" y="24" text-anchor="end" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="14" fill="#00e5ff">2</text>
+    </g>
+  <text x="24" y="296" font-family="'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace" font-size="12" fill="#9ba0a6">last push 2026-10-26 · full history at github.com/c0de-break3r</text>
+</svg>

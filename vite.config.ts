@@ -33,8 +33,8 @@ export default defineConfig(({ mode }) => {
         id: "/",
         display: "standalone",
         orientation: "portrait-primary",
-        theme_color: "#ea5a1e",
-        background_color: "#faf9f7",
+        theme_color: "#00e5ff",
+        background_color: "#0a0a0b",
         lang: "en",
         categories: ["portfolio"],
         icons: [

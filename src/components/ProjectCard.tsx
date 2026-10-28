@@ -3,18 +3,18 @@ import { getCategoryLabel } from "@/lib/projects";
 import { STATUS_LABELS, type Project } from "@/data/types";
 
 const statusClass: Record<Project["status"], string> = {
-  live: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  completed: "bg-slate-50 text-slate-600 border-slate-200",
-  beta: "bg-amber-50 text-amber-700 border-amber-200",
-  prototype: "bg-sky-50 text-sky-700 border-sky-200",
-  "in-development": "bg-orange-50 text-orange-700 border-orange-200",
+  live: "bg-emerald-400/10 text-emerald-300 border-emerald-400/20",
+  completed: "bg-zinc-400/10 text-zinc-300 border-zinc-400/20",
+  beta: "bg-amber-400/10 text-amber-300 border-amber-400/20",
+  prototype: "bg-sky-400/10 text-sky-300 border-sky-400/20",
+  "in-development": "bg-orange-400/10 text-orange-300 border-orange-400/20",
 };
 
 export function ProjectCard({ project }: { project: Project }) {
   return (
     <Link
       to={`/project/${project.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] transition duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[0_18px_40px_-24px_rgba(27,29,33,0.35)]"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] transition duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)]"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--surface-muted)]">
         {project.thumbnail ? (

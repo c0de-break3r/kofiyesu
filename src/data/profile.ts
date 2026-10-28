@@ -14,6 +14,9 @@ export const profile = {
   intro:
     "I'm a software engineer based in Accra, Ghana. I build web applications, explore AI-driven products, and develop practical solutions with security in mind.",
 
+  /** One-line philosophy — shown in the hero and reused across page headers. */
+  tagline: "Build with purpose. Automate with intent. Secure by design.",
+
   /** Longer biography for the About page. */
   bio: [
     "I'm a software engineer who likes taking ideas all the way to working products — the interface, the API, the data layer, and the details that keep things reliable once real people use them.",
@@ -41,6 +44,35 @@ export const profile = {
     {
       title: "Data & reliability",
       body: "PostgreSQL-backed architectures, deployment, and monitoring so products stay dependable in production.",
+    },
+  ],
+
+  /** Products in active development — sourced from the c0de-break3r profile README. */
+  currentlyBuilding: [
+    {
+      name: "SOCANA AI",
+      description: "AI product development focused on intelligent digital experiences.",
+      focus: ["AI", "Product Engineering"],
+    },
+    {
+      name: "CineFlow",
+      description: "AI-powered creative production platform for generating and managing visual content.",
+      focus: ["AI", "SaaS", "Creative Tools"],
+    },
+    {
+      name: "Barbers Eazy Connect",
+      description: "Barber booking and business management for walk-ins, home services, and operations.",
+      focus: ["Marketplace", "Booking", "SaaS"],
+    },
+    {
+      name: "Africana Mobility Service",
+      description: "Digital mobility platform connecting transportation services with customers.",
+      focus: ["Mobility", "Full-Stack"],
+    },
+    {
+      name: "DocxBase",
+      description: "Document-focused SaaS exploring smarter document workflows and productivity.",
+      focus: ["Documents", "SaaS"],
     },
   ],
 

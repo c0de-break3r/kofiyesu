@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -47,17 +47,13 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
 
-    <link rel="preload" href="/fonts/urbanist-400.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high" />
-    <link rel="prefetch" href="/api/site/projects" as="fetch" crossorigin="anonymous" />
-
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/meta/favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="/meta/favicon-16x16.png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/meta/apple-touch-icon.png" sizes="180x180" />
-    <link rel="manifest" href="/site.webmanifest" />
 
-    <meta name="theme-color" content="#f6672a" />
-    <meta name="msapplication-TileColor" content="#f6672a" />
+    <meta name="theme-color" content="#0a0a0b" />
+    <meta name="msapplication-TileColor" content="#0a0a0b" />
 
     <script type="application/ld+json">
       {
@@ -83,39 +79,6 @@
           }
         ]
       }
-    </script>
-
-    <script>
-      (function () {
-        try {
-          fetch("/api/site/projects", { cache: "no-store" })
-            .then(function (r) {
-              return r.ok ? r.json() : null;
-            })
-            .then(function (d) {
-              if (d && d.projects) {
-                sessionStorage.setItem(
-                  "kofiyesu-site-projects",
-                  JSON.stringify({ projects: d.projects, at: Date.now() }),
-                );
-              }
-            })
-            .catch(function () {});
-          fetch("/api/site/features", { cache: "no-store" })
-            .then(function (r) {
-              return r.ok ? r.json() : null;
-            })
-            .then(function (d) {
-              if (d && d.features) {
-                sessionStorage.setItem(
-                  "kofiyesu-site-features",
-                  JSON.stringify({ features: d.features, at: Date.now() }),
-                );
-              }
-            })
-            .catch(function () {});
-        } catch (e) {}
-      })();
     </script>
   </head>
   <body>

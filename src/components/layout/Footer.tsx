@@ -50,7 +50,18 @@ export function Footer({
           </nav>
         ) : null}
         <p className="text-center text-sm text-[var(--text-muted)]">
-          © {year} {profile.name}
+          © {year} {profile.name} · Template inspired by{" "}
+          <a
+            href="https://ui.wensity.com"
+            target="_blank"
+            rel="noreferrer"
+            className="transition hover:text-[var(--color-accent)]"
+          >
+            Wensity UI
+          </a>
+        </p>
+        <p className="text-center font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[var(--text-muted)]">
+          Build with purpose · Automate with intent · Secure by design
         </p>
       </div>
     </footer>

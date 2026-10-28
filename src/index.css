@@ -1,48 +1,28 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Urbanist";
-  src: url(/fonts/urbanist-400.woff2) format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Urbanist";
-  src: url(/fonts/urbanist-700.woff2) format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Urbanist";
-  src: url(/fonts/urbanist-900.woff2) format("woff2");
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme {
-  --color-accent: #ea5a1e;
-  --color-accent-deep: #c9460f;
-  --color-accent-soft: #fbe4d8;
-  --font-sans: "Urbanist", system-ui, -apple-system, sans-serif;
+  --color-accent: #00e5ff;
+  --color-accent-deep: #00b8d4;
+  --color-accent-soft: rgba(0, 229, 255, 0.14);
+  --font-sans: "Space Grotesk Variable", "Space Grotesk", system-ui, -apple-system,
+    sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace,
+    SFMono-Regular, Menlo, monospace;
 }
 
 @layer base {
   :root {
-    --bg: #faf9f7;
-    --surface: #ffffff;
-    --surface-muted: #f4f2ee;
-    --text: #1b1d21;
-    --text-muted: #646b76;
-    --border: rgba(27, 29, 33, 0.1);
-    --border-strong: rgba(27, 29, 33, 0.16);
-    --color-accent: #ea5a1e;
-    --color-accent-deep: #c9460f;
-    --color-accent-soft: #fbe4d8;
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface-muted: #17171a;
+    --text: #f4f4f5;
+    --text-muted: #9ba0a6;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --color-accent: #00e5ff;
+    --color-accent-deep: #00b8d4;
+    --color-accent-soft: rgba(0, 229, 255, 0.14);
+    --color-secondary: #ff44cd;
     --height-header: 4.5rem;
   }
 
@@ -55,8 +35,10 @@
   html {
     font-family: var(--font-sans);
     background: var(--bg);
+    color-scheme: dark;
     color: var(--text);
     scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--height-header) + 1rem);
     -webkit-text-size-adjust: 100%;
   }
 
@@ -70,13 +52,27 @@
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+    background: color-mix(in srgb, var(--color-accent) 26%, transparent);
   }
 
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
     border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
 
   .app-icon-shell {
@@ -114,6 +110,16 @@
     50% {
       opacity: 1;
     }
+  }
+
+  .bg-grid {
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
   }
 
   @media (prefers-reduced-motion: reduce) {
