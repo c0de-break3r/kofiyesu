@@ -82,7 +82,7 @@
 
 ### Task 7: Push + deploy
 
-- [ ] Push `feature/one-page-rebuild` to origin (c0de-break3r identity)
-- [ ] Merge to `main` (ff or merge commit) and push → production via Git→Vercel integration if connected
-- [ ] If project not git-connected: `vercel deploy --prod --yes` from repo (project `kofiyesu`)
+- [x] Push `feature/one-page-rebuild` to origin (c0de-break3r identity)
+- [x] Merge to `main` (ff or merge commit) and push → production via Git→Vercel integration if connected
+- [x] If project not git-connected: `vercel deploy --prod --yes` from repo (project `kofiyesu`)
 - [ ] Verify: `curl -s -o /dev/null -w '%{http_code}' https://kofiyesu.vercel.app` → 200 + spot-check section markup
