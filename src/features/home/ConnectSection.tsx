@@ -9,9 +9,8 @@ export function ConnectSection() {
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <SectionHeader
-            index="07"
-            title="Let's connect"
-            intro="Open to full-stack engineering, AI-powered applications, SaaS, automation, and security-focused work."
+            title="Get in touch"
+            intro="Open to full-stack engineering, AI-powered applications, SaaS, automation, and security-focused work — let's build something solid."
           />
         </Reveal>
 

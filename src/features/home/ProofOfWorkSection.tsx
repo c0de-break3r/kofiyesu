@@ -1,38 +1,49 @@
-import { Link } from "react-router-dom";
 import { Reveal } from "@/components/ui/Reveal";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { ProjectCard } from "@/components/ProjectCard";
-import { getSelectedProjects } from "@/lib/projects";
+import { ProjectShowcase, type ShowcaseItem } from "@/components/ui/ProjectShowcase";
+import { getAllProjects } from "@/lib/projects";
+import { STATUS_LABELS } from "@/data/types";
+import { profile } from "@/data/profile";
 
-/** Featured project cards for the one-pager — everything else lives on /projects. */
+function toId(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/** Projects kept out of the home showcase (still available on /projects). */
+const EXCLUDED_SLUGS = new Set(["driver-connect", "api-pentest-workflows"]);
+
+/**
+ * The one-pager showcase — real projects and in-development products combined
+ * into one Apple-style swipeable carousel. No section header.
+ */
 export function ProofOfWorkSection() {
-  const shown = getSelectedProjects(6);
+  const projectItems: ShowcaseItem[] = getAllProjects()
+    .filter((p) => !EXCLUDED_SLUGS.has(p.slug))
+    .map((p) => ({
+    id: p.slug,
+    kicker: STATUS_LABELS[p.status],
+    headline: p.title,
+    body: p.summary,
+    image: p.thumbnail,
+    href: `/project/${p.slug}`,
+    }));
+
+  const buildingItems: ShowcaseItem[] = profile.currentlyBuilding.map((b) => ({
+    id: toId(b.name),
+    kicker: "In development",
+    headline: b.name,
+    body: b.description,
+  }));
+
+  const items = [...projectItems, ...buildingItems];
 
   return (
-    <section id="work" className="w-full px-6 py-20 md:py-28">
+    <section id="work" className="w-full px-6 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal>
-          <SectionHeader
-            index="02"
-            title="Proof of work"
-            intro="Selected products spanning ecommerce, developer tooling, mobility, and security."
-            trailing={
-              <Link
-                to="/projects"
-                className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] transition hover:text-[var(--color-accent-deep)]"
-              >
-                All projects →
-              </Link>
-            }
-          />
-        </Reveal>
-
-        <Reveal delay={0.08}>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {shown.map((project) => (
-              <ProjectCard key={project.slug} project={project} />
-            ))}
-          </div>
+          <ProjectShowcase items={items} />
         </Reveal>
       </div>
     </section>

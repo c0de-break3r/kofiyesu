@@ -1,74 +1,57 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent: #00e5ff;
-  --color-accent-deep: #00b8d4;
-  --color-accent-soft: rgba(0, 229, 255, 0.14);
-  --font-sans: "Space Grotesk Variable", "Space Grotesk", system-ui, -apple-system,
-    sans-serif;
-  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace,
-    SFMono-Regular, Menlo, monospace;
+  --color-accent: #ea5a1e;
+  --color-accent-deep: #c9460f;
+  --color-accent-soft: rgba(234, 90, 30, 0.14);
+  --font-sans: "Urbanist", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 @layer base {
+  /* Light (warm editorial) is the default on :root. */
   :root {
-    --bg: #0a0a0b;
-    --surface: #111113;
-    --surface-muted: #17171a;
-    --text: #f4f4f5;
-    --text-muted: #9ba0a6;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.16);
-    --color-accent: #00e5ff;
-    --color-accent-deep: #00b8d4;
-    --color-accent-soft: rgba(0, 229, 255, 0.14);
-    --color-secondary: #ff44cd;
-    --banner-bg: #0a0d14;
-    --banner-fog-1: rgba(0, 229, 255, 0.16);
-    --banner-fog-2: rgba(255, 68, 205, 0.12);
-    --banner-node: #00e5ff;
-    --banner-link: rgba(0, 229, 255, 0.35);
-    --banner-dot: rgba(0, 229, 255, 0.7);
-    --banner-scrim: rgba(6, 8, 12, 0.62);
-    --grid-line: rgba(255, 255, 255, 0.035);
-    --height-header: 4.5rem;
-  }
-
-  [data-theme="light"] {
-    --bg: #f6f7f8;
+    --bg: #faf9f7;
     --surface: #ffffff;
-    --surface-muted: #eef0f2;
-    --text: #131316;
-    --text-muted: #565b62;
-    --border: rgba(0, 0, 0, 0.08);
-    --border-strong: rgba(0, 0, 0, 0.16);
-    --color-accent: #0092a8;
-    --color-accent-deep: #00778a;
-    --color-accent-soft: rgba(0, 146, 168, 0.12);
-    --color-secondary: #d21f9b;
-    --banner-bg: #e9eef3;
-    --banner-fog-1: rgba(0, 146, 168, 0.18);
-    --banner-fog-2: rgba(210, 31, 155, 0.12);
-    --banner-node: #00778a;
-    --banner-link: rgba(0, 119, 138, 0.35);
-    --banner-dot: rgba(0, 119, 138, 0.55);
-    --banner-scrim: rgba(10, 13, 20, 0.55);
-    --grid-line: rgba(19, 19, 22, 0.05);
+    --surface-muted: #f2efe9;
+    --text: #1b1d21;
+    --text-muted: #5f6672;
+    --border: rgba(27, 29, 33, 0.1);
+    --border-strong: rgba(27, 29, 33, 0.16);
+    --color-accent: #ea5a1e;
+    --color-accent-deep: #c9460f;
+    --color-accent-soft: rgba(234, 90, 30, 0.14);
+    --height-header: 4.5rem;
     color-scheme: light;
   }
 
-  /* Applied only for ~300ms after a theme toggle (useTheme adds/removes it);
-     removed right after, so there is no standing per-element transition cost. */
-  html.theming,
-  html.theming *,
-  html.theming *::before,
-  html.theming *::after {
-    transition:
-      background-color 300ms ease,
-      color 300ms ease,
-      border-color 300ms ease,
-      fill 300ms ease,
-      stroke 300ms ease;
+  [data-theme="light"] {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --surface-muted: #f2efe9;
+    --text: #1b1d21;
+    --text-muted: #5f6672;
+    --border: rgba(27, 29, 33, 0.1);
+    --border-strong: rgba(27, 29, 33, 0.16);
+    --color-accent: #ea5a1e;
+    --color-accent-deep: #c9460f;
+    --color-accent-soft: rgba(234, 90, 30, 0.14);
+    color-scheme: light;
+  }
+
+  [data-theme="dark"] {
+    --bg: #141110;
+    --surface: #1d1917;
+    --surface-muted: #24201d;
+    --text: #f3efe9;
+    --text-muted: #a49c92;
+    --border: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --color-accent: #f26a30;
+    --color-accent-deep: #ff8352;
+    --color-accent-soft: rgba(242, 106, 48, 0.18);
+    color-scheme: dark;
   }
 
   @media (min-width: 768px) {
@@ -80,11 +63,12 @@
   html {
     font-family: var(--font-sans);
     background: var(--bg);
-    color-scheme: dark;
     color: var(--text);
     scroll-behavior: smooth;
     scroll-padding-top: calc(var(--height-header) + 1rem);
     -webkit-text-size-adjust: 100%;
+    view-transition-name: root;
+    scrollbar-width: thin;
   }
 
   body {
@@ -160,10 +144,14 @@
   .bg-grid {
     background-image: linear-gradient(
         to right,
-        var(--grid-line) 1px,
+        color-mix(in srgb, var(--text) 5%, transparent) 1px,
         transparent 1px
       ),
-      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--text) 5%, transparent) 1px,
+        transparent 1px
+      );
     background-size: 56px 56px;
   }
 
@@ -178,9 +166,405 @@
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Theme "screen spread" transition (View Transitions API).
+ * The new theme scales up from the centre of the screen through a
+ * blurred-circle mask (no origin variables). Both directions expand the
+ * SAME way — light → dark and dark → light share one animation.
+ * Easing is expo-out to match.
+ * ------------------------------------------------------------------ */
+::view-transition-group(root) {
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+::view-transition-old(root) {
+  z-index: -1;
+  animation: none;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+  animation: vt-scale 1s cubic-bezier(0.19, 1, 0.22, 1) both;
+  mask: url("/meta/theme-mask.svg") no-repeat center;
+  mask-size: 0;
+}
+
+@keyframes vt-scale {
+  to {
+    mask-size: 200vmax;
+  }
+}
+
+/* ------------------------------------------------------------------
+ * Shared round icon button — used by the theme toggle and the mobile
+ * menu trigger. No border by default (fill only); the hero quick-links
+ * add `.icon-btn--outline` to keep a visible ring. Subtle press-in.
+ * ------------------------------------------------------------------ */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  transition: transform 120ms ease, color 120ms ease, border-color 120ms ease,
+    background-color 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:hover {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--surface));
+}
+
+.icon-btn:active {
+  transform: scale(0.93);
+}
+
+.icon-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* Variant that keeps a visible outline ring (hero quick-links). */
+.icon-btn--outline {
+  border-color: var(--border);
+}
+
+.icon-btn--outline:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--border));
+  background: var(--surface);
+}
+
+/* ------------------------------------------------------------------
+ * Ghana flag (hero). Static — no waving animation.
+ * ------------------------------------------------------------------ */
+.ghana-flag {
+  display: block;
+  width: 2.15rem;
+  height: auto;
+  border-radius: 3px;
+  box-shadow: 0 3px 8px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* ------------------------------------------------------------------
+ * Tech marquee — auto-scrolls continuously, pauses on hover/focus, and
+ * drops in a detail card for the hovered technology.
+ * ------------------------------------------------------------------ */
+.tech-marquee__viewport {
+  overflow: hidden;
+}
+
+.tech-marquee__track {
+  display: flex;
+  width: max-content;
+  gap: 0.75rem;
+  animation: vt-marquee 32s linear infinite;
+}
+
+.tech-marquee:hover .tech-marquee__track,
+.tech-marquee:focus-within .tech-marquee__track {
+  animation-play-state: paused;
+}
+
+.tech-card {
+  animation: tech-card-drop 200ms cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+@keyframes tech-card-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tech-marquee__track {
+    animation: none;
+  }
+  .tech-card {
+    animation: none;
+  }
+}
+
+/* Floating scroll-to-top button. */
+.scroll-top {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 9999px;
+  border: none;
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--color-accent) 60%, transparent);
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity 300ms ease, transform 300ms ease, background-color 200ms ease;
+}
+
+.scroll-top--visible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.scroll-top:hover {
+  background: var(--color-accent-deep);
+}
+
+.scroll-top svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* Apple-style project showcase carousel — full-bleed image cards (theme-aware
+   for image-less tiles), horizontal snap-scroll, and a bottom control bar of
+   progress dots + a play/pause button. */
+.showcase {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.showcase::-webkit-scrollbar {
+  display: none;
+}
+
+.showcase__track {
+  display: flex;
+  gap: 1.25rem;
+  width: max-content;
+  padding: 0.25rem 0.25rem 1rem;
+}
+
+.showcase__item {
+  scroll-snap-align: center;
+  flex: 0 0 auto;
+  width: min(80vw, 340px);
+}
+
+.showcase__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 580px;
+  padding: 1.75rem 1.5rem;
+  border-radius: 2rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 30px 60px -34px rgba(0, 0, 0, 0.5);
+  transition: transform 400ms cubic-bezier(0.19, 1, 0.22, 1), box-shadow 400ms ease;
+}
+
+.showcase__card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 40px 70px -34px rgba(0, 0, 0, 0.6);
+}
+
+/* Full-bleed media fills the entire card. */
+.showcase__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.showcase__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.showcase__card:hover .showcase__media img {
+  transform: scale(1.05);
+}
+
+/* Dark scrim so the overlaid text stays readable on top of the image. */
+.showcase__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.74) 0%,
+    rgba(0, 0, 0, 0.38) 34%,
+    rgba(0, 0, 0, 0.12) 58%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+
+/* Image-less tile: theme-aware surface + accent monogram. */
+.showcase__tile {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    color-mix(in srgb, var(--color-accent) 16%, var(--surface)),
+    var(--surface) 70%
+  );
+}
+
+.showcase__tile span {
+  font-size: 8rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+}
+
+.showcase__head {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.showcase__kicker {
+  display: inline-block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--color-accent);
+}
+
+.showcase__headline {
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.showcase__body {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Media variant → white text over the dark scrim. */
+.showcase__card--media .showcase__headline {
+  color: #fff;
+}
+
+.showcase__card--media .showcase__body {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.showcase__card--media .showcase__kicker {
+  color: #fff;
+  opacity: 0.85;
+}
+
+/* Apple-style controls: a dots pill + a play/pause button. */
+.showcase__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.showcase__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 9999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+}
+
+.showcase__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  background: var(--text-muted);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: width 300ms ease, opacity 300ms ease, background-color 300ms ease;
+}
+
+.showcase__dot--active {
+  width: 1.6rem;
+  opacity: 1;
+  background: var(--color-accent);
+}
+
+.showcase__play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 9999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: color 200ms ease, background-color 200ms ease;
+}
+
+.showcase__play:hover {
+  color: var(--color-accent);
+}
+
+.showcase__play svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase {
+    scroll-behavior: auto;
+  }
+  .scroll-top {
+    transform: none;
+    transition: opacity 200ms ease;
+  }
+}
+
+/* Tech-icon marquee. */
+@keyframes vt-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .animate-marquee {
+    animation: vt-marquee 40s linear infinite;
   }
 
   .sr-only {

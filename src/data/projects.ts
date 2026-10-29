@@ -1,4 +1,5 @@
 import kheliancart0 from "@/assets/images/projects/kheliancart/kheliancart-0.webp";
+import kheliancartShop from "@/assets/images/projects/kheliancart/kheliancart-shop.png";
 import type { Project } from "./types";
 
 /**
@@ -18,7 +19,7 @@ export const projects: Project[] = [
     year: 2025,
     summary:
       "Grocery ecommerce platform for Ho, Ghana — catalog, cart, checkout, and delivery-partner workflows.",
-    thumbnail: kheliancart0,
+    thumbnail: kheliancartShop,
     hero: {
       src: kheliancart0,
       alt: "KhelianCart grocery ecommerce storefront",

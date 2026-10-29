@@ -80,3 +80,18 @@ export interface ExperienceEntry {
   responsibilities: string[];
   technologies?: string[];
 }
+
+export interface BlogPost {
+  slug: string;
+  title: string;
+  /** 1–2 sentence excerpt shown on the card. */
+  excerpt: string;
+  /** ISO date string (YYYY-MM-DD) for display sorting. */
+  date: string;
+  /** Read time estimate (minutes). */
+  readingTime?: number;
+  /** Tag / category label. */
+  tag?: string;
+  /** External URL where the full post lives (e.g. dev.to, personal blog). */
+  url?: string;
+}

@@ -17,6 +17,13 @@ export const profile = {
   /** One-line philosophy — shown in the hero and reused across page headers. */
   tagline: "Build with purpose. Automate with intent. Secure by design.",
 
+  /**
+   * Full-width hero background image (e.g. `/hero-bg.webp`).
+   * Place the file in `public/` and set this to the URL path, or leave empty
+   * to skip the layer.
+   */
+  heroImage: "" as string,
+
   /** Longer biography for the About page. */
   bio: [
     "I'm a software engineer who likes taking ideas all the way to working products — the interface, the API, the data layer, and the details that keep things reliable once real people use them.",
@@ -26,6 +33,8 @@ export const profile = {
 
   email: "hello@kofiyesu.com",
   github: "https://github.com/c0de-break3r",
+  /** Replace with your actual LinkedIn profile URL. */
+  linkedin: "https://www.linkedin.com/in/kofiyesu",
 
   /** Concise technical expertise — replaces the old services/capabilities grid. */
   expertise: [

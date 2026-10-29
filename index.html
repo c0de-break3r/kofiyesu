@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -52,8 +52,27 @@
     <link rel="icon" type="image/png" href="/meta/favicon-16x16.png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/meta/apple-touch-icon.png" sizes="180x180" />
 
-    <meta name="theme-color" content="#0a0a0b" />
-    <meta name="msapplication-TileColor" content="#0a0a0b" />
+    <meta name="theme-color" content="#faf9f7" />
+    <meta name="msapplication-TileColor" content="#faf9f7" />
+    <script>
+      (function () {
+        var theme = "light";
+        try {
+          var stored = localStorage.getItem("theme");
+          if (stored === "light" || stored === "dark") {
+            theme = stored;
+          } else if (window.matchMedia) {
+            var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            if (dark) theme = "dark";
+          }
+        } catch (e) {
+          /* storage blocked — keep brand default */
+        }
+        document.documentElement.dataset.theme = theme;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#141110" : "#faf9f7");
+      })();
+    </script>
 
     <script type="application/ld+json">
       {

@@ -6,6 +6,7 @@ import { SkipToContent } from "@/components/layout/SkipToContent";
 import { Header } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
+import { ScrollTopButton } from "@/components/ui/ScrollTopButton";
 import { SeoManager } from "@/components/seo/SeoManager";
 import { HomePage } from "@/pages/HomePage";
 
@@ -44,6 +45,7 @@ export default function App() {
         </Routes>
       </Suspense>
       <PwaInstallPrompt />
+      <ScrollTopButton />
       <MobileNav />
     </>
   );
