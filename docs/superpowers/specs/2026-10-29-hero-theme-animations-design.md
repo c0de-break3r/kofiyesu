@@ -48,9 +48,10 @@ Header nav changes.
     `--color-accent-soft: rgba(0,146,168,0.12)`,
     `--color-secondary` stays magenta-family at a lightmode-adjusted value,
     `color-scheme: light` (all keys mirroring the dark `:root` block).
-  - `html.theming, html.theming body` + key components get
-    `transition: background-color 300ms ease, color 300ms ease,
-    border-color 300ms ease` (deliberately scoped, not universal).
+  - A transient `theming` class on `<html>` for ~300ms applies color
+    transitions (`background-color, color, border-color, fill, stroke`) across
+    the tree and is removed immediately after, so there is no standing
+    per-element transition cost.
   - Banner colorway vars defined in both themes, next to the tokens (dark on
     `:root`, light on `[data-theme="light"]`): `--banner-bg`, `--banner-fog-1`,
     `--banner-fog-2`, `--banner-node`, `--banner-link`, `--banner-dot`,

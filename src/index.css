@@ -23,7 +23,52 @@
     --color-accent-deep: #00b8d4;
     --color-accent-soft: rgba(0, 229, 255, 0.14);
     --color-secondary: #ff44cd;
+    --banner-bg: #0a0d14;
+    --banner-fog-1: rgba(0, 229, 255, 0.16);
+    --banner-fog-2: rgba(255, 68, 205, 0.12);
+    --banner-node: #00e5ff;
+    --banner-link: rgba(0, 229, 255, 0.35);
+    --banner-dot: rgba(0, 229, 255, 0.7);
+    --banner-scrim: rgba(6, 8, 12, 0.62);
+    --grid-line: rgba(255, 255, 255, 0.035);
     --height-header: 4.5rem;
+  }
+
+  [data-theme="light"] {
+    --bg: #f6f7f8;
+    --surface: #ffffff;
+    --surface-muted: #eef0f2;
+    --text: #131316;
+    --text-muted: #565b62;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.16);
+    --color-accent: #0092a8;
+    --color-accent-deep: #00778a;
+    --color-accent-soft: rgba(0, 146, 168, 0.12);
+    --color-secondary: #d21f9b;
+    --banner-bg: #e9eef3;
+    --banner-fog-1: rgba(0, 146, 168, 0.18);
+    --banner-fog-2: rgba(210, 31, 155, 0.12);
+    --banner-node: #00778a;
+    --banner-link: rgba(0, 119, 138, 0.35);
+    --banner-dot: rgba(0, 119, 138, 0.55);
+    --banner-scrim: rgba(10, 13, 20, 0.55);
+    --grid-line: rgba(19, 19, 22, 0.05);
+    color-scheme: light;
+  }
+
+  /* Applied only for ~300ms after a theme toggle (useTheme adds/removes it);
+     removed right after, so there is no standing per-element transition cost. */
+  html.theming,
+  html.theming *,
+  html.theming *::before,
+  html.theming *::after {
+    transition:
+      background-color 300ms ease,
+      color 300ms ease,
+      border-color 300ms ease,
+      fill 300ms ease,
+      stroke 300ms ease;
   }
 
   @media (min-width: 768px) {
@@ -115,10 +160,10 @@
   .bg-grid {
     background-image: linear-gradient(
         to right,
-        rgba(255, 255, 255, 0.035) 1px,
+        var(--grid-line) 1px,
         transparent 1px
       ),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
     background-size: 56px 56px;
   }
 
