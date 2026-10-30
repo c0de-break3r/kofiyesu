@@ -4,7 +4,7 @@
  * streak-stats.demolab.com (the exact link provided).
  */
 const STREAK_STATS_URL =
-  "https://streak-stats.demolab.com?user=c0de-break3r&hide_border=true&background=0B1020&ring=A855F7&fire=FF4EC4&currStreakLabel=00E5FF&sideLabels=E2E8F0&dates=94A3B8&stroke=A855F7";
+  "https://streak-stats.demolab.com?user=c0de-break3r&hide_border=true&background=0B1020&ring=A855F7&fire=FF4EC4&currStreakLabel=00E5FF&sideLabels=E2E8F0&dates=94A3B8&stroke=A855F7&currStreakNum=FFFFFF&sideNums=FFFFFF";
 
 export function GitHubStats() {
   return (
