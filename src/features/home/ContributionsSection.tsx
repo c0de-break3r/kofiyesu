@@ -1,25 +1,24 @@
 import { Reveal } from "@/components/ui/Reveal";
-import streakSvg from "@/assets/stats/streak.svg";
+import { GitHubContributions } from "@/components/ui/GitHubContributions";
+import { GitHubStats } from "@/components/ui/GitHubStats";
+import { useGitHubContributions } from "@/lib/githubContributions";
 
 /**
- * Contribution streak card (total contributions, current streak, longest
- * streak) as a locally committed asset so the site works offline and keeps
- * CSP img-src 'self'. Regenerate with `npm run stats:snapshot`.
+ * GitHub contribution activity: a native-style heatmap with the headline
+ * stats (total contributions, current streak, longest streak) beneath it.
+ * Fully client-side, theme-aware and responsive.
  */
 export function ContributionsSection() {
+  const data = useGitHubContributions();
+
   return (
     <section id="contributions" className="w-full px-6 py-16 md:py-20">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <Reveal>
-          <div className="overflow-x-auto rounded-2xl">
-            <img
-              src={streakSvg}
-              alt="GitHub contribution streak for c0de-break3r"
-              loading="lazy"
-              decoding="async"
-              className="mx-auto min-w-[560px] max-w-full"
-            />
-          </div>
+          <GitHubContributions data={data} />
+        </Reveal>
+        <Reveal delay={0.08}>
+          <GitHubStats />
         </Reveal>
       </div>
     </section>

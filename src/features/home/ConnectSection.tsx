@@ -2,7 +2,7 @@ import { profile } from "@/data/profile";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
-/** Closing contact section for the one-pager. */
+/** Closing contact section for the one-pager. Links live in the footer. */
 export function ConnectSection() {
   return (
     <section id="connect" className="w-full px-6 py-20 md:py-28">
@@ -14,45 +14,24 @@ export function ConnectSection() {
           />
         </Reveal>
 
-        <Reveal delay={0.08}>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <a
-              href={profile.github}
-              target="_blank"
-              rel="noreferrer"
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:border-[var(--color-accent)] md:p-8"
-            >
-              <p className="font-mono text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">
-                GitHub
-              </p>
-              <p className="mt-4 text-xl font-bold tracking-tight text-[var(--text)]">
-                @c0de-break3r
-              </p>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">
-                Code, active projects, and engineering updates
-              </p>
-              <span className="mt-5 inline-block font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] opacity-0 transition group-hover:opacity-100">
-                Visit profile →
-              </span>
-            </a>
-
-            <a
-              href={`mailto:${profile.email}`}
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:border-[var(--color-accent)] md:p-8"
-            >
-              <p className="font-mono text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">
-                Email
-              </p>
-              <p className="mt-4 text-xl font-bold tracking-tight text-[var(--text)]">
-                {profile.email}
-              </p>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">
-                No forms, no tracking — direct to my inbox
-              </p>
-              <span className="mt-5 inline-block font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] opacity-0 transition group-hover:opacity-100">
-                Compose mail →
-              </span>
-            </a>
+        <Reveal delay={0.05}>
+          <div className="max-w-2xl">
+            <p className="text-base leading-relaxed text-[var(--text-muted)]">
+              {profile.connect.blurb}
+            </p>
+            <p className="mt-6 font-mono text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">
+              Always open to discussing
+            </p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {profile.connect.openTo.map((item) => (
+                <li
+                  key={item}
+                  className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold text-[var(--text)]"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </Reveal>
       </div>

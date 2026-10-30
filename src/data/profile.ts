@@ -56,6 +56,73 @@ export const profile = {
     },
   ],
 
+  /** Areas of interest — mirrors the c0de-break3r profile README. */
+  interests: [
+    "Full-Stack Development",
+    "Artificial Intelligence",
+    "SaaS Engineering",
+    "Automation",
+    "Cybersecurity",
+  ],
+
+  /** What I'm focused on — from the profile README. */
+  focus: [
+    {
+      icon: "🚀",
+      title: "Software Engineering",
+      body: "Building scalable web applications, APIs, dashboards, and digital platforms.",
+    },
+    {
+      icon: "🤖",
+      title: "AI & Automation",
+      body: "Developing intelligent workflows, AI-assisted applications, and productivity tools.",
+    },
+    {
+      icon: "🛡️",
+      title: "Cybersecurity",
+      body: "Offensive security, vulnerability assessment, reconnaissance, and secure development.",
+    },
+    {
+      icon: "🧩",
+      title: "SaaS Products",
+      body: "Transforming real-world problems into practical, sustainable software products.",
+    },
+    {
+      icon: "📚",
+      title: "Continuous Learning",
+      body: "Improving system design, application architecture, and engineering practices.",
+    },
+  ],
+
+  /** Engineering & security philosophy — from the profile README. */
+  philosophy: {
+    quote:
+      "Great software isn't just about making things work. It's about understanding how they work, where they can fail, and how to build them better.",
+    body: "I approach development with a security-first mindset — weighing reliability, maintainability, performance, and potential attack surfaces throughout the engineering process. My security interests span web application testing, reconnaissance, attack surface analysis, and automating repetitive security tasks in authorized environments.",
+  },
+
+  /** Categorized technology stack — from the profile README. */
+  techStack: [
+    { category: "Languages", tools: ["TypeScript", "JavaScript", "Python", "Bash", "HTML", "CSS"] },
+    { category: "Frontend & UI", tools: ["React", "Next.js", "Tailwind CSS", "Vite"] },
+    { category: "Backend & Runtime", tools: ["Node.js", "Express", "Bun"] },
+    { category: "Databases & Infrastructure", tools: ["PostgreSQL", "MySQL", "MongoDB", "Docker", "Vercel"] },
+    { category: "Development Tools", tools: ["Git", "GitHub", "VS Code", "Linux", "Postman"] },
+  ],
+
+  /** Let's connect copy — from the profile README. */
+  connect: {
+    blurb:
+      "I'm interested in connecting with developers, founders, engineers, and teams working on meaningful technology.",
+    openTo: [
+      "Full-stack engineering",
+      "AI-powered applications",
+      "SaaS development",
+      "Automation",
+      "Cybersecurity",
+    ],
+  },
+
   /** Products in active development — sourced from the c0de-break3r profile README. */
   currentlyBuilding: [
     {
@@ -88,14 +155,24 @@ export const profile = {
   /** Technologies used across real projects — shown on the About page. */
   technologies: [
     "TypeScript",
+    "JavaScript",
     "React",
     "Next.js",
-    "Node.js",
-    "Express.js",
     "Tailwind CSS",
-    "PostgreSQL",
+    "Vite",
+    "Node.js",
+    "Express",
+    "Bun",
     "Python",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "Docker",
+    "Vercel",
     "Git",
+    "GitHub",
+    "Linux",
+    "Postman",
   ],
 } as const;
 

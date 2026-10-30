@@ -20,7 +20,7 @@ export function Footer({
         <p className="text-center text-sm text-[var(--text-muted)]">
           © {year} {profile.name}
         </p>
-        <p className="text-center font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[var(--text-muted)]">
+        <p className="text-center text-xs uppercase tracking-[0.24em] text-[var(--text-muted)]">
           Build with purpose · Automate with intent · Secure by design
         </p>
       </div>

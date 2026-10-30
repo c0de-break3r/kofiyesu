@@ -12,6 +12,14 @@ import {
   SiPython,
   SiGit,
   SiVite,
+  SiBun,
+  SiMysql,
+  SiMongodb,
+  SiDocker,
+  SiVercel,
+  SiGithub,
+  SiLinux,
+  SiPostman,
 } from "react-icons/si";
 
 /**
@@ -52,7 +60,7 @@ const TECH: Record<string, TechInfo> = {
     color: "#5fa04e",
     about: "Runs JavaScript on the server to build scalable backends and APIs.",
   },
-  "Express.js": {
+  Express: {
     Icon: SiExpress,
     color: "#e5e5e5",
     about: "Minimal Node.js framework for APIs, routing and middleware.",
@@ -81,6 +89,46 @@ const TECH: Record<string, TechInfo> = {
     Icon: SiVite,
     color: "#646cff",
     about: "Fast build tool and dev server for modern frontend projects.",
+  },
+  Bun: {
+    Icon: SiBun,
+    color: "#fbf0df",
+    about: "Ultra-fast JavaScript runtime, bundler and package manager in one.",
+  },
+  MySQL: {
+    Icon: SiMysql,
+    color: "#4479a1",
+    about: "Widely-used relational database for application data.",
+  },
+  MongoDB: {
+    Icon: SiMongodb,
+    color: "#47a248",
+    about: "Document database for flexible, schema-less data.",
+  },
+  Docker: {
+    Icon: SiDocker,
+    color: "#2496ed",
+    about: "Containers to package and run apps consistently anywhere.",
+  },
+  Vercel: {
+    Icon: SiVercel,
+    color: "#e5e5e5",
+    about: "Frontend cloud for deploying web apps and static sites.",
+  },
+  GitHub: {
+    Icon: SiGithub,
+    color: "#8b949e",
+    about: "Where code lives — version hosting, collaboration and CI.",
+  },
+  Linux: {
+    Icon: SiLinux,
+    color: "#fcc624",
+    about: "Open-source OS powering servers and dev tooling.",
+  },
+  Postman: {
+    Icon: SiPostman,
+    color: "#ff6c37",
+    about: "API client for testing and documenting endpoints.",
   },
 };
 

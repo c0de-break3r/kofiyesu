@@ -43,9 +43,11 @@ export function HeroSection() {
             {profile.tagline}
           </p>
 
-          <p className="max-w-xl text-base leading-relaxed text-[var(--text-muted)]">
-            {profile.intro}
-          </p>
+          <div className="max-w-xl space-y-3 text-base leading-relaxed text-[var(--text-muted)]">
+            {profile.bio.map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
+          </div>
 
           <QuickLinks className="mt-2 md:justify-start" />
         </div>

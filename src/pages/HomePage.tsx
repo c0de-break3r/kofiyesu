@@ -1,6 +1,7 @@
 import { HeroSection } from "@/features/home/HeroSection";
 import { ProofOfWorkSection } from "@/features/home/ProofOfWorkSection";
 import { ContributionsSection } from "@/features/home/ContributionsSection";
+import { AboutSection } from "@/features/home/AboutSection";
 import { StackSection } from "@/features/home/StackSection";
 import { ConnectSection } from "@/features/home/ConnectSection";
 import { Footer } from "@/components/layout/Footer";
@@ -20,6 +21,7 @@ export function HomePage() {
       <HeroSection />
       <ProofOfWorkSection />
       <ContributionsSection />
+      <AboutSection />
       <StackSection />
       <ConnectSection />
       <Footer />
